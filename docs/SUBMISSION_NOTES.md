@@ -5,7 +5,7 @@
 - Title: Dead Man's Ledger: The Money Engine
 - Event: Summer into AI Week 2
 - Theme: Independence Engines
-- Build: v0.4 public submission candidate
+- Build: v0.5 final candidate pending live deploy approval
 
 ## Short Description
 
@@ -31,7 +31,7 @@ Dead Man's Ledger treats independence as economic circulation. Paper money only 
 
 - The map is generated from open geodata.
 - State geometry comes from `us-atlas`.
-- Major river overlays come from Natural Earth data.
+- Major river overlays use a committed local fallback dataset, with a timed Natural Earth fallback only if the local file is missing.
 - City nodes are projected at runtime from latitude/longitude in `src/data/nodes.ts`.
 - Route lines are drawn at runtime from `src/data/routes.ts`.
 - No Google Maps screenshots are used.
@@ -40,10 +40,14 @@ Dead Man's Ledger treats independence as economic circulation. Paper money only 
 
 ## Gameplay Proof Notes
 
-- Mouse-first route/prep/dispatch loop.
-- Prep actions include scouts, guards, repair crews, telegraph reports, local tips, decoys, insurance, delay, and credit.
+- Mouse-first destination contract loop.
+- Contracts include origin, destination, cargo type, cargo value, delivery fee, trust weight, and leg limit.
+- Prep actions include scouts, guards, repair crews, telegraph reports, local tips, decoys, insurance, delay, and global credit.
+- Scout and Telegraph reveal danger but do not automatically counter it.
+- Credit tracks explicit debt; interest is charged only when debt exists.
+- Outlaw Pressure affects hazard density and counter difficulty.
 - Runs end when cash, reputation, or currency trust collapses.
-- Six-delivery journey milestones produce a Route Legend reward card.
+- Reaching the named destination completes the contract.
 - Generated WebAudio cues can be toggled with `M`.
 
 ## Competitor-Reference Note For Substack
@@ -60,12 +64,14 @@ https://bluntforceriot.github.io/dead-mans-ledger/
 
 ## Review Packet
 
-The v0.4 review packet should include:
+The v0.5 review packet should include:
 
 - Source code.
 - Package files.
 - Public assets.
 - Docs.
-- v0.4 screenshots.
+- v0.5 screenshots.
 - Build receipt.
 - Build log.
+- Balance report.
+- Neuroforge review-loop evidence.

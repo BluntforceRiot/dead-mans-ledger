@@ -2,22 +2,34 @@ import './styles.css';
 import { prepActions, type PrepActionId } from './data/gameContent';
 import { nodes, nodesById, type NodeId } from './data/nodes';
 import { routes, routesById, type LedgerRoute, type RouteId } from './data/routes';
-import { clearHighScores, getHighScores, HIGH_SCORE_KEY, saveHighScore } from './game/highScores';
+import { clearHighScores, getHighScores, saveHighScore } from './game/highScores';
 import {
   applyPrepAction,
+  BORROW_AMOUNT,
+  borrowCredit,
   canDispatch,
   createInitialState,
+  creditLimit,
   describeIntel,
+  describeHazardStack,
+  dispatchOffices,
   findNodeName,
   generateRouteStates,
   getAdjacentRoutes,
+  getLegalAdjacentRoutes,
   hazardById,
-  LEGS_PER_JOURNEY,
+  incidentExposure,
+  isLegalRoute,
   meterClass,
+  nextInterestCharge,
+  officeById,
   otherEnd,
   resolveDispatch,
+  routeClosesDistance,
+  routeStatusLabel,
   startNewRun,
   type LedgerState,
+  type OfficeId,
   type ScreenId
 } from './game/sim';
 import { MAP_HEIGHT, MAP_WIDTH, projectPoint } from './map/projection';
@@ -48,8 +60,16 @@ window.addEventListener('keydown', (event) => {
 });
 
 appRoot.addEventListener('click', (event) => {
-  const target = (event.target as HTMLElement).closest<HTMLElement>('[data-action], [data-screen], [data-route-id], [data-prep-id]');
+  const target = (event.target as HTMLElement).closest<HTMLElement>('[data-action], [data-screen], [data-route-id], [data-prep-id], [data-office-id]');
   if (!target) {
+    return;
+  }
+
+  const officeId = target.dataset.officeId as OfficeId | undefined;
+  if (officeId) {
+    playCue('dispatch');
+    state = startNewRun(officeId);
+    updateHash('game');
     return;
   }
 
@@ -57,8 +77,7 @@ appRoot.addEventListener('click', (event) => {
   if (screen) {
     playCue('click');
     if (screen === 'game') {
-      state = startNewRun();
-      updateHash('game');
+      updateHash('office');
     } else {
       navigate(screen);
     }
@@ -96,7 +115,7 @@ appRoot.addEventListener('click', (event) => {
       state = {
         ...state,
         seed: Date.now() >>> 0,
-        routeStates: generateRouteStates(Date.now() >>> 0, state.journey, state.currentNodeId),
+        routeStates: generateRouteStates(Date.now() >>> 0, state.journey, state.currentNodeId, state.contract, state.outlawPressure),
         selectedRouteId: undefined
       };
       render();
@@ -123,11 +142,20 @@ appRoot.addEventListener('click', (event) => {
   }
 });
 
+appRoot.addEventListener('keydown', (event) => {
+  const target = (event.target as HTMLElement).closest<HTMLElement>('[data-route-id]');
+  if (!target || (event.key !== 'Enter' && event.key !== ' ')) {
+    return;
+  }
+  event.preventDefault();
+  handleRouteClick(target.dataset.routeId as RouteId);
+});
+
 render();
 
 function screenFromHash(): ScreenId {
   const raw = window.location.hash.replace(/^#\/?/, '').split('?')[0];
-  if (raw === 'howto' || raw === 'preview' || raw === 'game' || raw === 'fired' || raw === 'scores') {
+  if (raw === 'office' || raw === 'howto' || raw === 'preview' || raw === 'about' || raw === 'game' || raw === 'scores') {
     return raw;
   }
   return 'title';
@@ -156,15 +184,17 @@ function handlePrepClick(prepId: PrepActionId) {
   }
 
   playCue('click');
+  if (prepId === 'borrow') {
+    state = borrowCredit(state);
+    render();
+    return;
+  }
   state = { ...state, selectedActionId: state.selectedActionId === prepId ? undefined : prepId };
   render();
 }
 
 function handleRouteClick(routeId: RouteId) {
   const routeState = state.routeStates[routeId];
-  if (!routeState?.active) {
-    return;
-  }
 
   if (state.screen === 'preview') {
     state = { ...state, selectedRouteId: routeId };
@@ -177,9 +207,14 @@ function handleRouteClick(routeId: RouteId) {
   }
 
   const route = routesById[routeId];
-  const reachable = route.from === state.currentNodeId || route.to === state.currentNodeId;
-  if (!reachable) {
-    state = { ...state, selectedRouteId: routeId };
+  if (!routeState?.active) {
+    state = { ...state, routeNotice: 'Route closed this contract.' };
+    render();
+    return;
+  }
+
+  if (!isLegalRoute(state, routeId)) {
+    state = { ...state, selectedRouteId: routeId, routeNotice: 'That route is open elsewhere, not from this station.' };
     render();
     return;
   }
@@ -189,7 +224,7 @@ function handleRouteClick(routeId: RouteId) {
     state = applyPrepAction(state, routeId, state.selectedActionId);
   } else {
     playCue('click');
-    state = { ...state, selectedRouteId: routeId };
+    state = { ...state, selectedRouteId: routeId, routeNotice: routeClosesDistance(state, route) ? undefined : 'Detour route: it does not shorten the trip to the destination.' };
   }
   render();
 }
@@ -232,15 +267,19 @@ function render() {
   appRoot.innerHTML =
     state.screen === 'title'
       ? renderTitle()
+      : state.screen === 'office'
+        ? renderOfficeChoice()
       : state.screen === 'howto'
         ? renderHowTo()
         : state.screen === 'preview'
           ? renderMapPreview()
-          : state.screen === 'game'
-            ? renderGame()
-            : state.screen === 'fired'
-              ? renderFired()
-              : renderHighScores();
+          : state.screen === 'about'
+            ? renderAbout()
+            : state.screen === 'game'
+              ? renderGame()
+              : state.screen === 'fired'
+                ? renderFired()
+                : renderHighScores();
 }
 
 function renderTitle() {
@@ -252,13 +291,43 @@ function renderTitle() {
         <p class="subtitle">The money provided independence. The route was the engine.</p>
         <p class="title-kicker">A frontier board-game sim about currency, risk, trust, and the routes that made paper money useful.</p>
         <div class="title-actions">
-          <button data-screen="game">Start Ledger Run</button>
-          <button data-screen="preview">Map Preview</button>
+          <button data-screen="office">Start Ledger Run</button>
+          <button data-screen="preview">Route Atlas</button>
           <button data-screen="howto">How To Play</button>
+          <button data-screen="about">About</button>
           <button data-screen="scores">High Scores</button>
         </div>
-        <p class="fine-print">Summer into AI Week 2: Independence Engines &middot; v0.4 public submission candidate &middot; M toggles sound</p>
+        <p class="fine-print">Summer into AI Week 2: Independence Engines &middot; M toggles sound</p>
       </div>
+    </main>
+  `;
+}
+
+function renderOfficeChoice() {
+  return `
+    <main class="page-shell office-screen">
+      <section class="paper-page">
+        <p class="eyebrow">Dispatch Office</p>
+        <h1>Choose the first ledger desk</h1>
+        <p class="lead-copy">Each office starts on a different route web with a mild accounting edge. The contract destination is real; get the cargo there before the legs run out.</p>
+        <div class="office-grid">
+          ${dispatchOffices
+            .map(
+              (office) => `
+                <button class="office-card" data-office-id="${office.id}">
+                  <strong>${office.name}</strong>
+                  <span>${findNodeName(office.nodeId)} office</span>
+                  <small>${office.bonus}</small>
+                </button>
+              `
+            )
+            .join('')}
+        </div>
+        <div class="page-actions">
+          <button data-screen="title">Title</button>
+          <button data-screen="preview">Route Atlas</button>
+        </div>
+      </section>
     </main>
   `;
 }
@@ -271,23 +340,57 @@ function renderHowTo() {
         <div class="rules-grid">
           <article>
             <h2>Pick a route</h2>
-            <p>Click an active route from your current station. Long express routes pay more, but hide nastier complications.</p>
+            <p>Click an active route from your current station. Your contract has a destination, cargo value, fee, and leg limit.</p>
           </article>
           <article>
             <h2>Prepare the line</h2>
-            <p>Choose scouts, guards, repair crews, telegraph reports, decoys, insurance, delays, or credit before dispatching.</p>
+            <p>Scout and Telegraph gather intel. Guards, repairs, decoys, delays, and insurance handle the danger.</p>
           </article>
           <article>
             <h2>Read the danger</h2>
-            <p>Scout and telegraph actions can reveal hidden trouble. Matching the right counter earns score and reputation.</p>
+            <p>Intel helps the right counter work, but information alone cannot guarantee survival.</p>
           </article>
           <article>
             <h2>Survive the board</h2>
-            <p>Cash below ${formatMoney(-500)}, zero reputation, or zero currency trust ends the run.</p>
+            <p>Cash below ${formatMoney(-500)}, zero reputation, or zero currency trust ends the run. Debt charges interest only when debt exists.</p>
           </article>
         </div>
         <div class="page-actions">
-          <button data-screen="game">Start Run</button>
+          <button data-screen="office">Start Run</button>
+          <button data-screen="title">Title</button>
+        </div>
+      </section>
+    </main>
+  `;
+}
+
+function renderAbout() {
+  return `
+    <main class="page-shell">
+      <section class="paper-page">
+        <p class="eyebrow">Credits And Proof</p>
+        <h1>About The Money Engine</h1>
+        <div class="rules-grid">
+          <article>
+            <h2>Theme</h2>
+            <p>The money provided independence. The route was the engine. Contracts turn currency trust into a route-planning problem.</p>
+          </article>
+          <article>
+            <h2>Map Proof</h2>
+            <p>The base board is generated from open U.S. geodata. City and route overlays are drawn from coordinate data at runtime.</p>
+          </article>
+          <article>
+            <h2>Build Proof</h2>
+            <p>Journey seed: <strong>${state.seed}</strong>. High scores are local browser storage only.</p>
+          </article>
+          <article>
+            <h2>AI Usage</h2>
+            <p>AI assisted design direction, code integration, review-loop hardening, and lightweight original SVG/UI generation. No AI-generated geography is used.</p>
+          </article>
+        </div>
+        <div class="page-actions">
+          <button data-screen="office">Start Run</button>
+          <button data-screen="preview">Route Atlas</button>
           <button data-screen="title">Title</button>
         </div>
       </section>
@@ -301,26 +404,25 @@ function renderMapPreview() {
   return `
     <main class="preview-shell">
       <aside class="side-panel">
-        <h1>Map Preview</h1>
-        <p>Base geography is generated from open geodata. Cities and routes are projected live from <code>nodes.ts</code> and <code>routes.ts</code>.</p>
-        <button data-action="regen-routes">Regenerate Availability</button>
+        <h1>Route Atlas</h1>
+        <p>Inspect the board geography, route types, express lines, and contract availability before opening the ledger.</p>
         <dl>
           <dt>Nodes</dt><dd>${nodes.length}</dd>
           <dt>Routes</dt><dd>${routes.length}</dd>
-          <dt>Scores</dt><dd>Local only</dd>
+          <dt>Scores</dt><dd>Saved on this device</dd>
         </dl>
         ${
           selected
             ? `<div class="route-card">
                 <h2>${routeName(selected)}</h2>
                 <p class="route-note">${selected.note}</p>
-                <p><strong>${selected.type.toUpperCase()}</strong> &middot; ${selected.distanceTier} &middot; risk ${Math.round(selected.baseRisk * 100)}% &middot; ${selected.express ? 'EXPRESS' : 'standard'}</p>
-                <p>${selectedState?.active ? 'Active this run' : 'Inactive this run'} &middot; Intel: ${selectedState ? describeIntel(selectedState) : 'Unknown'}</p>
+                <p><strong>${selected.type.toUpperCase()}</strong> &middot; ${selected.distanceTier} &middot; risk ${Math.round(selected.baseRisk * 100)}% &middot; exposure ${incidentExposure(selected)} &middot; ${selected.express ? 'EXPRESS' : 'standard'}</p>
+                <p>${selectedState?.active ? 'Open this contract' : 'Closed this contract'} &middot; Intel: ${selectedState ? describeIntel(selectedState) : 'Unknown'}</p>
               </div>`
-            : '<p class="hint">Click a route line or city marker to inspect the graph.</p>'
+            : '<p class="hint">Click a route line to inspect status, risk, exposure, and route type.</p>'
         }
         <div class="page-actions">
-          <button data-screen="game">Start Run</button>
+          <button data-screen="office">Start Run</button>
           <button data-screen="title">Title</button>
         </div>
       </aside>
@@ -331,59 +433,60 @@ function renderMapPreview() {
 
 function renderGame() {
   const selected = state.selectedRouteId ? routesById[state.selectedRouteId] : undefined;
-  const adjacent = getAdjacentRoutes(state.currentNodeId, state.routeStates);
+  const adjacent = getLegalAdjacentRoutes(state);
   const selectedState = selected ? state.routeStates[selected.id] : undefined;
+  const office = officeById(state.officeId);
 
   return `
     <main class="game-shell">
       <aside class="side-panel contract-panel">
         <p class="eyebrow">Current Contract</p>
-        <h1>${state.shipment.name}</h1>
-        <p>${state.shipment.copy}</p>
+        <h1>${state.contract.cargoName}</h1>
+        <p>${state.contract.copy}</p>
         <dl class="compact-list">
+          <dt>Office</dt><dd>${office.name.replace(' Office', '')}</dd>
           <dt>Station</dt><dd>${findNodeName(state.currentNodeId)}</dd>
-          <dt>Value</dt><dd>${formatMoney(state.shipment.value)}</dd>
+          <dt>Origin</dt><dd>${findNodeName(state.contract.origin)}</dd>
+          <dt>Destination</dt><dd>${findNodeName(state.contract.destination)}</dd>
+          <dt>Cargo type</dt><dd>${state.contract.cargoType}</dd>
+          <dt>Cargo value</dt><dd>${formatMoney(state.contract.cargoValue)}</dd>
+          <dt>Delivery fee</dt><dd>${formatMoney(state.contract.deliveryFee)}</dd>
+          <dt>Legs left</dt><dd>${state.contract.legsRemaining}/${state.contract.legLimit}</dd>
           <dt>Active exits</dt><dd>${adjacent.length}</dd>
-          <dt>Journey leg</dt><dd>${state.deliveryInJourney}/${LEGS_PER_JOURNEY}</dd>
         </dl>
         ${
           selected
-            ? `<div class="route-card selected-route">
+              ? `<div class="route-card selected-route">
                 <p class="eyebrow">Selected Route</p>
                 <h2>${routeName(selected)}</h2>
-                <p>${selected.note}</p>
+                <button data-action="dispatch" ${canDispatch(state) ? '' : 'disabled'}>${state.dispatchingRouteId ? 'Dispatching...' : 'Dispatch Shipment'}</button>
+                <p class="route-note">${selected.note}</p>
                 <dl class="compact-list">
-                  <dt>Type</dt><dd>${selected.type}${selected.express ? ' express' : ''}</dd>
-                  <dt>Risk</dt><dd>${Math.round(selected.baseRisk * 100)}%</dd>
-                  <dt>Payout</dt><dd>x${selected.payoutMultiplier.toFixed(2)}</dd>
+                  <dt>Risk</dt><dd>${Math.round(selected.baseRisk * 100)}% / ${incidentExposure(selected)} check${incidentExposure(selected) === 1 ? '' : 's'}</dd>
+                  <dt>Threat</dt><dd>${selectedState ? describeHazardStack(selectedState) : 'Unknown'}</dd>
                   <dt>Intel</dt><dd>${selectedState ? describeIntel(selectedState) : 'Unknown'}</dd>
                   <dt>Prep</dt><dd>${selectedState?.assigned.length ? selectedState.assigned.map((id) => actionName(id)).join(', ') : 'None'}</dd>
                 </dl>
                 ${selectedState?.assigned.length ? `<div class="prep-badge-row">${selectedState.assigned.map((id) => renderPrepBadge(id)).join('')}</div>` : ''}
-                <button data-action="dispatch" ${canDispatch(state) ? '' : 'disabled'}>${state.dispatchingRouteId ? 'Dispatching...' : 'Dispatch Shipment'}</button>
               </div>`
-            : `<div class="station-card"><strong>${findNodeName(state.currentNodeId)} office open</strong><span>${adjacent.length} active exits. Click a glowing route to review the ledger before dispatch.</span></div>`
+            : `<div class="station-card"><strong>${findNodeName(state.currentNodeId)} office open</strong><span>${adjacent.length} legal exits. Gold routes are reachable; muted routes are closed or elsewhere.</span></div>`
         }
+        ${state.routeNotice ? `<p class="danger-copy small-copy">${state.routeNotice}</p>` : ''}
       </aside>
       <section class="map-stage">
         <div class="turn-strip" aria-label="How to play this turn">
           <strong>How to play this turn</strong>
-          <span>Pick a route &rarr; prepare it &rarr; dispatch the shipment &rarr; survive the ledger.</span>
+          <span>Plot toward ${findNodeName(state.contract.destination)} &rarr; gather intel &rarr; assign counters &rarr; dispatch.</span>
         </div>
         ${renderMap('game')}
       </section>
       <aside class="side-panel actions-panel">
         <p class="eyebrow">Preparation</p>
         <h2>Route Actions</h2>
-        <div class="action-steps">
-          <span>1. Choose prep</span>
-          <span>2. Click route</span>
-          <span>3. Dispatch</span>
-        </div>
-        <p class="hint">Scout finds physical danger. Telegraph finds official warnings. Local tips are unreliable. Borrow Credit adds cash and interest pressure.</p>
-        <div class="prep-list">
+        <div class="prep-list compact-prep-grid">
           ${prepActions.map((action) => renderPrepAction(action.id)).join('')}
         </div>
+        ${renderSelectedActionDetail()}
       </aside>
       <section class="hud">${renderHud()}</section>
       ${state.lastResult ? renderResultModal() : ''}
@@ -397,15 +500,45 @@ function renderPrepAction(actionId: PrepActionId) {
     return '';
   }
   const selected = state.selectedActionId === action.id;
-  const disabled = action.cost > state.cash && action.id !== 'borrow';
+  const disabled =
+    action.id === 'borrow'
+      ? state.creditBorrowedThisLeg || state.borrowedCredit >= creditLimit(state)
+      : action.cost > state.cash;
+  const costLine =
+    action.id === 'borrow'
+      ? state.creditBorrowedThisLeg
+        ? 'Borrowed this leg'
+        : `+${formatMoney(Math.min(BORROW_AMOUNT, creditLimit(state) - state.borrowedCredit))} credit`
+      : action.cost === 0
+        ? 'Free'
+        : formatMoney(action.cost);
   return `
     <button class="prep-action ${selected ? 'selected' : ''}" data-prep-id="${action.id}" ${disabled ? 'disabled' : ''}>
       <img src="${assetUrl(`assets/tokens/${action.asset}`)}" alt="" />
       <span>
         <strong>${action.name}</strong>
-        <small>${action.id === 'borrow' ? '+$400 credit when assigned to a route' : action.cost === 0 ? action.short : `${formatMoney(action.cost)} &middot; ${action.short}`}</small>
+        <small>${costLine}</small>
       </span>
     </button>
+  `;
+}
+
+function renderSelectedActionDetail() {
+  const action = state.selectedActionId ? prepActions.find((item) => item.id === state.selectedActionId) : undefined;
+  if (!action) {
+    return `
+      <div class="action-detail-card">
+        <strong>Select prep, then click a reachable route.</strong>
+        <span>Scout and Telegraph reveal danger. Counters still need guards, repairs, decoys, delays, or insurance.</span>
+      </div>
+    `;
+  }
+  return `
+    <div class="action-detail-card selected">
+      <strong>${action.name}</strong>
+      <span>${action.short}</span>
+      <em>${action.id === 'borrow' ? `Credit line ${formatMoney(creditLimit(state))}; next interest ${formatMoney(nextInterestCharge(state))}.` : action.cost === 0 ? 'No cash cost.' : `${formatMoney(action.cost)} cash cost.`}</em>
+    </div>
   `;
 }
 
@@ -415,10 +548,11 @@ function renderHud() {
     <div class="meter"><span>Score</span><strong>${Math.max(0, state.score).toLocaleString()}</strong></div>
     <div class="bar-meter ${meterClass(state.reputation)}"><span>Reputation</span><b style="width:${state.reputation}%"></b><strong>${state.reputation}</strong></div>
     <div class="bar-meter ${meterClass(state.trust)}"><span>Currency Trust</span><b style="width:${state.trust}%"></b><strong>${state.trust}</strong></div>
-    <div class="meter"><span>Outlaw Pressure</span><strong>${state.outlawPressure}</strong></div>
-    <div class="meter"><span>Interest</span><strong>${state.interestRate.toFixed(1)}%</strong></div>
-    <div class="meter"><span>Credit</span><strong>${formatMoney(state.borrowedCredit)}</strong></div>
-    <div class="meter"><span>Journey</span><strong>${state.journey}.${state.deliveryInJourney}</strong></div>
+    <div class="meter pressure-meter" title="Higher pressure increases hazard frequency and makes protection less reliable."><span>Outlaw Pressure</span><strong>${state.outlawPressure}</strong></div>
+    <div class="meter debt"><span>Debt</span><strong>${formatMoney(state.borrowedCredit)}</strong></div>
+    <div class="meter"><span>Rate</span><strong>${state.interestRate.toFixed(1)}%</strong></div>
+    <div class="meter"><span>Next Interest</span><strong>${formatMoney(nextInterestCharge(state))}</strong></div>
+    <div class="meter"><span>Contract</span><strong>${state.journey}.${state.deliveryInJourney}</strong></div>
     <button class="mute-button" data-action="toggle-sound" title="M toggles sound">${muted ? 'Muted' : 'Sound'}</button>
   `;
 }
@@ -441,32 +575,42 @@ function renderResultModal() {
           <div class="event-spark"></div>
         </div>
         <div>
-          <p class="eyebrow">${result.journeyComplete ? 'Journey Complete' : result.success ? 'Route Result' : 'Board Incident'}</p>
-          <h1>${result.journeyComplete ? 'ROUTE LEGEND' : result.message}</h1>
-          <p class="result-outcome ${result.success ? 'outcome-good' : 'outcome-bad'}">${result.success ? 'Shipment delivered' : 'Shipment disrupted'}${result.helpfulPrep.length ? ` &middot; ${result.helpfulPrep.length} prep counter${result.helpfulPrep.length === 1 ? '' : 's'} worked` : ''}</p>
+          <p class="eyebrow">${result.arrivedAtDestination ? 'Destination Arrival' : result.success ? 'Route Result' : 'Board Incident'}</p>
+          <h1>${result.arrivedAtDestination ? 'CONTRACT DELIVERED' : result.message}</h1>
+          <p class="result-outcome ${result.success ? 'outcome-good' : 'outcome-bad'}">${result.success ? 'Shipment moving' : 'Shipment disrupted'}${result.prepUsed.length ? ` &middot; ${result.prepUsed.length} counter${result.prepUsed.length === 1 ? '' : 's'} attempted` : ''}</p>
           <p>${result.detail}</p>
-          ${result.journeyComplete ? '<p class="success-copy">The currency arrived. The towns trusted the notes. The engine kept turning.</p>' : ''}
+          ${result.arrivedAtDestination ? '<p class="success-copy">The named destination signed the receipt. The money engine keeps turning.</p>' : ''}
           <dl class="result-grid">
+            <dt>Contract</dt><dd>${findNodeName(result.contract.origin)} to ${findNodeName(result.contract.destination)}</dd>
+            <dt>Cargo value</dt><dd>${formatMoney(result.contract.cargoValue)}</dd>
             <dt>Route</dt><dd>${routeName(result.route)}</dd>
-            <dt>Event</dt><dd>${result.hazard.name}</dd>
-            <dt>Prep helped</dt><dd>${result.helpfulPrep.length ? result.helpfulPrep.map((id) => actionName(id)).join(', ') : 'None'}</dd>
-            <dt>Prep failed</dt><dd>${result.failedPrep.length ? result.failedPrep.map((id) => actionName(id)).join(', ') : 'None'}</dd>
-            <dt>Payout</dt><dd class="money-result">${formatMoney(result.payout)}</dd>
+            <dt>Threat encountered</dt><dd>${result.incidents.map((incident) => incident.hazard.name).join(' + ')}</dd>
+            <dt>Incident exposure</dt><dd>${result.incidents.length}</dd>
+            <dt>Intel gathered</dt><dd>${result.intelGathered.length ? result.intelGathered.map((report) => report.text).join(' ') : 'None'}</dd>
+            <dt>Prep used</dt><dd>${result.prepUsed.length ? result.prepUsed.map((id) => actionName(id)).join(', ') : 'None'}</dd>
+            <dt>Mitigation applied</dt><dd>${result.mitigationApplied.length ? result.mitigationApplied.map((id) => actionName(id)).join(', ') : 'None'}</dd>
+            <dt>Prep not needed</dt><dd>${result.prepNotNeeded.length ? result.prepNotNeeded.map((id) => actionName(id)).join(', ') : 'None'}</dd>
+            <dt>Gross fee</dt><dd class="money-result">${formatMoney(result.grossFee)}</dd>
+            <dt>Principal repaid</dt><dd>-${formatMoney(result.principalRepaid)}</dd>
+            <dt>Net fee</dt><dd class="${result.netFee >= 0 ? 'positive-result' : 'negative-result'}">${signedMoney(result.netFee)}</dd>
             <dt>Score</dt><dd class="${result.scoreDelta >= 0 ? 'positive-result' : 'negative-result'}">${signedNumber(result.scoreDelta)}</dd>
             <dt>Cash</dt><dd class="${result.cashDelta >= 0 ? 'positive-result' : 'negative-result'}">${signedMoney(result.cashDelta)}</dd>
             <dt>Interest paid</dt><dd>-${formatMoney(result.interestCharge)}</dd>
             <dt>Reputation</dt><dd class="${result.reputationDelta >= 0 ? 'positive-result' : 'negative-result'}">${signedNumber(result.reputationDelta)}</dd>
             <dt>Trust</dt><dd class="${result.trustDelta >= 0 ? 'positive-result' : 'negative-result'}">${signedNumber(result.trustDelta)}</dd>
-            ${result.journeyComplete ? `<dt>Cash carryover</dt><dd>${formatMoney(result.cashAfter)}</dd><dt>Pressure rise</dt><dd>+${result.pressureDelta}</dd>` : ''}
+            <dt>Outlaw pressure</dt><dd>${signedNumber(result.pressureDelta)}</dd>
+            ${result.backtrackPenalty ? '<dt>Backtrack penalty</dt><dd>Fee and score reduced</dd>' : ''}
           </dl>
           ${
             result.firedReason
               ? `<p class="danger-copy">${result.firedReason}</p>`
-              : result.success
+              : result.arrivedAtDestination
+                ? '<p class="success-copy">New destination contract is posted behind this card.</p>'
+                : result.success
                 ? '<p class="success-copy">The route engine keeps turning. A harder contract is waiting.</p>'
                 : '<p class="danger-copy">The board permits another journey, but the ledger is bruised.</p>'
           }
-          <button data-action="continue-result">${result.firedReason ? 'Face the Board' : result.journeyComplete ? 'Begin Next Journey' : 'Continue'}</button>
+          <button data-action="continue-result">${result.firedReason ? 'Face the Board' : result.contractEnded ? 'Review Next Contract' : 'Continue'}</button>
         </div>
       </article>
     </div>
@@ -474,6 +618,9 @@ function renderResultModal() {
 }
 
 function renderFired() {
+  if (!state.firedReason) {
+    return renderTitle();
+  }
   return `
     <main class="page-shell fired-screen">
       <section class="paper-page compact">
@@ -481,7 +628,7 @@ function renderFired() {
         <p class="eyebrow">Final Board Review</p>
         <h1>FIRED BY THE BOARD</h1>
         <p>Payroll failed. Merchants refused paper. The route lost trust. The town went back to dust, favors, and shotguns.</p>
-        <p class="danger-copy">${state.firedReason ?? 'Demonstration board hearing for review capture.'}</p>
+        <p class="danger-copy">${state.firedReason}</p>
         <dl class="result-grid">
           <dt>Final score</dt><dd>${state.score.toLocaleString()}</dd>
           <dt>Journey reached</dt><dd>${state.journey}.${state.deliveryInJourney}</dd>
@@ -517,9 +664,9 @@ function renderHighScores() {
           }
         </ol>
         ${resetMessage}
-        <p class="hint">Local ledger entries live only in <code>${HIGH_SCORE_KEY}</code> on this browser.</p>
+        <p class="hint">Scores are saved on this device. No online leaderboard is used.</p>
         <div class="page-actions">
-          <button data-screen="game">Play Again</button>
+          <button data-screen="office">Play Again</button>
           <button data-screen="title">Title</button>
           <button data-action="reset-scores">Reset Local Scores</button>
         </div>
@@ -533,13 +680,15 @@ function renderMap(mode: 'preview' | 'game') {
     .map((node) => {
       const point = projectPoint(node.longitude, node.latitude);
       const current = node.id === state.currentNodeId;
+      const destination = node.id === state.contract.destination;
       const reachable = getAdjacentRoutes(state.currentNodeId, state.routeStates).some((route) => otherEnd(route, state.currentNodeId) === node.id);
       const dense = isDenseNode(node.id);
       const offset = labelOffset(node.id);
       return `
-        <g class="node ${current ? 'current' : ''} ${reachable ? 'reachable-node' : ''} ${dense ? 'dense-node' : ''}" transform="translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})">
-          <circle r="${current ? 20 : 12}" />
+        <g class="node ${current ? 'current' : ''} ${destination ? 'destination' : ''} ${reachable ? 'reachable-node' : ''} ${dense ? 'dense-node' : ''}" transform="translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})">
+          <circle r="${current ? 20 : destination ? 18 : 12}" />
           ${current ? '<circle class="station-ring" r="33" />' : ''}
+          ${destination ? '<circle class="destination-ring" r="31" />' : ''}
           <text x="${offset.x}" y="${offset.y + (mode === 'preview' ? 1 : 0)}">${escapeHtml(node.name)}</text>
         </g>
       `;
@@ -550,7 +699,9 @@ function renderMap(mode: 'preview' | 'game') {
     .map((route) => {
       const routeState = state.routeStates[route.id];
       const selected = state.selectedRouteId === route.id;
-      const reachable = route.from === state.currentNodeId || route.to === state.currentNodeId;
+      const connected = route.from === state.currentNodeId || route.to === state.currentNodeId;
+      const reachable = Boolean(routeState?.active && connected);
+      const inspectable = mode === 'preview' || reachable;
       const d = routePath(route);
       const classes = [
         'route-line',
@@ -561,8 +712,9 @@ function renderMap(mode: 'preview' | 'game') {
         reachable ? 'reachable' : '',
         state.dispatchingRouteId === route.id ? 'dispatching' : ''
       ].join(' ');
+      const aria = routeAriaLabel(route, routeState, mode);
       return `
-        <path d="${d}" class="route-hit" data-route-id="${route.id}"><title>${escapeHtml(routeTooltip(route, routeState))}</title></path>
+        <path d="${d}" class="route-hit ${inspectable ? '' : 'disabled'}" ${inspectable ? `data-route-id="${route.id}" tabindex="0" role="button" aria-label="${escapeHtml(aria)}"` : 'tabindex="-1" aria-hidden="true"'}><title>${escapeHtml(routeTooltip(route, routeState))}</title></path>
         <path d="${d}" class="${classes}"></path>
         ${routeState?.assigned.length ? renderRouteBadges(route, routeState.assigned) : ''}
         ${routeState?.revealed && routeState.hazardId !== 'clean' ? renderHazardPip(route) : ''}
@@ -669,7 +821,12 @@ function routeName(route: LedgerRoute) {
 
 function routeTooltip(route: LedgerRoute, routeState?: { active: boolean; assigned: PrepActionId[]; revealed: boolean }) {
   const prep = routeState?.assigned.length ? routeState.assigned.map((id) => actionName(id)).join(', ') : 'No prep assigned';
-  return `${routeName(route)} | ${route.type} ${route.express ? 'express' : 'route'} | risk ${Math.round(route.baseRisk * 100)}% | payout x${route.payoutMultiplier.toFixed(2)} | ${routeState?.active ? 'active' : 'inactive'} | ${prep}`;
+  return `${routeName(route)} | ${route.type} ${route.express ? 'express' : 'route'} | risk ${Math.round(route.baseRisk * 100)}% | fee x${route.payoutMultiplier.toFixed(2)} | exposure ${incidentExposure(route)} | ${routeState?.active ? 'open' : 'closed'} | ${prep}`;
+}
+
+function routeAriaLabel(route: LedgerRoute, routeState: LedgerState['routeStates'][RouteId] | undefined, mode: 'preview' | 'game') {
+  const status = mode === 'preview' ? (routeState?.active ? 'open this contract' : 'closed this contract') : routeStatusLabel(state, route);
+  return `${routeName(route)}, ${status}, ${route.type}${route.express ? ' express' : ''}, risk ${Math.round(route.baseRisk * 100)} percent, fee multiplier ${route.payoutMultiplier.toFixed(2)}, incident exposure ${incidentExposure(route)}`;
 }
 
 function renderPrepBadge(actionId: PrepActionId) {

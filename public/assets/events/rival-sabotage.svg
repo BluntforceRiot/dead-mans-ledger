@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Rival Sabotage">
+
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
+  </defs>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+
+  <g filter="url(#shadow)"><rect x="118" y="131" width="92" height="34" rx="6" fill="#17262c" stroke="#e0b45d" stroke-width="3"/><rect x="204" y="119" width="44" height="46" rx="5" fill="#20343a" stroke="#e0b45d" stroke-width="3"/><circle cx="139" cy="170" r="12" fill="#111"/><circle cx="225" cy="170" r="12" fill="#111"/><path d="M96 164h180" stroke="#1b1510" stroke-width="5" stroke-linecap="round"/></g><path d="M246 92l42 34-18 36" fill="none" stroke="#f06f4e" stroke-width="6" stroke-linecap="round"/><path d="M246 92l-10 26M246 92l28-4" stroke="#ffe7a6" stroke-width="4"/><g fill="#171014"><circle cx="294" cy="91" r="12"/><path d="M281 104h25l-7 46h-12z"/></g>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Rival Sabotage</text>
+</svg>

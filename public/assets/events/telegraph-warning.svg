@@ -1,10 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
-  <defs><linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#17313b"/><stop offset="1" stop-color="#091319"/></linearGradient></defs>
-  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
-  <path d="M60 130V34M130 130V34M200 130V34" stroke="#d9b55e" stroke-width="8" stroke-linecap="round"/>
-  <path d="M32 48c50 30 146 30 196 0" fill="none" stroke="#71b3bb" stroke-width="6"/>
-  <path d="M46 82c46 22 122 22 168 0" fill="none" stroke="#71b3bb" stroke-width="5" opacity=".6"/>
-  <path d="M80 102h100" stroke="#d85c44" stroke-width="9" stroke-linecap="round" stroke-dasharray="16 12"/>
-  <circle cx="130" cy="102" r="18" fill="none" stroke="#f6da95" stroke-width="5"/>
-  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">WIRE WARNING</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Telegraph Sparks">
+
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
+  </defs>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+
+  <g filter="url(#shadow)"><path d="M270 72v99" stroke="#2c1c10" stroke-width="7"/><path d="M238 86h63" stroke="#2c1c10" stroke-width="6"/><path d="M246 91l-26 45M294 91l-28 50" stroke="#f1c66e" stroke-width="3"/><path d="M220 72l20 14-22 8 24 13" fill="none" stroke="#ffeaa7" stroke-width="4" stroke-linecap="round"/></g><path d="M206 72l22 15-24 10 28 15-31 12" fill="none" stroke="#ffeaa7" stroke-width="5" stroke-linecap="round"/><circle cx="232" cy="92" r="18" fill="#ffeaa7" opacity=".18"/>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Telegraph Sparks</text>
 </svg>

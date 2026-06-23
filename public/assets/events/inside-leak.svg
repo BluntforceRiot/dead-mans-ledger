@@ -1,16 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Inside Leak">
+
   <defs>
-    <linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#302239"/><stop offset="1" stop-color="#111015"/></linearGradient>
-    <filter id="sealGlow"><feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#f1c96d" flood-opacity=".7"/></filter>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
   </defs>
-  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
-  <rect x="54" y="47" width="152" height="72" rx="9" fill="#d9b56c" stroke="#f4d98f" stroke-width="6"/>
-  <path d="M54 47l76 48 76-48" fill="none" stroke="#342416" stroke-width="7" stroke-linejoin="round"/>
-  <path d="M63 119c24-35 59-47 110-35" fill="none" stroke="#e96f4e" stroke-width="8" stroke-linecap="round" stroke-dasharray="13 10"/>
-  <circle cx="190" cy="52" r="18" fill="#6a2430" stroke="#f4d98f" stroke-width="5" filter="url(#sealGlow)"/>
-  <path d="M184 52h12M190 46v12" stroke="#f4d98f" stroke-width="4" stroke-linecap="round"/>
-  <path d="M73 35h38M148 132h42" stroke="#74d2d0" stroke-width="5" stroke-linecap="round" opacity=".62"/>
-  <circle cx="82" cy="86" r="6" fill="#111015"/>
-  <path d="M86 88c26 16 60 16 96 0" fill="none" stroke="#111015" stroke-width="5" stroke-linecap="round" opacity=".55"/>
-  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">INSIDE LEAK</text>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+
+  <g filter="url(#shadow)"><rect x="154" y="136" width="54" height="36" rx="5" fill="#213238" stroke="#f0c36d" stroke-width="4"/><path d="M154 149h54" stroke="#f0c36d" stroke-width="3"/><circle cx="181" cy="154" r="6" fill="url(#gold)"/></g><g filter="url(#shadow)"><path d="M91 90h72v82H91z" fill="#213238" stroke="#e0b45d" stroke-width="3"/><path d="M104 111h46M104 128h38M104 145h50" stroke="#ffe2a2" stroke-width="4"/></g><path d="M178 112c38-16 68-13 96 12" fill="none" stroke="#f06f4e" stroke-width="5" stroke-dasharray="8 8"/>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Inside Leak</text>
 </svg>

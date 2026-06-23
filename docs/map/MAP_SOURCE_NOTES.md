@@ -23,11 +23,12 @@ The base state geometry comes from the `us-atlas` npm package:
 - License: ISC
 - Source described by the package as U.S. Census Bureau cartographic boundary shapefiles, 2017 edition, redistributed as TopoJSON.
 
-Major river overlays are fetched by the generator from Natural Earth vector data:
+Major river overlays are generated from a committed local fallback dataset:
 
-- Source URL: `https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_rivers_lake_centerlines.geojson`
-- Natural Earth public-domain map data.
-- Rivers used include Mississippi, Missouri, Ohio, Arkansas, Platte, Columbia, Colorado, Rio Grande, and Red where available in the source.
+- Local file: `scripts/geodata/major-rivers-fallback.geojson`
+- Rivers included: Mississippi, Missouri, Ohio, Arkansas, Platte, Columbia, Colorado, Rio Grande, and Red.
+- The generator can still try the Natural Earth public-domain river source with a 4.5 second timeout if the local fallback is missing.
+- The GitHub Pages workflow does not depend on an unbounded remote fetch.
 
 ## Projection
 
@@ -56,7 +57,7 @@ The base map includes:
 - Contiguous U.S. state geometry.
 - A merged contiguous U.S. land shape with faint state boundary linework.
 - Coastline and Great Lakes shape from the source polygons.
-- Major river overlay from Natural Earth.
+- Major river overlay from the in-repo fallback dataset, with optional timed Natural Earth fallback.
 - Decorative antique board-map styling.
 - v0.3 paper grain, engraving hatch, softened state boundaries, and board-game color grading.
 
@@ -70,9 +71,9 @@ No AI-generated geography was used.
 
 AI assistance may be used later for decorative art, panels, tokens, or title treatments, but not for U.S. coastline, Great Lakes, city positions, or route coordinates.
 
-## v0.4 Status
+## v0.5 Status
 
-The v0.4 public-candidate pass preserves the same geodata pipeline. It only improves UI framing, route readability, event-card presentation, and submission documentation.
+The v0.5 final-candidate pass keeps the geodata pipeline deterministic for CI by adding the local river fallback and `npm run verify:assets`.
 
 ## Known Map Limitations
 

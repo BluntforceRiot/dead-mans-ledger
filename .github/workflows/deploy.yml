@@ -34,6 +34,9 @@ jobs:
       - name: Generate geodata map
         run: npm run map:generate
 
+      - name: Verify runtime assets
+        run: npm run verify:assets
+
       - name: Typecheck
         run: npm run typecheck
 

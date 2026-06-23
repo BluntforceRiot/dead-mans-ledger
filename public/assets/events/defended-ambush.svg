@@ -1,9 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
-  <defs><linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#19313a"/><stop offset="1" stop-color="#0c171b"/></linearGradient><linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#ffe7a0"/><stop offset="1" stop-color="#bd8131"/></linearGradient></defs>
-  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
-  <path d="M44 122V66l86-39 86 39v56c-50 31-122 31-172 0z" fill="#244453" stroke="url(#gold)" stroke-width="8"/>
-  <path d="M130 35v96M78 78h104" stroke="url(#gold)" stroke-width="7" stroke-linecap="round"/>
-  <path d="M55 136c48 16 102 16 150 0" fill="none" stroke="#77d099" stroke-width="6" stroke-linecap="round"/>
-  <path d="M54 58l34 34M206 58l-34 34" stroke="#d25b3f" stroke-width="6" stroke-linecap="round" opacity=".58"/>
-  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">DEFENDED AMBUSH</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Defended Ambush">
+
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
+  </defs>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+
+  <g filter="url(#shadow)" fill="#1f3a42" stroke="#f0c36d" stroke-width="3"><path d="M91 126h28l-8 45H98z"/><circle cx="105" cy="111" r="12"/><path d="M78 130h52"/></g><g filter="url(#shadow)"><rect x="132" y="128" width="82" height="38" rx="8" fill="#6e2f24" stroke="#e6bb68" stroke-width="3"/><path d="M145 128l18-19h39l20 19" fill="#263940" stroke="#e6bb68" stroke-width="3"/><circle cx="150" cy="171" r="12" fill="#141414"/><circle cx="205" cy="171" r="12" fill="#141414"/></g><g fill="#171014" opacity=".94"><path d="M73 133h28l-8 42H81z"/><circle cx="87" cy="119" r="13"/><path d="M58 130h57" stroke="#171014" stroke-width="7" stroke-linecap="round"/><path d="M281 124h26l-7 45h-14z"/><circle cx="294" cy="111" r="12"/><path d="M268 123h50" stroke="#171014" stroke-width="7" stroke-linecap="round"/></g><path d="M113 126l50 19M248 132l-44 18" stroke="#ffe5a1" stroke-width="4" stroke-linecap="round"/>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Defended Ambush</text>
 </svg>

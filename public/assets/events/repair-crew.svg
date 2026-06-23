@@ -1,17 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Repair Crew Success">
+
   <defs>
-    <linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#17333a"/><stop offset="1" stop-color="#101412"/></linearGradient>
-    <filter id="glow"><feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#f6d27a" flood-opacity=".62"/></filter>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
   </defs>
-  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
-  <path d="M34 116c58-18 98 15 192-5" fill="none" stroke="#8f6a3a" stroke-width="15" stroke-linecap="round" opacity=".72"/>
-  <path d="M38 116h184" stroke="#e2bd70" stroke-width="7" stroke-linecap="round"/>
-  <path d="M54 101l18 27M90 98l18 28M128 94l18 30M166 93l18 27M203 90l18 28" stroke="#5b3922" stroke-width="6" stroke-linecap="round"/>
-  <path d="M76 76l66-42" stroke="#f0cf7c" stroke-width="12" stroke-linecap="round" filter="url(#glow)"/>
-  <path d="M134 42l38 28" stroke="#7b4528" stroke-width="16" stroke-linecap="round"/>
-  <path d="M71 65l18 24M197 60l-22 40" stroke="#d6edf0" stroke-width="5" stroke-linecap="round" opacity=".7"/>
-  <circle cx="78" cy="58" r="8" fill="#f6d27a"/>
-  <circle cx="198" cy="54" r="8" fill="#f6d27a"/>
-  <path d="M66 128h128" stroke="#7dd0a3" stroke-width="6" stroke-linecap="round" stroke-dasharray="14 10"/>
-  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">REPAIR CREW HOLDS</text>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+
+  <g filter="url(#shadow)"><rect x="118" y="131" width="92" height="34" rx="6" fill="#17262c" stroke="#e0b45d" stroke-width="3"/><rect x="204" y="119" width="44" height="46" rx="5" fill="#20343a" stroke="#e0b45d" stroke-width="3"/><circle cx="139" cy="170" r="12" fill="#111"/><circle cx="225" cy="170" r="12" fill="#111"/><path d="M96 164h180" stroke="#1b1510" stroke-width="5" stroke-linecap="round"/></g><g filter="url(#shadow)" fill="#2c4a4d" stroke="#f0c36d" stroke-width="3"><circle cx="80" cy="128" r="11"/><path d="M70 140h22l-5 35H75z"/><circle cx="272" cy="128" r="11"/><path d="M262 140h22l-5 35h-12z"/></g><path d="M98 162l42-23M250 162l-42-23" stroke="#ffe7a6" stroke-width="5" stroke-linecap="round"/>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Repair Crew Success</text>
 </svg>

@@ -1,15 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Decoy Success">
+
   <defs>
-    <linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#183b2d"/><stop offset="1" stop-color="#0b1710"/></linearGradient>
-    <filter id="greenGlow"><feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#77d99f" flood-opacity=".68"/></filter>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
   </defs>
-  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
-  <rect x="42" y="58" width="76" height="46" rx="8" fill="#7b4a29" stroke="#f0c56e" stroke-width="6"/>
-  <rect x="127" y="48" width="70" height="62" rx="9" fill="#253946" stroke="#f0c56e" stroke-width="6" opacity=".94"/>
-  <path d="M62 81h37M81 63v37" stroke="#f0c56e" stroke-width="6" stroke-linecap="round"/>
-  <path d="M137 79c23-28 48-28 73 0" fill="none" stroke="#77d99f" stroke-width="9" stroke-linecap="round" filter="url(#greenGlow)"/>
-  <path d="M196 67l17 13-17 13" fill="none" stroke="#77d99f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M44 119h164" stroke="#e0bd6d" stroke-width="6" stroke-dasharray="16 10" opacity=".75"/>
-  <circle cx="214" cy="48" r="14" fill="#77d99f" opacity=".3"/>
-  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">DECOY WORKED</text>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+
+  <g filter="url(#shadow)"><rect x="154" y="136" width="54" height="36" rx="5" fill="#213238" stroke="#f0c36d" stroke-width="4"/><path d="M154 149h54" stroke="#f0c36d" stroke-width="3"/><circle cx="181" cy="154" r="6" fill="url(#gold)"/></g><g filter="url(#shadow)"><rect x="232" y="138" width="56" height="32" rx="5" fill="#3a241b" stroke="#e0b45d" stroke-width="3"/><path d="M241 154h38" stroke="#ffe7a6" stroke-width="4"/></g><path d="M211 147c32-30 63-32 90-2" fill="none" stroke="#ffe7a6" stroke-width="5" stroke-dasharray="9 8"/>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Decoy Success</text>
 </svg>

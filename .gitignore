@@ -4,8 +4,12 @@ dist
 coverage
 .cache
 cache
+.tmp
 *.log
 *.zip
+Review*.txt
+review*.txt
+PROJECT*.txt
 BUILD_LOG_DEAD_MANS_LEDGER_V*.txt
 BUILD_RECEIPT_DEAD_MANS_LEDGER_V*.md
 output

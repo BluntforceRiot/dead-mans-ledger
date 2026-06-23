@@ -4,116 +4,60 @@
 
 Dead Man's Ledger asks: what do you risk to keep money trusted long enough for independence to function?
 
-The core thesis is:
-
 ```text
 The money provided independence. The route was the engine.
 ```
 
-Dead Man's Ledger treats independence as economic circulation. Paper money only creates practical independence if it reaches frontier towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
+The game treats independence as economic circulation. Paper money only creates practical independence if it reaches towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
-## v0.4 Scope
+## v0.5 Scope
 
-The fourth build keeps the v0.1-v0.3 foundation and locks the artifact as a public submission candidate:
+The fifth build turns the polished v0.4 board into a sharper strategy game:
 
-- Accurate base map pipeline.
-- Fixed city coordinate data.
-- Dynamic clickable route graph.
-- One-player route/prep/dispatch loop.
-- Score and survival meters.
-- Local high-score storage.
-- Premium board-game event presentation with lightweight CSS incident effects.
-- Larger central map presentation at 1440x900 with a stronger physical board frame.
-- More distinct route-type styling, route glow, route-attached prep badges, and first-turn guidance.
-- Scout/Telegraph/Local Tip intel split.
-- Generated WebAudio cues.
-- Six-delivery journey segments and a richer Route Legend milestone.
-- GitHub Pages workflow prepared for static deployment after explicit approval.
+- Contracts now have origin, destination, cargo value, delivery fee, trust weight, urgency, and leg limit.
+- The route network persists for the contract instead of rerolling after each dispatch.
+- Scout and Telegraph are information tools, not magic counters.
+- Protection tools are probabilistic counters with no guaranteed 200-leg survival strategy.
+- Express routes are stronger gambles because they carry two incident checks.
+- Outlaw Pressure affects hazard density and counter difficulty.
+- Credit is a global debt tool with explicit principal, rate, next interest, and repayment.
+- Result cards group intel, threat, prep used, mitigation applied, prep not needed, fee, interest, and score.
+- The action panel uses a compact icon grid with one detail card.
+- Route Atlas replaces Map Preview and removes player-facing code references.
 
-It does not attempt final art, online services, multiplayer, user login, an online leaderboard, or a large simulation economy.
+## Visual Direction
+
+The public-demo look should feel like a premium board-table ledger, not a muddy western template:
+
+- Polished gold and antique brass for selected routes, important values, medallions, dividers, and buttons.
+- Blackened steel, walnut, deep teal, and parchment only where text readability needs it.
+- The map remains dominant.
+- State boundaries stay subdued during play.
+- Event cards are lightweight original SVG board-game scenes rather than diagrams.
+- The logo avoids the old plus, padlock, and rail-tie treatment.
 
 ## Interaction Model
 
-The game is mouse-first:
+1. Choose a dispatch office.
+2. Read the contract destination, value, fee, and legs remaining.
+3. Select a reachable route from the current station.
+4. Gather intel and assign counters.
+5. Dispatch the shipment.
+6. Read the event/result card.
+7. Continue toward the destination or face the board if the ledger collapses.
 
-1. Select an active route from the current station.
-2. Optionally select a prep action and assign it to a reachable route.
-3. Dispatch the shipment.
-4. Watch the map token move.
-5. Read the event/result card.
-6. Continue to the next station with higher risk and payout pressure.
+## Prep Roles
 
-## Prep Actions
+- Scout Ahead: physical intel and counter effectiveness bonus.
+- Telegraph Report: official/system intel and counter effectiveness bonus.
+- Local Tip: free unreliable rumor.
+- Hire Guards: ambush, sabotage, and repair-crew danger.
+- Send Repair Crew: track and bridge trouble.
+- Decoy Strongbox: ambush and inside leaks.
+- Insurance: mitigation only.
+- Delay One Day: weather, bridge, cut-wire, and rumor timing.
+- Borrow Credit: global once-per-leg cash with explicit debt and interest.
 
-Actions are intentionally small and legible:
+## Future Art Hook
 
-- Scout Ahead reveals danger and counters ambushes, cuts, weather, false tips, and wire trouble.
-- Hire Guards counters ambushes and sabotage.
-- Send Repair Crew counters track cuts and washed bridges.
-- Telegraph Report reveals official intel and counters weather, leaks, sabotage, and false tips.
-- Local Tip is free, unreliable, and can reveal truth, false rumor, or useless dust.
-- Decoy Strongbox counters ambushes and inside leaks.
-- Insurance softens cash loss.
-- Delay One Day counters weather, bridge trouble, and telegraph cuts.
-- Borrow Credit is assigned to a route, adds cash, raises interest pressure, lowers trust, and leaves visible credit pressure in the HUD.
-
-## Meters
-
-- Cash is the operating budget and debt risk.
-- Score is the score-attack total.
-- Reputation is board and public confidence in the route office.
-- Currency Trust is whether towns still accept the paper.
-- Outlaw Pressure rises as the run continues.
-- Interest Rate slowly climbs and taxes every dispatch.
-- Journey Number tracks survival depth.
-
-## Scoring
-
-Score rewards:
-
-- Delivered shipment value.
-- Route payout multiplier.
-- Express-route bonus.
-- Risk bonus.
-- Correct counter bonus.
-- Remaining cash budget bonus.
-- Trust streak bonus.
-- Journey completion bonus.
-
-Score penalizes:
-
-- Shipment loss.
-- Cash damage.
-- Failed or uncountered hazards.
-- Interest pressure.
-
-## Event Presentation
-
-The event system uses reusable SVG cards:
-
-- Ambush.
-- Defended Ambush.
-- Track Cut.
-- Repair Crew.
-- Snowstorm.
-- Sandstorm.
-- Bridge Damage.
-- Telegraph Warning.
-- Successful Delivery.
-- Failed Delivery.
-- Inside Leak.
-- Decoy Strongbox Success.
-- Repair Crew Ambushed.
-
-Future versions can replace these with richer final art while keeping the data-driven event layer.
-
-## Future Local Two-Player Hook
-
-The current data model keeps player state and route state separate enough to support local hot-seat later:
-
-- Player 1 selects route/prep/dispatch.
-- Player 2 selects route/prep/dispatch.
-- Results resolve from the same route graph.
-- Scores compare after a fixed number of rounds.
-
-This is intentionally only a design hook and is not part of the v0.4 public candidate.
+The v0.5 SVGs are intentional public-demo symbolic art, not final commercial illustration. A later art pass can replace them with hand-painted or higher-fidelity assets without changing the contract/economy rules.

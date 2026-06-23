@@ -1,9 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
-  <defs><linearGradient id="water" y1="0" y2="1"><stop offset="0" stop-color="#193141"/><stop offset="1" stop-color="#0c1a21"/></linearGradient></defs>
-  <rect width="260" height="170" rx="20" fill="url(#water)"/>
-  <path d="M20 122c46-22 72 22 116 0s72-22 104 0" fill="none" stroke="#74a9a8" stroke-width="12" opacity=".8"/>
-  <path d="M40 83h72M150 83h72M74 83l-20 44M190 83l18 44" stroke="#ddb45f" stroke-width="9" stroke-linecap="round"/>
-  <path d="M116 60l34 48M151 60l-36 48" stroke="#d85c44" stroke-width="9" stroke-linecap="round"/>
-  <path d="M48 103h158" stroke="#f6da95" stroke-width="4" stroke-dasharray="14 12" opacity=".7"/>
-  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">WASHED BRIDGE</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Washed Bridge">
+
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
+  </defs>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+
+  <g filter="url(#shadow)"><rect x="132" y="128" width="82" height="38" rx="8" fill="#6e2f24" stroke="#e6bb68" stroke-width="3"/><path d="M145 128l18-19h39l20 19" fill="#263940" stroke="#e6bb68" stroke-width="3"/><circle cx="150" cy="171" r="12" fill="#141414"/><circle cx="205" cy="171" r="12" fill="#141414"/></g><path d="M54 170h92M214 170h92" stroke="#2b1c11" stroke-width="9" stroke-linecap="round"/><path d="M145 170c24 16 49 16 70 0" fill="none" stroke="#5fa8b3" stroke-width="12" stroke-linecap="round"/><path d="M152 150l25 25 25-26" fill="none" stroke="#f06f4e" stroke-width="5"/>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Washed Bridge</text>
 </svg>

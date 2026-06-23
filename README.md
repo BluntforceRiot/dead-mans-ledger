@@ -1,41 +1,39 @@
 # Dead Man's Ledger: The Money Engine
 
-Dead Man's Ledger is a clickable frontier board-game strategy sim about moving currency through dangerous American routes.
+Dead Man's Ledger is a static browser board-game strategy sim about keeping American paper money trusted by moving valuable cargo through dangerous frontier routes.
 
 The money provided independence. The route was the engine.
 
 Built for Summer into AI Week 2: Independence Engines.
 
-Theme connection: Dead Man's Ledger treats independence as economic circulation. Paper money only creates practical independence if it reaches frontier towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
+## Playable v0.5
 
-## Playable v0.4
+This build is a final-candidate mechanics and polish pass:
 
-This build is the public submission candidate built on the geodata-backed board-game foundation:
-
-- Vite + TypeScript browser app.
+- Vite + TypeScript static browser app.
 - Real geodata-derived contiguous U.S. base map.
-- City nodes projected from latitude/longitude in `src/data/nodes.ts`.
-- Route graph drawn live from `src/data/routes.ts`.
-- Clickable map preview with active/inactive/express route styling.
-- Single-player score-survival loop with route selection, prep actions, dispatch, event result, meters, fired screen, and local high scores.
-- Custom lightweight SVG UI, tokens, and event vignettes.
-- HD board-table gameplay layout with a dominant framed map, compact side ledgers, and first-turn guidance.
-- Distinct rail, stage, river/sea, and express route styling.
-- Route-attached prep badges.
-- Scout, Telegraph, and Local Tip intel behaviors.
-- Six-delivery journey segments with a Route Legend milestone card.
+- Runtime city nodes and route graph from TypeScript latitude/longitude data.
+- Destination-based contracts with origin, destination, cargo type, cargo value, delivery fee, trust weight, and leg limit.
+- Persistent per-contract route network; the country no longer silently rerolls after every leg.
+- Intel/counter split: Scout and Telegraph reveal danger, while guards, repairs, decoys, delays, and insurance handle danger.
+- Express routes have higher reward and two incident checks.
+- Outlaw Pressure affects hazard density and counter difficulty.
+- Credit is a global once-per-leg action with explicit debt, rate, next interest, and principal repayment.
+- Route Atlas replaces the old Map Preview wording.
+- About/Credits shows proof notes, AI usage, local-score scope, and the current journey seed.
+- Local high scores only; no backend, login, or online leaderboard.
 - Generated WebAudio cues with `M` mute toggle.
-- GitHub Pages workflow prepared for later deployment.
-- Static browser game: no backend, no login, and no online leaderboard.
 
 ## Commands
 
 ```sh
 npm install
+npm run events:generate
 npm run map:generate
-npm run dev
+npm run verify:assets
 npm run typecheck
 npm run build
+npm run balance:sim
 npm run preview
 npm audit --audit-level=moderate
 ```
@@ -43,103 +41,84 @@ npm audit --audit-level=moderate
 Screenshot capture for review:
 
 ```sh
-npm run screenshots:v01
-npm run screenshots:v02
-npm run screenshots:v03
-npm run screenshots:v04
+npm run screenshots:v05
 ```
 
 ## Controls
 
 This is intentionally mouse-first.
 
-- Click `Start Ledger Run` to begin.
-- Click an active route from the current station.
+- Choose a dispatch office.
+- Click an active gold route from the current station.
 - Click a prep action, then click a reachable route to assign it.
 - Click `Dispatch Shipment`.
-- Read the result card and continue to the next station.
-- Use the map preview to inspect the graph and regenerate route availability.
+- Read the result card and continue.
+- Use Route Atlas to inspect the graph.
+- Use About for proof notes, AI usage, and the current journey seed.
 - Press `M` to toggle generated sound cues.
+
+Keyboard route support:
+
+- Focusable route paths expose route, status, risk, fee multiplier, and exposure.
+- Press Enter or Space on a focused route to select it.
 
 ## Game Loop
 
-You are the express manager moving shipments such as Federal Notes, Mine Payroll, Bank Drafts, Merchant Credit, Land Office Documents, Silver Reserve, Treasury Packets, Railroad Wages, County Tax Receipts, and Bank Charter Documents.
+Each contract has a real destination. The player is paid a delivery fee or commission, not the whole shipment value. Cargo value drives score, liability, reputation, and currency-trust consequences.
 
-Each delivery selects a route and optional prep. A journey segment is six deliveries. Hidden hazards can damage cash, reputation, and currency trust. Correct counters can protect the shipment and earn score bonuses.
+Successful legs earn fee portions, score, trust, and reputation. Reaching the destination completes the contract and posts a new one from the current station.
 
-Intel and credit:
+Failure turns cargo value into liability. Insurance mitigates loss but does not make failure harmless.
 
-- Scout reports physical threats such as ambushes, track cuts, bridge damage, repair crew danger, and missing-scout risk.
-- Telegraph reports official warnings such as weather, sabotage, inside leaks, cut wires, and false tips.
-- Local Tip is free and unreliable; it can be true, false, or only rumor.
-- Borrow Credit is assigned to a route, adds cash, raises interest, lowers trust, and displays borrowed credit in the HUD.
+Immediate backtracking is allowed when necessary, but it sharply reduces fee and score so bouncing between two nodes is not profitable.
 
-Lose conditions:
+## Prep And Economy
 
-- Cash falls below the hard board debt limit.
-- Reputation reaches zero.
-- Currency trust reaches zero.
-
-High scores are stored locally only under:
-
-```text
-dead-mans-ledger.highScores.v1
-```
+- Scout Ahead reveals physical threats and improves matching counter odds.
+- Telegraph Report reveals official/system threats and improves matching counter odds.
+- Local Tip is free and unreliable.
+- Hire Guards counters ambushes, sabotage, and repair-crew danger.
+- Send Repair Crew counters track cuts and washed bridges.
+- Decoy Strongbox counters ambushes and inside leaks.
+- Insurance mitigates losses.
+- Delay One Day helps with weather, bridge, wire, and rumor timing.
+- Borrow Credit is global once per leg, adds explicit debt, and charges interest only when debt exists.
 
 ## Map And Data
 
 The base map is generated by `scripts/generate-map.mjs` from open geodata:
 
 - `us-atlas` TopoJSON derived from U.S. Census cartographic boundary shapefiles.
-- Natural Earth river centerlines for major river overlays.
+- A committed local major-river fallback under `scripts/geodata/major-rivers-fallback.geojson`.
+- Optional Natural Earth river centerlines fetch with timeout if the local fallback is missing.
 - A fixed Albers projection in `src/map/projection.ts`.
 
-No Google Maps screenshots are used. No AI-generated map geography is used. City markers, labels, and route lines are drawn dynamically in the game from data.
-
-See `docs/map/MAP_SOURCE_NOTES.md` for details.
+No Google Maps screenshots are used. No AI-generated geography is used.
 
 ## Art And Assets
 
 The current visuals are public-demo symbolic art, not final commercial production art:
 
-- UI frames and logo are custom SVG.
-- Tokens and event cards are custom SVG.
+- UI frames, logo, tokens, and event cards are custom lightweight SVG.
+- Event cards are original SVG board-game scenes.
 - The map base is geodata-derived and styled as a premium antique board map.
 
 No copyrighted commercial game assets are used.
 
-## Submission Notes
-
-- Static browser game.
-- No backend.
-- No login.
-- No online leaderboard.
-- Local scores only.
-- Geodata-backed map base.
-- Runtime city and route overlays from TypeScript data.
-- No Google Maps assets.
-- No AI-generated geography.
-
 ## AI Usage Note
 
-AI assistance was used for ideation, code assistance, design direction, and placeholder SVG/UI generation. AI was not used to invent or bake the geography. The map base comes from open geodata and city positions come from latitude/longitude data.
+AI assistance was used for ideation, code assistance, design direction, review-loop hardening, and lightweight SVG/UI generation. AI was not used to invent or bake the geography.
 
 ## GitHub Pages
 
 The Vite config uses `base: './'`, so the built app should work under a project subpath when deployed as static files.
-
-To deploy later:
-
-```sh
-npm run build
-```
-
-This repo also includes `.github/workflows/deploy.yml`, which runs `npm ci`, `npm run map:generate`, `npm run typecheck`, and `npm run build` before uploading `dist/` to GitHub Pages.
 
 Expected project URL once deployed:
 
 ```text
 https://bluntforceriot.github.io/dead-mans-ledger/
 ```
+
+The included GitHub Pages workflow runs `npm ci`, `npm run map:generate`, `npm run verify:assets`, `npm run typecheck`, and `npm run build` before uploading `dist/`.
 
 Do not push or deploy without explicit approval.

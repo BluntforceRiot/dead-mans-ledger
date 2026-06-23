@@ -1,9 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
-  <defs><linearGradient id="storm" y1="0" y2="1"><stop offset="0" stop-color="#243f50"/><stop offset="1" stop-color="#101b22"/></linearGradient></defs>
-  <rect width="260" height="170" rx="20" fill="url(#storm)"/>
-  <path d="M18 61c48-29 83-26 130 0s77 24 104 2M6 98c64-31 109 29 166 0 30-15 50-17 78 0" fill="none" stroke="#cce7e8" stroke-width="8" opacity=".82"/>
-  <path d="M46 123h168" stroke="#f0d889" stroke-width="6" stroke-dasharray="10 14"/>
-  <circle cx="66" cy="43" r="5" fill="#e9f6f4"/><circle cx="128" cy="78" r="6" fill="#e9f6f4"/><circle cx="197" cy="48" r="5" fill="#e9f6f4"/><circle cx="94" cy="105" r="4" fill="#e9f6f4"/>
-  <path d="M91 126c22-20 50-20 77 0" fill="none" stroke="#d8a75a" stroke-width="6" stroke-linecap="round"/>
-  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#f6da95">BAD WEATHER</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Bad Weather">
+
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
+  </defs>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+
+  <g filter="url(#shadow)"><rect x="132" y="128" width="82" height="38" rx="8" fill="#6e2f24" stroke="#e6bb68" stroke-width="3"/><path d="M145 128l18-19h39l20 19" fill="#263940" stroke="#e6bb68" stroke-width="3"/><circle cx="150" cy="171" r="12" fill="#141414"/><circle cx="205" cy="171" r="12" fill="#141414"/></g><g fill="#e8f4f2" opacity=".85"><circle cx="70" cy="70" r="5"/><circle cx="116" cy="96" r="4"/><circle cx="190" cy="71" r="5"/><circle cx="246" cy="95" r="4"/><circle cx="300" cy="68" r="5"/><circle cx="318" cy="124" r="4"/></g><path d="M36 82h274" stroke="#e8f4f2" stroke-width="5" opacity=".45"/>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Bad Weather</text>
 </svg>

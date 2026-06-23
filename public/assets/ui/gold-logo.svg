@@ -1,41 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 260" role="img" aria-label="Dead Man's Ledger: The Money Engine gold logo">
   <defs>
-    <linearGradient id="plaque" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#253847"/>
-      <stop offset=".52" stop-color="#132431"/>
-      <stop offset="1" stop-color="#0a141c"/>
+    <linearGradient id="gold" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff6c5"/>
+      <stop offset=".16" stop-color="#f3d27a"/>
+      <stop offset=".38" stop-color="#b77728"/>
+      <stop offset=".58" stop-color="#f8de8d"/>
+      <stop offset=".78" stop-color="#c48a38"/>
+      <stop offset="1" stop-color="#fff0ad"/>
     </linearGradient>
-    <linearGradient id="gold" x1="0" x2="1">
-      <stop offset="0" stop-color="#fff2b7"/>
-      <stop offset=".22" stop-color="#e8bd5f"/>
-      <stop offset=".48" stop-color="#9d6824"/>
-      <stop offset=".72" stop-color="#f4d27b"/>
-      <stop offset="1" stop-color="#fff5c5"/>
+    <linearGradient id="darkMetal" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#293b3f"/>
+      <stop offset=".55" stop-color="#101d22"/>
+      <stop offset="1" stop-color="#070d10"/>
     </linearGradient>
-    <linearGradient id="rail" x1="0" x2="1">
-      <stop offset="0" stop-color="#684820"/>
-      <stop offset=".5" stop-color="#e6b857"/>
-      <stop offset="1" stop-color="#684820"/>
-    </linearGradient>
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000" flood-opacity=".62"/>
+    <filter id="drop">
+      <feDropShadow dx="0" dy="8" stdDeviation="5" flood-color="#000" flood-opacity=".72"/>
     </filter>
-    <filter id="coinGlow">
-      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#f6d67f" flood-opacity=".55"/>
+    <filter id="softGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#f7d36f" flood-opacity=".44"/>
     </filter>
   </defs>
-  <rect x="22" y="24" width="876" height="212" rx="26" fill="#0c161d" stroke="#d9a84f" stroke-width="8"/>
-  <rect x="42" y="44" width="836" height="172" rx="18" fill="url(#plaque)" stroke="#63451f" stroke-width="4"/>
-  <path d="M120 76h680M120 184h680" stroke="url(#rail)" stroke-width="7" stroke-linecap="round"/>
-  <path d="M150 66v30M200 66v30M250 66v30M670 66v30M720 66v30M770 66v30" stroke="#8f622b" stroke-width="5" opacity=".82"/>
-  <path d="M134 168v30M184 168v30M234 168v30M686 168v30M736 168v30M786 168v30" stroke="#8f622b" stroke-width="5" opacity=".82"/>
-  <g filter="url(#coinGlow)">
-    <circle cx="86" cy="130" r="34" fill="url(#gold)" stroke="#fff0b5" stroke-width="3"/>
-    <path d="M70 130h32M86 112v36" stroke="#172633" stroke-width="6" stroke-linecap="round"/>
-    <rect x="798" y="100" width="58" height="48" rx="9" fill="#1b2a34" stroke="#f0c46a" stroke-width="5"/>
-    <path d="M812 101c2-20 29-20 31 0" fill="none" stroke="#f0c46a" stroke-width="6"/>
-    <rect x="820" y="118" width="16" height="16" rx="3" fill="#f0c46a"/>
+  <g filter="url(#drop)">
+    <path d="M82 64h756l28 30v92l-28 30H82l-28-30V94z" fill="url(#darkMetal)" stroke="#c18a39" stroke-width="6"/>
+    <path d="M104 84h712l18 18v76l-18 18H104l-18-18v-76z" fill="none" stroke="#ffe4a1" stroke-width="2" opacity=".35"/>
+    <path d="M139 130h642" stroke="#7c5c31" stroke-width="2" opacity=".75"/>
+    <g filter="url(#softGlow)">
+      <circle cx="100" cy="130" r="30" fill="url(#gold)" stroke="#fff3bd" stroke-width="3"/>
+      <path d="M86 126c11-14 28-14 39 0M86 137c11 14 28 14 39 0" fill="none" stroke="#241a0c" stroke-width="5" stroke-linecap="round"/>
+      <path d="M800 108h46v44h-46z" rx="5" fill="url(#gold)" stroke="#fff2b5" stroke-width="3"/>
+      <path d="M807 116h32M807 130h32M807 144h32" stroke="#2a1d0d" stroke-width="4" stroke-linecap="round" opacity=".78"/>
+    </g>
+    <text x="460" y="126" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="900" fill="#5a3511" opacity=".75" transform="translate(0 5)">DEAD MAN'S LEDGER</text>
+    <text x="460" y="126" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="900" fill="url(#gold)" stroke="#fff4bd" stroke-width=".85">DEAD MAN'S LEDGER</text>
+    <text x="460" y="169" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="29" font-weight="800" letter-spacing="7" fill="#ffe7a6" stroke="#5b3613" stroke-width=".8">THE MONEY ENGINE</text>
+    <path d="M216 188h488" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" opacity=".92"/>
   </g>
-  <text x="460" y="123" text-anchor="middle" font-family="Georgia, serif" font-size="62" font-weight="800" fill="url(#gold)" filter="url(#shadow)">DEAD MAN'S LEDGER</text>
-  <text x="460" y="165" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-weight="700" letter-spacing="6" fill="#ffe6a4" filter="url(#shadow)">THE MONEY ENGINE</text>
 </svg>

@@ -1,9 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
-  <defs><linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#173a27"/><stop offset="1" stop-color="#0b1710"/></linearGradient><filter id="glow"><feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#f7d878" flood-opacity=".72"/></filter></defs>
-  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
-  <circle cx="130" cy="84" r="54" fill="none" stroke="#74c990" stroke-width="7" opacity=".72"/>
-  <path d="M71 91l38 34 82-82" fill="none" stroke="#f7d878" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-  <path d="M72 130h116" stroke="#dfba68" stroke-width="6" stroke-dasharray="12 10" opacity=".8"/>
-  <circle cx="195" cy="45" r="18" fill="#f7d878" opacity=".32"/>
-  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#f6da95">CLEAN PASSAGE</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Clean Passage">
+
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
+  </defs>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+
+  <g filter="url(#shadow)"><rect x="118" y="131" width="92" height="34" rx="6" fill="#17262c" stroke="#e0b45d" stroke-width="3"/><rect x="204" y="119" width="44" height="46" rx="5" fill="#20343a" stroke="#e0b45d" stroke-width="3"/><circle cx="139" cy="170" r="12" fill="#111"/><circle cx="225" cy="170" r="12" fill="#111"/><path d="M96 164h180" stroke="#1b1510" stroke-width="5" stroke-linecap="round"/></g><g filter="url(#shadow)"><path d="M230 94h72v78h-72z" fill="#24363a" stroke="#e0b45d" stroke-width="3"/><path d="M220 98l46-32 47 32z" fill="#704225" stroke="#e0b45d" stroke-width="3"/><rect x="252" y="128" width="20" height="44" fill="#111b20"/><rect x="236" y="112" width="18" height="18" fill="#ffd77a"/><rect x="280" y="112" width="18" height="18" fill="#ffd77a"/></g><path d="M80 86c36-22 68-19 91 2" fill="none" stroke="#ffe9a8" stroke-width="4" opacity=".6"/>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Clean Passage</text>
 </svg>
