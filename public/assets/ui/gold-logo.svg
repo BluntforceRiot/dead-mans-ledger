@@ -1,14 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 220" role="img" aria-label="Dead Man's Ledger gold logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 260" role="img" aria-label="Dead Man's Ledger: The Money Engine gold logo">
   <defs>
-    <linearGradient id="gold" x1="0" x2="1">
-      <stop offset="0" stop-color="#f5d986"/>
-      <stop offset=".45" stop-color="#b8842e"/>
-      <stop offset="1" stop-color="#ffe7a5"/>
+    <linearGradient id="plaque" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#253847"/>
+      <stop offset=".52" stop-color="#132431"/>
+      <stop offset="1" stop-color="#0a141c"/>
     </linearGradient>
-    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000" flood-opacity=".55"/></filter>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0" stop-color="#fff2b7"/>
+      <stop offset=".22" stop-color="#e8bd5f"/>
+      <stop offset=".48" stop-color="#9d6824"/>
+      <stop offset=".72" stop-color="#f4d27b"/>
+      <stop offset="1" stop-color="#fff5c5"/>
+    </linearGradient>
+    <linearGradient id="rail" x1="0" x2="1">
+      <stop offset="0" stop-color="#684820"/>
+      <stop offset=".5" stop-color="#e6b857"/>
+      <stop offset="1" stop-color="#684820"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000" flood-opacity=".62"/>
+    </filter>
+    <filter id="coinGlow">
+      <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#f6d67f" flood-opacity=".55"/>
+    </filter>
   </defs>
-  <rect x="18" y="22" width="784" height="176" rx="18" fill="#1a2530" stroke="#d7a94f" stroke-width="7"/>
-  <path d="M82 66h656M82 154h656" stroke="#73552d" stroke-width="5" opacity=".8"/>
-  <text x="410" y="105" text-anchor="middle" font-family="Georgia, serif" font-size="54" font-weight="700" fill="url(#gold)" filter="url(#shadow)">DEAD MAN'S LEDGER</text>
-  <text x="410" y="151" text-anchor="middle" font-family="Georgia, serif" font-size="28" letter-spacing="4" fill="#f2d691">THE MONEY ENGINE</text>
+  <rect x="22" y="24" width="876" height="212" rx="26" fill="#0c161d" stroke="#d9a84f" stroke-width="8"/>
+  <rect x="42" y="44" width="836" height="172" rx="18" fill="url(#plaque)" stroke="#63451f" stroke-width="4"/>
+  <path d="M120 76h680M120 184h680" stroke="url(#rail)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M150 66v30M200 66v30M250 66v30M670 66v30M720 66v30M770 66v30" stroke="#8f622b" stroke-width="5" opacity=".82"/>
+  <path d="M134 168v30M184 168v30M234 168v30M686 168v30M736 168v30M786 168v30" stroke="#8f622b" stroke-width="5" opacity=".82"/>
+  <g filter="url(#coinGlow)">
+    <circle cx="86" cy="130" r="34" fill="url(#gold)" stroke="#fff0b5" stroke-width="3"/>
+    <path d="M70 130h32M86 112v36" stroke="#172633" stroke-width="6" stroke-linecap="round"/>
+    <rect x="798" y="100" width="58" height="48" rx="9" fill="#1b2a34" stroke="#f0c46a" stroke-width="5"/>
+    <path d="M812 101c2-20 29-20 31 0" fill="none" stroke="#f0c46a" stroke-width="6"/>
+    <rect x="820" y="118" width="16" height="16" rx="3" fill="#f0c46a"/>
+  </g>
+  <text x="460" y="123" text-anchor="middle" font-family="Georgia, serif" font-size="62" font-weight="800" fill="url(#gold)" filter="url(#shadow)">DEAD MAN'S LEDGER</text>
+  <text x="460" y="165" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-weight="700" letter-spacing="6" fill="#ffe6a4" filter="url(#shadow)">THE MONEY ENGINE</text>
 </svg>

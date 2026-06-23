@@ -6,9 +6,9 @@ The money provided independence. The route was the engine.
 
 Built for Summer into AI Week 2: Independence Engines.
 
-## Playable v0.2
+## Playable v0.3
 
-This build is a visually polished board-game prototype built on the v0.1 geodata foundation:
+This build is a public submission candidate built on the geodata-backed board-game foundation:
 
 - Vite + TypeScript browser app.
 - Real geodata-derived contiguous U.S. base map.
@@ -16,13 +16,14 @@ This build is a visually polished board-game prototype built on the v0.1 geodata
 - Route graph drawn live from `src/data/routes.ts`.
 - Clickable map preview with active/inactive/express route styling.
 - Single-player score-survival loop with route selection, prep actions, dispatch, event result, meters, fired screen, and local high scores.
-- Custom lightweight SVG placeholders for UI, tokens, and event vignettes.
-- Larger board-table gameplay layout with compact side ledgers.
+- Custom lightweight SVG UI, tokens, and event vignettes.
+- HD board-table gameplay layout with a dominant framed map and compact side ledgers.
 - Distinct rail, stage, river/sea, and express route styling.
 - Route-attached prep badges.
 - Scout, Telegraph, and Local Tip intel behaviors.
 - Six-delivery journey segments with a Route Legend milestone card.
 - Generated WebAudio cues with `M` mute toggle.
+- GitHub Pages workflow prepared for later deployment.
 
 ## Commands
 
@@ -41,6 +42,7 @@ Screenshot capture for review:
 ```sh
 npm run screenshots:v01
 npm run screenshots:v02
+npm run screenshots:v03
 ```
 
 ## Controls
@@ -57,11 +59,11 @@ This is intentionally mouse-first.
 
 ## Game Loop
 
-You are the express manager moving shipments such as Federal Notes, Mine Payroll, Bank Drafts, Merchant Credit, Land Office Documents, Silver Reserve, and Treasury Packets.
+You are the express manager moving shipments such as Federal Notes, Mine Payroll, Bank Drafts, Merchant Credit, Land Office Documents, Silver Reserve, Treasury Packets, Railroad Wages, County Tax Receipts, and Bank Charter Documents.
 
 Each delivery selects a route and optional prep. A journey segment is six deliveries. Hidden hazards can damage cash, reputation, and currency trust. Correct counters can protect the shipment and earn score bonuses.
 
-Intel and credit in v0.2:
+Intel and credit:
 
 - Scout reports physical threats such as ambushes, track cuts, bridge damage, repair crew danger, and missing-scout risk.
 - Telegraph reports official warnings such as weather, sabotage, inside leaks, cut wires, and false tips.
@@ -94,11 +96,11 @@ See `docs/map/MAP_SOURCE_NOTES.md` for details.
 
 ## Art And Assets
 
-The current visuals are intentional placeholders:
+The current visuals are public-demo symbolic art, not final commercial production art:
 
 - UI frames and logo are custom SVG.
 - Tokens and event cards are custom SVG.
-- The map base is geodata-derived and styled as an antique board map.
+- The map base is geodata-derived and styled as a premium antique board map.
 
 No copyrighted commercial game assets are used.
 
@@ -116,4 +118,12 @@ To deploy later:
 npm run build
 ```
 
-Then publish the `dist/` directory through GitHub Pages or an equivalent static host. Do not push or deploy without explicit approval.
+This repo also includes `.github/workflows/deploy.yml`, which runs `npm ci`, `npm run map:generate`, `npm run typecheck`, and `npm run build` before uploading `dist/` to GitHub Pages.
+
+Expected project URL once deployed:
+
+```text
+https://bluntforceriot.github.io/dead-mans-ledger/
+```
+
+Do not push or deploy without explicit approval.

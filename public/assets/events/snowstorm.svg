@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150"><rect width="240" height="150" rx="18" fill="#173040"/><path d="M24 60c48-24 88-24 136 0s72 24 96 5" fill="none" stroke="#c9e8ec" stroke-width="7" opacity=".85"/><path d="M50 92h148" stroke="#f0d889" stroke-width="6" stroke-dasharray="8 12"/><circle cx="68" cy="42" r="5" fill="#e7f3f2"/><circle cx="122" cy="76" r="5" fill="#e7f3f2"/><circle cx="176" cy="46" r="5" fill="#e7f3f2"/><text x="120" y="132" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#f5d98d">WEATHER</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+  <defs><linearGradient id="storm" y1="0" y2="1"><stop offset="0" stop-color="#243f50"/><stop offset="1" stop-color="#101b22"/></linearGradient></defs>
+  <rect width="260" height="170" rx="20" fill="url(#storm)"/>
+  <path d="M18 61c48-29 83-26 130 0s77 24 104 2M6 98c64-31 109 29 166 0 30-15 50-17 78 0" fill="none" stroke="#cce7e8" stroke-width="8" opacity=".82"/>
+  <path d="M46 123h168" stroke="#f0d889" stroke-width="6" stroke-dasharray="10 14"/>
+  <circle cx="66" cy="43" r="5" fill="#e9f6f4"/><circle cx="128" cy="78" r="6" fill="#e9f6f4"/><circle cx="197" cy="48" r="5" fill="#e9f6f4"/><circle cx="94" cy="105" r="4" fill="#e9f6f4"/>
+  <path d="M91 126c22-20 50-20 77 0" fill="none" stroke="#d8a75a" stroke-width="6" stroke-linecap="round"/>
+  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#f6da95">BAD WEATHER</text>
+</svg>

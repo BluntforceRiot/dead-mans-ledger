@@ -57,9 +57,11 @@ export interface DispatchResult {
   payout: number;
   scoreDelta: number;
   cashDelta: number;
+  cashAfter: number;
   interestCharge: number;
   reputationDelta: number;
   trustDelta: number;
+  pressureDelta: number;
   message: string;
   detail: string;
   nextNodeId: NodeId;
@@ -293,6 +295,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const newCash = cashAfterInterest;
   const newReputation = Math.max(0, Math.min(100, state.reputation + reputationDelta));
   const newTrust = Math.max(0, Math.min(100, state.trust + trustDelta));
+  const pressureDelta = 2 + (success ? 1 : 5) + (journeyComplete ? 3 : 0);
   const firedReason = newCash < debtLimit ? 'Cash fell below the board debt limit.' : newReputation <= 0 ? 'Reputation reached zero.' : newTrust <= 0 ? 'Currency trust reached zero.' : undefined;
 
   const result: DispatchResult = {
@@ -306,9 +309,11 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     payout: success ? basePayout + expressBonus : 0,
     scoreDelta,
     cashDelta: cashDelta - interestCharge,
+    cashAfter: newCash,
     interestCharge,
     reputationDelta,
     trustDelta,
+    pressureDelta,
     message,
     detail,
     nextNodeId,
@@ -323,7 +328,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     score: Math.max(0, state.score + scoreDelta),
     reputation: newReputation,
     trust: newTrust,
-    outlawPressure: Math.min(95, state.outlawPressure + 2 + (success ? 1 : 5) + (journeyComplete ? 3 : 0)),
+    outlawPressure: Math.min(95, state.outlawPressure + pressureDelta),
     interestRate: Math.min(18, state.interestRate + 0.25 + (state.cash < 300 ? 0.5 : 0) + (journeyComplete ? 0.35 : 0)),
     borrowedCredit: Math.max(0, Math.round(state.borrowedCredit * (journeyComplete ? 0.82 : 0.94))),
     interestPaid: state.interestPaid + interestCharge,

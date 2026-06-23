@@ -9,8 +9,8 @@ v0.1 includes:
 - Core, swing, and rare route availability.
 - Standard and express route styling.
 - Hidden route hazards on a portion of active routes.
-- Route-attached prep badges in v0.2.
-- Separate visual treatments for rail, stage/branch, river/sea, and express routes.
+- Route-attached prep badges.
+- Separate visual treatments for rail, stage/branch, river/sea, and express routes, with stronger v0.3 hover/selected/dispatch styling.
 
 Nodes remain fixed. Routes vary per run so the map feels like a known frontier network with changing opportunities.
 

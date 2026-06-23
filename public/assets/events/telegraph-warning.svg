@@ -1,1 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150"><rect width="240" height="150" rx="18" fill="#172c35"/><path d="M58 112V32M120 112V32M182 112V32" stroke="#d9b55e" stroke-width="7"/><path d="M32 42c44 26 132 26 176 0" fill="none" stroke="#65a4af" stroke-width="5"/><path d="M76 75h88" stroke="#d3543a" stroke-width="8" stroke-dasharray="14 11"/><text x="120" y="135" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#f5d98d">WIRE WARNING</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+  <defs><linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#17313b"/><stop offset="1" stop-color="#091319"/></linearGradient></defs>
+  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
+  <path d="M60 130V34M130 130V34M200 130V34" stroke="#d9b55e" stroke-width="8" stroke-linecap="round"/>
+  <path d="M32 48c50 30 146 30 196 0" fill="none" stroke="#71b3bb" stroke-width="6"/>
+  <path d="M46 82c46 22 122 22 168 0" fill="none" stroke="#71b3bb" stroke-width="5" opacity=".6"/>
+  <path d="M80 102h100" stroke="#d85c44" stroke-width="9" stroke-linecap="round" stroke-dasharray="16 12"/>
+  <circle cx="130" cy="102" r="18" fill="none" stroke="#f6da95" stroke-width="5"/>
+  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">WIRE WARNING</text>
+</svg>

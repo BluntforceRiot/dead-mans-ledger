@@ -1,9 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150">
-  <rect width="240" height="150" rx="18" fill="#183127"/>
-  <rect x="46" y="52" width="72" height="42" rx="8" fill="#7b4a29" stroke="#f0c56e" stroke-width="6"/>
-  <rect x="122" y="46" width="62" height="52" rx="8" fill="#253946" stroke="#f0c56e" stroke-width="6" opacity=".9"/>
-  <path d="M64 73h34M81 58v30" stroke="#f0c56e" stroke-width="6" stroke-linecap="round"/>
-  <path d="M132 72c22-24 44-24 66 0" fill="none" stroke="#74d59b" stroke-width="8" stroke-linecap="round"/>
-  <path d="M184 61l16 12-16 12" fill="none" stroke="#74d59b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="120" y="134" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#f5d98d">DECOY WORKED</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+  <defs>
+    <linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#183b2d"/><stop offset="1" stop-color="#0b1710"/></linearGradient>
+    <filter id="greenGlow"><feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#77d99f" flood-opacity=".68"/></filter>
+  </defs>
+  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
+  <rect x="42" y="58" width="76" height="46" rx="8" fill="#7b4a29" stroke="#f0c56e" stroke-width="6"/>
+  <rect x="127" y="48" width="70" height="62" rx="9" fill="#253946" stroke="#f0c56e" stroke-width="6" opacity=".94"/>
+  <path d="M62 81h37M81 63v37" stroke="#f0c56e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M137 79c23-28 48-28 73 0" fill="none" stroke="#77d99f" stroke-width="9" stroke-linecap="round" filter="url(#greenGlow)"/>
+  <path d="M196 67l17 13-17 13" fill="none" stroke="#77d99f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M44 119h164" stroke="#e0bd6d" stroke-width="6" stroke-dasharray="16 10" opacity=".75"/>
+  <circle cx="214" cy="48" r="14" fill="#77d99f" opacity=".3"/>
+  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">DECOY WORKED</text>
 </svg>

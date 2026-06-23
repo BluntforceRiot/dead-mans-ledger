@@ -1,7 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90">
-  <rect x="18" y="34" width="92" height="34" rx="6" fill="#26323a" stroke="#edc36a" stroke-width="5"/>
-  <rect x="105" y="24" width="28" height="44" rx="4" fill="#3d4b54" stroke="#edc36a" stroke-width="5"/>
-  <path d="M42 34v-16h26v16" fill="#6e3f24" stroke="#edc36a" stroke-width="4"/>
-  <circle cx="42" cy="72" r="10" fill="#0d161c" stroke="#d99b43" stroke-width="4"/>
-  <circle cx="94" cy="72" r="10" fill="#0d161c" stroke="#d99b43" stroke-width="4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 96">
+  <defs>
+    <linearGradient id="steel" x1="0" x2="1">
+      <stop offset="0" stop-color="#1a2931"/>
+      <stop offset=".5" stop-color="#405360"/>
+      <stop offset="1" stop-color="#101920"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0" stop-color="#ffe49c"/>
+      <stop offset="1" stop-color="#b57b2c"/>
+    </linearGradient>
+  </defs>
+  <path d="M24 62h126" stroke="#d7a249" stroke-width="7" stroke-linecap="round"/>
+  <rect x="20" y="36" width="82" height="30" rx="6" fill="url(#steel)" stroke="url(#gold)" stroke-width="5"/>
+  <rect x="96" y="24" width="38" height="42" rx="6" fill="#273a44" stroke="url(#gold)" stroke-width="5"/>
+  <path d="M44 36V18h28v18" fill="#6b3c24" stroke="url(#gold)" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M136 44h20l-10 16h-10z" fill="#9b5b2c" stroke="#f0c56e" stroke-width="4"/>
+  <circle cx="43" cy="72" r="11" fill="#0a1116" stroke="#e5b75a" stroke-width="5"/>
+  <circle cx="92" cy="72" r="11" fill="#0a1116" stroke="#e5b75a" stroke-width="5"/>
+  <circle cx="124" cy="72" r="9" fill="#0a1116" stroke="#e5b75a" stroke-width="4"/>
+  <path d="M52 51h32M108 39h14" stroke="#d9edf0" stroke-width="4" stroke-linecap="round" opacity=".72"/>
+  <path d="M70 18c12-14 30-10 34 3" fill="none" stroke="#cad9d7" stroke-width="5" stroke-linecap="round" opacity=".68"/>
 </svg>

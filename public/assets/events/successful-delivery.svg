@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150"><rect width="240" height="150" rx="18" fill="#173522"/><path d="M54 84l40 34 92-86" fill="none" stroke="#f0c96e" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><circle cx="120" cy="75" r="58" fill="none" stroke="#7ac98c" stroke-width="6" opacity=".6"/><text x="120" y="137" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#f5d98d">DELIVERED</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+  <defs><linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#173a27"/><stop offset="1" stop-color="#0b1710"/></linearGradient><filter id="glow"><feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#f7d878" flood-opacity=".72"/></filter></defs>
+  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
+  <circle cx="130" cy="84" r="54" fill="none" stroke="#74c990" stroke-width="7" opacity=".72"/>
+  <path d="M71 91l38 34 82-82" fill="none" stroke="#f7d878" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <path d="M72 130h116" stroke="#dfba68" stroke-width="6" stroke-dasharray="12 10" opacity=".8"/>
+  <circle cx="195" cy="45" r="18" fill="#f7d878" opacity=".32"/>
+  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#f6da95">CLEAN PASSAGE</text>
+</svg>

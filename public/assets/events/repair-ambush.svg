@@ -1,8 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150">
-  <rect width="240" height="150" rx="18" fill="#2d1d19"/>
-  <path d="M42 100h156" stroke="#d8b56c" stroke-width="8" stroke-linecap="round" stroke-dasharray="18 13"/>
-  <path d="M62 84l82-58" stroke="#e9c46a" stroke-width="10" stroke-linecap="round"/>
-  <path d="M134 34l30 30" stroke="#6b3d25" stroke-width="15" stroke-linecap="round"/>
-  <path d="M72 42l96 72M168 42L72 114" stroke="#d85c44" stroke-width="8" stroke-linecap="round"/>
-  <text x="120" y="134" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#f5d98d">CREW AMBUSHED</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+  <defs>
+    <linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#3a211a"/><stop offset="1" stop-color="#120d0a"/></linearGradient>
+    <filter id="redGlow"><feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#e96f4e" flood-opacity=".75"/></filter>
+  </defs>
+  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
+  <path d="M34 116c58-18 98 15 192-5" fill="none" stroke="#7a5130" stroke-width="15" stroke-linecap="round" opacity=".75"/>
+  <path d="M40 116h180" stroke="#d9b36a" stroke-width="7" stroke-linecap="round" stroke-dasharray="18 11"/>
+  <path d="M55 100l18 28M92 98l18 28M130 94l18 31M168 94l18 27M204 91l18 28" stroke="#55321f" stroke-width="6" stroke-linecap="round"/>
+  <path d="M78 77l67-43" stroke="#f0cf7c" stroke-width="12" stroke-linecap="round"/>
+  <path d="M137 42l37 28" stroke="#7b4528" stroke-width="16" stroke-linecap="round"/>
+  <path d="M47 44l162 92M213 43L51 135" stroke="#e96f4e" stroke-width="11" stroke-linecap="round" filter="url(#redGlow)"/>
+  <circle cx="62" cy="48" r="11" fill="#f4cf78"/>
+  <circle cx="200" cy="48" r="11" fill="#f4cf78"/>
+  <path d="M72 58c31 18 69 18 116 0" fill="none" stroke="#d85c44" stroke-width="5" stroke-linecap="round" opacity=".78"/>
+  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">CREW AMBUSHED</text>
 </svg>

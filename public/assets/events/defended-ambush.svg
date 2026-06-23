@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150"><rect width="240" height="150" rx="18" fill="#172b32"/><path d="M48 104V58l72-32 72 32v46c-44 27-100 27-144 0z" fill="#223d49" stroke="#f0c56e" stroke-width="7"/><path d="M120 32v86M78 70h84" stroke="#f0c56e" stroke-width="6"/><text x="120" y="136" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#e6d094">DEFENDED</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+  <defs><linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#19313a"/><stop offset="1" stop-color="#0c171b"/></linearGradient><linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#ffe7a0"/><stop offset="1" stop-color="#bd8131"/></linearGradient></defs>
+  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
+  <path d="M44 122V66l86-39 86 39v56c-50 31-122 31-172 0z" fill="#244453" stroke="url(#gold)" stroke-width="8"/>
+  <path d="M130 35v96M78 78h104" stroke="url(#gold)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M55 136c48 16 102 16 150 0" fill="none" stroke="#77d099" stroke-width="6" stroke-linecap="round"/>
+  <path d="M54 58l34 34M206 58l-34 34" stroke="#d25b3f" stroke-width="6" stroke-linecap="round" opacity=".58"/>
+  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">DEFENDED AMBUSH</text>
+</svg>

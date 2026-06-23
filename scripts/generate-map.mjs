@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { geoAlbers, geoPath } from 'd3-geo';
-import { feature } from 'topojson-client';
+import { feature, merge } from 'topojson-client';
 import sharp from 'sharp';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -100,13 +100,16 @@ async function main() {
   const geoPathGenerator = geoPath(projection);
   const stateCollection = feature(topo, topo.objects.states);
   const lower48 = stateCollection.features.filter((state) => !excludeStateIds.has(String(state.id)));
+  const lower48Geometries = topo.objects.states.geometries.filter((state) => !excludeStateIds.has(String(state.id)));
+  const mergedLand = merge(topo, lower48Geometries);
   const rivers = pickMajorRivers(await fetchRivers());
 
-  const states = lower48
+  const landPath = geoPathGenerator(mergedLand);
+  const stateLines = lower48
     .map((state) => {
       const d = geoPathGenerator(state);
       const name = escapeSvg(state.properties?.name || state.id);
-      return `<path d="${d}" class="state" data-name="${name}"/>`;
+      return `<path d="${d}" class="state-line" data-name="${name}"/>`;
     })
     .join('\n');
 
@@ -146,11 +149,17 @@ async function main() {
       <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#061018" flood-opacity="0.42"/>
     </filter>
     <style>
-      .state {
+      .land {
         fill: url(#land);
-        stroke: #4c3d28;
-        stroke-width: 1.25;
-        stroke-opacity: 0.16;
+        stroke: #594229;
+        stroke-width: 2.4;
+        stroke-opacity: 0.42;
+      }
+      .state-line {
+        fill: none;
+        stroke: #493925;
+        stroke-width: 1.05;
+        stroke-opacity: 0.085;
       }
       .river {
         fill: none;
@@ -168,8 +177,9 @@ async function main() {
   </defs>
   <rect width="${width}" height="${height}" fill="url(#oceanGlow)"/>
   <rect width="${width}" height="${height}" fill="#b28c58" opacity="0.14" filter="url(#paperNoise)"/>
-  <g opacity="0.34">${makeTerrainLines()}</g>
-  <g filter="url(#coastShadow)">${states}</g>
+  <g opacity="0.3">${makeTerrainLines()}</g>
+  <g filter="url(#coastShadow)"><path d="${landPath}" class="land"/></g>
+  <g>${stateLines}</g>
   <g opacity="0.5">${makeEngravingHatch()}</g>
   <g>${riverPaths}</g>
   <rect width="${width}" height="${height}" fill="#f0c978" opacity="0.08" filter="url(#paperNoise)"/>

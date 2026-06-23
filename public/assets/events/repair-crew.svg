@@ -1,1 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150"><rect width="240" height="150" rx="18" fill="#1b2730"/><path d="M58 102l96-78" stroke="#e9c46a" stroke-width="12" stroke-linecap="round"/><path d="M142 32l34 34" stroke="#6b3d25" stroke-width="16" stroke-linecap="round"/><path d="M45 72h150" stroke="#59747d" stroke-width="6" stroke-dasharray="13 12"/><text x="120" y="132" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#f5d98d">REPAIR CREW</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+  <defs>
+    <linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#17333a"/><stop offset="1" stop-color="#101412"/></linearGradient>
+    <filter id="glow"><feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#f6d27a" flood-opacity=".62"/></filter>
+  </defs>
+  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
+  <path d="M34 116c58-18 98 15 192-5" fill="none" stroke="#8f6a3a" stroke-width="15" stroke-linecap="round" opacity=".72"/>
+  <path d="M38 116h184" stroke="#e2bd70" stroke-width="7" stroke-linecap="round"/>
+  <path d="M54 101l18 27M90 98l18 28M128 94l18 30M166 93l18 27M203 90l18 28" stroke="#5b3922" stroke-width="6" stroke-linecap="round"/>
+  <path d="M76 76l66-42" stroke="#f0cf7c" stroke-width="12" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M134 42l38 28" stroke="#7b4528" stroke-width="16" stroke-linecap="round"/>
+  <path d="M71 65l18 24M197 60l-22 40" stroke="#d6edf0" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+  <circle cx="78" cy="58" r="8" fill="#f6d27a"/>
+  <circle cx="198" cy="54" r="8" fill="#f6d27a"/>
+  <path d="M66 128h128" stroke="#7dd0a3" stroke-width="6" stroke-linecap="round" stroke-dasharray="14 10"/>
+  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">REPAIR CREW HOLDS</text>
+</svg>

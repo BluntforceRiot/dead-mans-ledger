@@ -10,9 +10,9 @@ The core thesis is:
 The money provided independence. The route was the engine.
 ```
 
-## v0.2 Scope
+## v0.3 Scope
 
-The second build keeps the v0.1 foundation and improves public-facing board-game readability:
+The third build keeps the v0.1/v0.2 foundation and pushes the artifact toward public submission polish:
 
 - Accurate base map pipeline.
 - Fixed city coordinate data.
@@ -20,12 +20,13 @@ The second build keeps the v0.1 foundation and improves public-facing board-game
 - One-player route/prep/dispatch loop.
 - Score and survival meters.
 - Local high-score storage.
-- Board-game style event presentation.
-- Larger central map presentation at 1440x900.
-- Distinct route-type styling and route-attached prep badges.
+- Premium board-game event presentation.
+- Larger central map presentation at 1440x900 with a stronger physical board frame.
+- More distinct route-type styling, route glow, and route-attached prep badges.
 - Scout/Telegraph/Local Tip intel split.
 - Generated WebAudio cues.
-- Six-delivery journey segments and a Route Legend milestone.
+- Six-delivery journey segments and a richer Route Legend milestone.
+- GitHub Pages workflow prepared for static deployment after explicit approval.
 
 It does not attempt final art, online services, multiplayer, or a large simulation economy.
 
@@ -86,7 +87,7 @@ Score penalizes:
 
 ## Event Presentation
 
-The v0.1 event system uses reusable SVG cards:
+The event system uses reusable SVG cards:
 
 - Ambush.
 - Defended Ambush.
@@ -102,7 +103,7 @@ The v0.1 event system uses reusable SVG cards:
 - Decoy Strongbox Success.
 - Repair Crew Ambushed.
 
-Future versions can replace these with richer art while keeping the data-driven event layer.
+Future versions can replace these with richer final art while keeping the data-driven event layer.
 
 ## Future Local Two-Player Hook
 

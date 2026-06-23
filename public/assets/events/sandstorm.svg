@@ -1,1 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150"><rect width="240" height="150" rx="18" fill="#3b281b"/><path d="M28 54c64-18 100 20 184 0M18 86c70-22 116 24 204 0" fill="none" stroke="#d8a75a" stroke-width="9" opacity=".85"/><text x="120" y="132" text-anchor="middle" font-family="Georgia,serif" font-size="18" fill="#f5d98d">SANDSTORM</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170">
+  <defs>
+    <linearGradient id="bg" y1="0" y2="1"><stop offset="0" stop-color="#4b321d"/><stop offset="1" stop-color="#19100a"/></linearGradient>
+    <filter id="dust"><feGaussianBlur stdDeviation="1.2"/></filter>
+  </defs>
+  <rect width="260" height="170" rx="20" fill="url(#bg)"/>
+  <circle cx="202" cy="42" r="23" fill="#f0c56e" opacity=".28"/>
+  <path d="M26 59c69-21 107 19 208-3M18 91c77-24 127 26 225-2M34 119c52-15 95 10 165-4" fill="none" stroke="#d8a75a" stroke-width="10" stroke-linecap="round" opacity=".9" filter="url(#dust)"/>
+  <path d="M54 104h151" stroke="#6f4726" stroke-width="6" stroke-linecap="round" stroke-dasharray="14 12"/>
+  <path d="M77 66l42 18 52-16" fill="none" stroke="#f3d28b" stroke-width="5" stroke-linecap="round" opacity=".5"/>
+  <text x="130" y="153" text-anchor="middle" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#f6da95">SANDSTORM</text>
+</svg>

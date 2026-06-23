@@ -54,11 +54,11 @@ City nodes are projected from latitude/longitude at runtime.
 The base map includes:
 
 - Contiguous U.S. state geometry.
-- Faint state boundaries.
+- A merged contiguous U.S. land shape with faint state boundary linework.
 - Coastline and Great Lakes shape from the source polygons.
 - Major river overlay from Natural Earth.
 - Decorative antique board-map styling.
-- v0.2 paper grain, engraving hatch, softened state boundaries, and board-game color grading.
+- v0.3 paper grain, engraving hatch, softened state boundaries, and board-game color grading.
 
 The base map does not include gameplay city markers, labels, route lines, or selected-route state. Those are drawn by the app from TypeScript data.
 
@@ -75,4 +75,4 @@ AI assistance may be used later for decorative art, panels, tokens, or title tre
 - State shapes are simplified at the `10m` TopoJSON level.
 - Terrain bands are decorative, not terrain data.
 - Major river linework is generalized for board-game readability.
-- State fill regions remain visible in v0.2 as a board-map texture; a later art pass may blend them further without changing the geodata.
+- State boundaries are intentionally subdued in v0.3; a later art pass may add richer terrain styling without changing the geodata.

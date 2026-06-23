@@ -247,15 +247,17 @@ function renderTitle() {
   return `
     <main class="title-screen">
       <div class="title-card">
+        <div class="title-rails" aria-hidden="true"><span></span><span></span></div>
         <img src="${assetUrl('assets/ui/gold-logo.svg')}" alt="Dead Man's Ledger: The Money Engine" class="logo" />
         <p class="subtitle">The money provided independence. The route was the engine.</p>
+        <p class="title-kicker">Frontier currency routes. Hidden danger. Boardroom consequences.</p>
         <div class="title-actions">
           <button data-screen="game">Start Ledger Run</button>
           <button data-screen="preview">Map Preview</button>
           <button data-screen="howto">How To Play</button>
           <button data-screen="scores">High Scores</button>
         </div>
-        <p class="fine-print">Summer into AI Week 2: Independence Engines &middot; v0.2 board-game prototype &middot; M toggles sound</p>
+        <p class="fine-print">Summer into AI Week 2: Independence Engines &middot; v0.3 public submission candidate &middot; M toggles sound</p>
       </div>
     </main>
   `;
@@ -367,7 +369,12 @@ function renderGame() {
       <aside class="side-panel actions-panel">
         <p class="eyebrow">Preparation</p>
         <h2>Route Actions</h2>
-        <p class="hint">Click an action, then click a reachable route. Scout finds physical danger. Telegraph finds official warnings. Local tips are unreliable.</p>
+        <div class="action-steps">
+          <span>1. Choose prep</span>
+          <span>2. Click route</span>
+          <span>3. Dispatch</span>
+        </div>
+        <p class="hint">Scout finds physical danger. Telegraph finds official warnings. Local tips are unreliable. Borrow Credit adds cash and interest pressure.</p>
         <div class="prep-list">
           ${prepActions.map((action) => renderPrepAction(action.id)).join('')}
         </div>
@@ -439,6 +446,7 @@ function renderResultModal() {
             <dt>Interest paid</dt><dd>-${formatMoney(result.interestCharge)}</dd>
             <dt>Reputation</dt><dd>${signedNumber(result.reputationDelta)}</dd>
             <dt>Trust</dt><dd>${signedNumber(result.trustDelta)}</dd>
+            ${result.journeyComplete ? `<dt>Cash carryover</dt><dd>${formatMoney(result.cashAfter)}</dd><dt>Pressure rise</dt><dd>+${result.pressureDelta}</dd>` : ''}
           </dl>
           ${
             result.firedReason
@@ -611,6 +619,9 @@ function renderMovingToken(route: LedgerRoute) {
   const path = routePath(route, state.currentNodeId);
   return `
     <g class="vehicle-token moving">
+      <circle class="token-dust dust-one" cx="-54" cy="18" r="10"></circle>
+      <circle class="token-dust dust-two" cx="-78" cy="26" r="7"></circle>
+      <circle class="token-glint" cx="30" cy="-22" r="8"></circle>
       <image href="${assetUrl(`assets/tokens/${route.type === 'stage' || route.type === 'branch' ? 'stagecoach.svg' : 'train.svg'}`)}" x="-52" y="-48" width="104" height="72"></image>
       <animateMotion dur="0.9s" fill="freeze" path="${path}"></animateMotion>
     </g>

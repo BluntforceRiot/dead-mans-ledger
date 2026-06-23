@@ -83,7 +83,10 @@ export const shipments: Shipment[] = [
   { name: 'Merchant Credit', value: 540, trustWeight: 1, copy: "The town buys tomorrow with today's signature." },
   { name: 'Land Office Documents', value: 500, trustWeight: 1.3, copy: 'A clean title is worth more than its paper weight.' },
   { name: 'Silver Reserve', value: 900, trustWeight: 0.9, copy: 'Metal in the box, rumors outside it.' },
-  { name: 'Treasury Packet', value: 820, trustWeight: 1.4, copy: 'Federal trust in a stamped envelope.' }
+  { name: 'Treasury Packet', value: 820, trustWeight: 1.4, copy: 'Federal trust in a stamped envelope.' },
+  { name: 'Railroad Wages', value: 700, trustWeight: 0.95, copy: 'Crews trust the rails when the payroll arrives.' },
+  { name: 'County Tax Receipts', value: 580, trustWeight: 1.15, copy: 'Local government runs on paper that survives the road.' },
+  { name: 'Bank Charter Documents', value: 860, trustWeight: 1.35, copy: 'A town becomes a market when its charter reaches the desk.' }
 ];
 
 export const hazardTagFallbacks: Record<HazardTag, HazardId[]> = {
