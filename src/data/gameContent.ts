@@ -5,6 +5,7 @@ export type PrepActionId =
   | 'guards'
   | 'repair'
   | 'telegraph'
+  | 'tip'
   | 'decoy'
   | 'insurance'
   | 'delay'
@@ -54,6 +55,7 @@ export const prepActions: PrepAction[] = [
   { id: 'guards', name: 'Hire Guards', cost: 180, short: 'Protects against ambushes, sabotage, and guarded repair trouble.', counters: ['ambush', 'rival-sabotage', 'repair-ambush'], asset: 'guards.svg' },
   { id: 'repair', name: 'Send Repair Crew', cost: 160, short: 'Useful for track cuts and bridge damage.', counters: ['track-cut', 'washed-bridge'], asset: 'repair-crew.svg' },
   { id: 'telegraph', name: 'Telegraph Report', cost: 100, short: 'Reveals official intel and counters weather, leaks, sabotage, and false tips.', counters: ['bad-weather', 'inside-leak', 'rival-sabotage', 'false-tip'], asset: 'telegraph.svg' },
+  { id: 'tip', name: 'Local Tip', cost: 0, short: 'Free rumor. Sometimes true, sometimes bait.', counters: [], asset: 'telegraph.svg' },
   { id: 'decoy', name: 'Decoy Strongbox', cost: 90, short: 'Confuses ambushes and inside leaks.', counters: ['ambush', 'inside-leak'], asset: 'decoy.svg' },
   { id: 'insurance', name: 'Insurance', cost: 140, short: 'Softens cash loss when a route goes wrong.', counters: [], asset: 'strongbox.svg' },
   { id: 'delay', name: 'Delay One Day', cost: 60, short: 'Lets weather or cut wires settle before dispatch.', counters: ['washed-bridge', 'bad-weather', 'telegraph-cut'], asset: 'telegraph.svg' },

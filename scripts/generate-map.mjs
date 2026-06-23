@@ -74,13 +74,22 @@ function pickMajorRivers(geojson) {
 
 function makeTerrainLines() {
   const lines = [];
-  for (let i = 0; i < 52; i += 1) {
-    const y = 170 + i * 40;
-    const opacity = i % 4 === 0 ? 0.11 : 0.055;
-    const wobble = 22 + (i % 7) * 6;
+  for (let i = 0; i < 66; i += 1) {
+    const y = 130 + i * 33;
+    const opacity = i % 5 === 0 ? 0.09 : 0.045;
+    const wobble = 18 + (i % 7) * 5;
     lines.push(
-      `<path d="M 180 ${y} C 860 ${y - wobble}, 1430 ${y + wobble}, 2020 ${y - wobble / 2} S 3240 ${y + wobble}, 3920 ${y - 6}" fill="none" stroke="#6b5b42" stroke-width="2" opacity="${opacity}"/>`
+      `<path d="M 180 ${y} C 860 ${y - wobble}, 1430 ${y + wobble}, 2020 ${y - wobble / 2} S 3240 ${y + wobble}, 3920 ${y - 6}" fill="none" stroke="#5e4c31" stroke-width="1.7" opacity="${opacity}"/>`
     );
+  }
+  return lines.join('\n');
+}
+
+function makeEngravingHatch() {
+  const lines = [];
+  for (let i = -30; i < 70; i += 1) {
+    const x = i * 72;
+    lines.push(`<path d="M ${x} 2290 L ${x + 980} 0" stroke="#1f2e31" stroke-width="1.2" opacity="0.035"/>`);
   }
   return lines.join('\n');
 }
@@ -121,15 +130,15 @@ async function main() {
       <stop offset="100%" stop-color="#122532"/>
     </radialGradient>
     <linearGradient id="land" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#a98555"/>
-      <stop offset="45%" stop-color="#9a7245"/>
-      <stop offset="100%" stop-color="#725633"/>
+      <stop offset="0%" stop-color="#ba925b"/>
+      <stop offset="45%" stop-color="#a67a45"/>
+      <stop offset="100%" stop-color="#7f6039"/>
     </linearGradient>
     <filter id="paperNoise">
-      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="4" seed="31"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.014 0.02" numOctaves="5" seed="31"/>
       <feColorMatrix type="saturate" values="0"/>
       <feComponentTransfer>
-        <feFuncA type="table" tableValues="0 0.16"/>
+        <feFuncA type="table" tableValues="0 0.22"/>
       </feComponentTransfer>
       <feBlend mode="multiply" in2="SourceGraphic"/>
     </filter>
@@ -139,10 +148,9 @@ async function main() {
     <style>
       .state {
         fill: url(#land);
-        stroke: #4f432f;
-        stroke-width: 2.1;
-        stroke-opacity: 0.34;
-        filter: url(#coastShadow);
+        stroke: #4c3d28;
+        stroke-width: 1.25;
+        stroke-opacity: 0.16;
       }
       .river {
         fill: none;
@@ -159,10 +167,12 @@ async function main() {
     </style>
   </defs>
   <rect width="${width}" height="${height}" fill="url(#oceanGlow)"/>
-  <rect width="${width}" height="${height}" fill="#b28c58" opacity="0.18" filter="url(#paperNoise)"/>
-  <g opacity="0.42">${makeTerrainLines()}</g>
-  <g>${states}</g>
+  <rect width="${width}" height="${height}" fill="#b28c58" opacity="0.14" filter="url(#paperNoise)"/>
+  <g opacity="0.34">${makeTerrainLines()}</g>
+  <g filter="url(#coastShadow)">${states}</g>
+  <g opacity="0.5">${makeEngravingHatch()}</g>
   <g>${riverPaths}</g>
+  <rect width="${width}" height="${height}" fill="#f0c978" opacity="0.08" filter="url(#paperNoise)"/>
   <rect x="80" y="78" width="${width - 160}" height="${height - 156}" rx="42" fill="none" stroke="#d4af6a" stroke-width="8" opacity="0.48"/>
   <rect x="111" y="109" width="${width - 222}" height="${height - 218}" rx="28" fill="none" stroke="#281b12" stroke-width="3" opacity="0.55"/>
   <text x="176" y="2070" fill="#e6c987" font-family="Georgia, serif" font-size="44" opacity="0.82">Base map generated from open U.S. geodata. Gameplay nodes and routes are drawn live from coordinates.</text>

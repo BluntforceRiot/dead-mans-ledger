@@ -10,9 +10,9 @@ The core thesis is:
 The money provided independence. The route was the engine.
 ```
 
-## v0.1 Scope
+## v0.2 Scope
 
-The first build focuses on the foundation:
+The second build keeps the v0.1 foundation and improves public-facing board-game readability:
 
 - Accurate base map pipeline.
 - Fixed city coordinate data.
@@ -21,6 +21,11 @@ The first build focuses on the foundation:
 - Score and survival meters.
 - Local high-score storage.
 - Board-game style event presentation.
+- Larger central map presentation at 1440x900.
+- Distinct route-type styling and route-attached prep badges.
+- Scout/Telegraph/Local Tip intel split.
+- Generated WebAudio cues.
+- Six-delivery journey segments and a Route Legend milestone.
 
 It does not attempt final art, online services, multiplayer, or a large simulation economy.
 
@@ -43,10 +48,11 @@ Actions are intentionally small and legible:
 - Hire Guards counters ambushes and sabotage.
 - Send Repair Crew counters track cuts and washed bridges.
 - Telegraph Report reveals official intel and counters weather, leaks, sabotage, and false tips.
+- Local Tip is free, unreliable, and can reveal truth, false rumor, or useless dust.
 - Decoy Strongbox counters ambushes and inside leaks.
 - Insurance softens cash loss.
 - Delay One Day counters weather, bridge trouble, and telegraph cuts.
-- Borrow Credit adds cash while raising interest pressure and lowering trust.
+- Borrow Credit is assigned to a route, adds cash, raises interest pressure, lowers trust, and leaves visible credit pressure in the HUD.
 
 ## Meters
 
@@ -92,6 +98,9 @@ The v0.1 event system uses reusable SVG cards:
 - Telegraph Warning.
 - Successful Delivery.
 - Failed Delivery.
+- Inside Leak.
+- Decoy Strongbox Success.
+- Repair Crew Ambushed.
 
 Future versions can replace these with richer art while keeping the data-driven event layer.
 
@@ -104,4 +113,4 @@ The current data model keeps player state and route state separate enough to sup
 - Results resolve from the same route graph.
 - Scores compare after a fixed number of rounds.
 
-This is intentionally only a design hook in v0.1.
+This is intentionally only a design hook in v0.2.

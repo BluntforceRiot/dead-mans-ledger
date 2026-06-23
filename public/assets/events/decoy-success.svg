@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150">
+  <rect width="240" height="150" rx="18" fill="#183127"/>
+  <rect x="46" y="52" width="72" height="42" rx="8" fill="#7b4a29" stroke="#f0c56e" stroke-width="6"/>
+  <rect x="122" y="46" width="62" height="52" rx="8" fill="#253946" stroke="#f0c56e" stroke-width="6" opacity=".9"/>
+  <path d="M64 73h34M81 58v30" stroke="#f0c56e" stroke-width="6" stroke-linecap="round"/>
+  <path d="M132 72c22-24 44-24 66 0" fill="none" stroke="#74d59b" stroke-width="8" stroke-linecap="round"/>
+  <path d="M184 61l16 12-16 12" fill="none" stroke="#74d59b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="120" y="134" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#f5d98d">DECOY WORKED</text>
+</svg>

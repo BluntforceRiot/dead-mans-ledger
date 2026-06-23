@@ -6,9 +6,9 @@ The money provided independence. The route was the engine.
 
 Built for Summer into AI Week 2: Independence Engines.
 
-## Playable v0.1
+## Playable v0.2
 
-This first build is a real foundation rather than a gray-box alpha:
+This build is a visually polished board-game prototype built on the v0.1 geodata foundation:
 
 - Vite + TypeScript browser app.
 - Real geodata-derived contiguous U.S. base map.
@@ -17,6 +17,12 @@ This first build is a real foundation rather than a gray-box alpha:
 - Clickable map preview with active/inactive/express route styling.
 - Single-player score-survival loop with route selection, prep actions, dispatch, event result, meters, fired screen, and local high scores.
 - Custom lightweight SVG placeholders for UI, tokens, and event vignettes.
+- Larger board-table gameplay layout with compact side ledgers.
+- Distinct rail, stage, river/sea, and express route styling.
+- Route-attached prep badges.
+- Scout, Telegraph, and Local Tip intel behaviors.
+- Six-delivery journey segments with a Route Legend milestone card.
+- Generated WebAudio cues with `M` mute toggle.
 
 ## Commands
 
@@ -34,6 +40,7 @@ Screenshot capture for review:
 
 ```sh
 npm run screenshots:v01
+npm run screenshots:v02
 ```
 
 ## Controls
@@ -46,12 +53,20 @@ This is intentionally mouse-first.
 - Click `Dispatch Shipment`.
 - Read the result card and continue to the next station.
 - Use the map preview to inspect the graph and regenerate route availability.
+- Press `M` to toggle generated sound cues.
 
 ## Game Loop
 
 You are the express manager moving shipments such as Federal Notes, Mine Payroll, Bank Drafts, Merchant Credit, Land Office Documents, Silver Reserve, and Treasury Packets.
 
-Each journey selects a route and optional prep. Hidden hazards can damage cash, reputation, and currency trust. Correct counters can protect the shipment and earn score bonuses.
+Each delivery selects a route and optional prep. A journey segment is six deliveries. Hidden hazards can damage cash, reputation, and currency trust. Correct counters can protect the shipment and earn score bonuses.
+
+Intel and credit in v0.2:
+
+- Scout reports physical threats such as ambushes, track cuts, bridge damage, repair crew danger, and missing-scout risk.
+- Telegraph reports official warnings such as weather, sabotage, inside leaks, cut wires, and false tips.
+- Local Tip is free and unreliable; it can be true, false, or only rumor.
+- Borrow Credit is assigned to a route, adds cash, raises interest, lowers trust, and displays borrowed credit in the HUD.
 
 Lose conditions:
 

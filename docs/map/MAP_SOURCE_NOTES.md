@@ -58,6 +58,7 @@ The base map includes:
 - Coastline and Great Lakes shape from the source polygons.
 - Major river overlay from Natural Earth.
 - Decorative antique board-map styling.
+- v0.2 paper grain, engraving hatch, softened state boundaries, and board-game color grading.
 
 The base map does not include gameplay city markers, labels, route lines, or selected-route state. Those are drawn by the app from TypeScript data.
 
@@ -74,4 +75,4 @@ AI assistance may be used later for decorative art, panels, tokens, or title tre
 - State shapes are simplified at the `10m` TopoJSON level.
 - Terrain bands are decorative, not terrain data.
 - Major river linework is generalized for board-game readability.
-- State lines remain visible in v0.1; a later art pass may make them even fainter.
+- State fill regions remain visible in v0.2 as a board-map texture; a later art pass may blend them further without changing the geodata.

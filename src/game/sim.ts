@@ -2,12 +2,22 @@ import { prepActions, hazards, hazardTagFallbacks, shipments, type Hazard, type 
 import { nodes, type NodeId } from '../data/nodes';
 import { routes, routesById, type LedgerRoute, type RouteId } from '../data/routes';
 
+export const LEGS_PER_JOURNEY = 6;
+export const BORROW_AMOUNT = 400;
+
+export type IntelSource = 'scout' | 'telegraph' | 'tip';
+export type IntelQuality = 'true' | 'partial' | 'false' | 'rumor';
+
 export interface RouteState {
   routeId: RouteId;
   active: boolean;
   hazardId: HazardId;
   revealed: boolean;
   assigned: PrepActionId[];
+  intelSource?: IntelSource;
+  intelQuality?: IntelQuality;
+  intelHazardId?: HazardId;
+  intelText?: string;
 }
 
 export interface LedgerState {
@@ -19,7 +29,10 @@ export interface LedgerState {
   trust: number;
   outlawPressure: number;
   interestRate: number;
+  borrowedCredit: number;
+  interestPaid: number;
   journey: number;
+  deliveryInJourney: number;
   shipment: Shipment;
   seed: number;
   routeStates: Record<RouteId, RouteState>;
@@ -38,14 +51,19 @@ export interface DispatchResult {
   hazard: Hazard;
   countered: boolean;
   success: boolean;
+  assigned: PrepActionId[];
+  helpfulPrep: PrepActionId[];
+  failedPrep: PrepActionId[];
   payout: number;
   scoreDelta: number;
   cashDelta: number;
+  interestCharge: number;
   reputationDelta: number;
   trustDelta: number;
   message: string;
   detail: string;
   nextNodeId: NodeId;
+  journeyComplete: boolean;
   firedReason?: string;
 }
 
@@ -78,7 +96,10 @@ export function createInitialState(screen: ScreenId = 'title'): LedgerState {
     trust: 74,
     outlawPressure: 20,
     interestRate: 6,
+    borrowedCredit: 0,
+    interestPaid: 0,
     journey: 1,
+    deliveryInJourney: 1,
     shipment: shipments[0],
     seed,
     routeStates: generateRouteStates(seed, 1, 'seattle')
@@ -169,11 +190,20 @@ export function applyPrepAction(state: LedgerState, routeId: RouteId, actionId: 
     return state;
   }
   if (actionId === 'borrow') {
+    const routeState = state.routeStates[routeId];
     return {
       ...state,
-      cash: state.cash + 400,
+      cash: state.cash + BORROW_AMOUNT,
+      borrowedCredit: state.borrowedCredit + BORROW_AMOUNT,
       interestRate: Math.min(18, state.interestRate + 1.2),
       trust: Math.max(0, state.trust - 2),
+      routeStates: {
+        ...state.routeStates,
+        [routeId]: {
+          ...routeState,
+          assigned: [...routeState.assigned, actionId]
+        }
+      },
       selectedActionId: undefined
     };
   }
@@ -181,7 +211,7 @@ export function applyPrepAction(state: LedgerState, routeId: RouteId, actionId: 
     return state;
   }
 
-  const reveal = actionId === 'scout' || actionId === 'telegraph';
+  const intel = buildIntelForAction(state, routeId, actionId);
   return {
     ...state,
     cash: state.cash - action.cost,
@@ -190,7 +220,8 @@ export function applyPrepAction(state: LedgerState, routeId: RouteId, actionId: 
       [routeId]: {
         ...state.routeStates[routeId],
         assigned: [...state.routeStates[routeId].assigned, actionId],
-        revealed: state.routeStates[routeId].revealed || reveal
+        revealed: state.routeStates[routeId].revealed || Boolean(intel),
+        ...intel
       }
     },
     selectedActionId: undefined,
@@ -204,7 +235,9 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const hazard = hazardById(routeState.hazardId);
   const nextNodeId = otherEnd(route, state.currentNodeId);
   const assignments = routeState.assigned;
-  const countered = hazard.id === 'clean' || assignments.some((actionId) => hazard.counters.includes(actionId));
+  const helpfulPrep = assignments.filter((actionId) => hazard.counters.includes(actionId));
+  const failedPrep = assignments.filter((actionId) => !hazard.counters.includes(actionId) && actionId !== 'insurance' && actionId !== 'borrow' && actionId !== 'tip');
+  const countered = hazard.id === 'clean' || helpfulPrep.length > 0;
   const insured = assignments.includes('insurance');
   const basePayout = Math.round(state.shipment.value * route.payoutMultiplier * (1 + state.journey * 0.045));
   const expressBonus = route.express ? Math.round(basePayout * 0.22) : 0;
@@ -251,9 +284,12 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
       : `${hazard.name} broke the line. Merchants saw paper fail in public.`;
   }
 
-  const cashAfterInterest = Math.round(state.cash + cashDelta - state.interestRate * 12);
-  const nextJourney = state.journey + 1;
-  const nextSeed = (state.seed + nextJourney * 104729 + Math.floor(basePayout * 13)) >>> 0;
+  const interestCharge = Math.round(state.interestRate * 12 + state.borrowedCredit * 0.018);
+  const cashAfterInterest = Math.round(state.cash + cashDelta - interestCharge);
+  const journeyComplete = state.deliveryInJourney >= LEGS_PER_JOURNEY;
+  const nextJourney = journeyComplete ? state.journey + 1 : state.journey;
+  const nextDeliveryInJourney = journeyComplete ? 1 : state.deliveryInJourney + 1;
+  const nextSeed = (state.seed + nextJourney * 104729 + nextDeliveryInJourney * 53 + Math.floor(basePayout * 13)) >>> 0;
   const newCash = cashAfterInterest;
   const newReputation = Math.max(0, Math.min(100, state.reputation + reputationDelta));
   const newTrust = Math.max(0, Math.min(100, state.trust + trustDelta));
@@ -264,14 +300,19 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     hazard,
     countered,
     success,
+    assigned: assignments,
+    helpfulPrep,
+    failedPrep,
     payout: success ? basePayout + expressBonus : 0,
     scoreDelta,
-    cashDelta: cashDelta - Math.round(state.interestRate * 12),
+    cashDelta: cashDelta - interestCharge,
+    interestCharge,
     reputationDelta,
     trustDelta,
     message,
     detail,
     nextNodeId,
+    journeyComplete,
     firedReason
   };
 
@@ -282,12 +323,15 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     score: Math.max(0, state.score + scoreDelta),
     reputation: newReputation,
     trust: newTrust,
-    outlawPressure: Math.min(95, state.outlawPressure + 2 + (success ? 1 : 5)),
-    interestRate: Math.min(18, state.interestRate + 0.25 + (state.cash < 300 ? 0.5 : 0)),
+    outlawPressure: Math.min(95, state.outlawPressure + 2 + (success ? 1 : 5) + (journeyComplete ? 3 : 0)),
+    interestRate: Math.min(18, state.interestRate + 0.25 + (state.cash < 300 ? 0.5 : 0) + (journeyComplete ? 0.35 : 0)),
+    borrowedCredit: Math.max(0, Math.round(state.borrowedCredit * (journeyComplete ? 0.82 : 0.94))),
+    interestPaid: state.interestPaid + interestCharge,
     journey: nextJourney,
-    shipment: shipments[nextJourney % shipments.length],
+    deliveryInJourney: nextDeliveryInJourney,
+    shipment: shipments[(nextJourney + nextDeliveryInJourney) % shipments.length],
     seed: nextSeed,
-    routeStates: generateRouteStates(nextSeed, nextJourney, nextNodeId),
+    routeStates: generateRouteStates(nextSeed, nextJourney + nextDeliveryInJourney, nextNodeId),
     selectedRouteId: undefined,
     selectedActionId: undefined,
     dispatchingRouteId: undefined,
@@ -318,4 +362,75 @@ export function meterClass(value: number) {
 
 export function findNodeName(nodeId: NodeId) {
   return nodes.find((node) => node.id === nodeId)?.name ?? nodeId;
+}
+
+export function describeIntel(routeState: RouteState) {
+  if (!routeState.revealed) {
+    return 'Unknown';
+  }
+  return routeState.intelText ?? hazardById(routeState.hazardId).name;
+}
+
+function buildIntelForAction(state: LedgerState, routeId: RouteId, actionId: PrepActionId): Partial<RouteState> | undefined {
+  const routeState = state.routeStates[routeId];
+  const hazard = hazardById(routeState.hazardId);
+
+  if (actionId === 'scout') {
+    const physical = new Set<HazardId>(['ambush', 'track-cut', 'washed-bridge', 'repair-ambush', 'scout-missing']);
+    const found = hazard.id === 'clean' || physical.has(hazard.id);
+    return {
+      intelSource: 'scout',
+      intelQuality: found ? 'true' : 'partial',
+      intelHazardId: found ? hazard.id : undefined,
+      intelText: found ? `Scout: ${hazard.name}.` : 'Scout: physical clear; official unknown.'
+    };
+  }
+
+  if (actionId === 'telegraph') {
+    const official = new Set<HazardId>(['bad-weather', 'inside-leak', 'rival-sabotage', 'telegraph-cut', 'false-tip']);
+    const found = hazard.id === 'clean' || official.has(hazard.id);
+    return {
+      intelSource: 'telegraph',
+      intelQuality: found ? 'true' : 'partial',
+      intelHazardId: found ? hazard.id : undefined,
+      intelText: found ? `Wire: ${hazard.name}.` : 'Wire: official clear; physical unknown.'
+    };
+  }
+
+  if (actionId === 'tip') {
+    const roll = deterministicRoll(`${state.seed}:${state.journey}:${state.deliveryInJourney}:${routeId}:tip`);
+    if (roll < 0.32) {
+      return {
+        intelSource: 'tip',
+        intelQuality: 'true',
+        intelHazardId: hazard.id,
+        intelText: `Tip: maybe ${hazard.name}.`
+      };
+    }
+    if (roll < 0.68) {
+      const wrong = hazards.find((item) => item.id !== hazard.id && item.id !== 'clean') ?? hazards[0];
+      return {
+        intelSource: 'tip',
+        intelQuality: 'false',
+        intelHazardId: wrong.id,
+        intelText: `Tip: maybe ${wrong.name}.`
+      };
+    }
+    return {
+      intelSource: 'tip',
+      intelQuality: 'rumor',
+      intelText: 'Tip: rumor only.'
+    };
+  }
+
+  return undefined;
+}
+
+function deterministicRoll(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 0x100000000;
 }
