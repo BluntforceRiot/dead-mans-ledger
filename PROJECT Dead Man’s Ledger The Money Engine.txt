@@ -1,0 +1,564 @@
+PROJECT: Dead Man’s Ledger: The Money Engine
+
+Theme:
+Summer into AI Week 2: Independence Engines
+
+Core thesis:
+The money provided independence. The route was the engine.
+
+Project concept:
+Build a beautiful clickable HD board-game strategy sim about moving currency through dangerous American frontier routes. The player manages shipments, routes, scouts, guards, repairs, telegraph intel, decoys, insurance, interest/credit pressure, reputation, trust, weather, and route hazards. The goal is a high score and survival across repeated journeys.
+
+Very important:
+Do not push anything until explicitly approved.
+
+Critical direction:
+Do not use AI-generated map images for geography.
+Do not use Google Maps screenshots as game assets.
+Do not bake city positions and route labels into a generated fantasy map.
+The hardest part so far has been keeping U.S. geography and city positions accurate, so build the map from real geodata and coordinates.
+
+Use AI-generated art only for decoration:
+
+* gold logo
+* UI panels
+* parchment textures
+* ledger cards
+* tokens
+* event vignettes
+* icons
+* title art
+
+Do not use AI-generated art for:
+
+* U.S. coastline
+* Great Lakes shape
+* Upper Peninsula of Michigan
+* city positions
+* base geography
+* route graph coordinates
+
+Goal for first build:
+Do not make a gray-box alpha.
+Build the real foundation with the real map pipeline, real clickable route overlay, real game loop skeleton, and polished board-game UI direction. Aim for a 70 percent complete first foundation, even if some art/event variety is still limited.
+
+Architecture:
+Use Vite + TypeScript.
+Prefer SVG/canvas overlay for route/node interactions.
+The base map should be an accurate 16:9 HD/4K-style U.S. board map.
+The game overlay should draw nodes and routes dynamically from data.
+
+Data source requirements:
+Use real geodata for map boundaries, coastline, Great Lakes, rivers, and terrain.
+Preferred sources:
+
+* Natural Earth public-domain vector/raster data
+* U.S. Census TIGER/Line or cartographic boundary data
+* Other clearly licensed open geodata only if needed
+
+Map projection:
+Use a fixed projection suitable for the contiguous United States, such as Albers USA or Lambert Conformal Conic.
+Create a deterministic projection helper so every node is placed from lat/lon, not hand-dragged or guessed.
+
+Deliverable 1: Accurate map base
+
+Create:
+
+* `public/assets/map/map-base-usa-4k.png`
+* `public/assets/map/map-base-usa-4k.webp` if useful
+* `docs/map/MAP_SOURCE_NOTES.md`
+
+The base map should:
+
+* show accurate contiguous U.S. geography
+* show the Great Lakes accurately
+* show the Upper Peninsula of Michigan accurately
+* show Lake Superior accurately
+* show the Mississippi River corridor
+* show the Missouri River / Iowa “nose” region accurately enough for gameplay
+* show the Texas Gulf Coast correctly
+* show the Pacific coast, Florida, Rockies, Great Plains, Appalachians, Gulf Coast
+* hide state lines or make them extremely faint
+* avoid modern satellite-map colors
+* use antique/old-west parchment styling
+* have room for the game overlay
+* not have city labels baked into the base image unless they are intentionally decorative and not used for gameplay
+
+Important:
+City markers and labels should be drawn by the game overlay from `nodes.ts`, not baked into the base map image.
+
+Deliverable 2: Node data
+
+Create:
+
+* `src/data/nodes.ts`
+
+Each node should include:
+
+* id
+* display name
+* state
+* latitude
+* longitude
+* node type
+* region/biome
+* brief gameplay note
+
+Initial required nodes:
+
+* Seattle, WA
+* Portland, OR
+* Medford, OR
+* Sacramento, CA
+* San Francisco, CA
+* Reno, NV
+* Los Angeles, CA
+* San Diego, CA
+* Spokane, WA
+* Boise, ID
+* Salt Lake City, UT
+* Las Vegas, NV
+* Phoenix, AZ
+* Tucson, AZ
+* Albuquerque, NM
+* Santa Fe, NM
+* Bozeman, MT
+* Great Falls, MT
+* Deadwood, SD
+* Cheyenne, WY
+* Denver, CO
+* North Platte, NE
+* Sioux Falls, SD
+* Fargo, ND
+* Duluth, MN
+* Minneapolis, MN
+* Des Moines, IA
+* Omaha, NE
+* Kansas City, MO
+* Wichita, KS
+* Oklahoma City, OK
+* Fort Worth, TX
+* Dallas, TX
+* Austin, TX
+* San Antonio, TX
+* Houston, TX
+* New Orleans, LA
+* Memphis, TN
+* St. Louis, MO
+* Milwaukee, WI
+* Chicago, IL
+* Detroit, MI
+* Sault Ste. Marie, MI
+* Cleveland, OH
+* Pittsburgh, PA
+* Indianapolis, IN
+* Cincinnati, OH
+* Columbus, OH
+* Nashville, TN
+* Atlanta, GA
+* Charlotte, NC
+* Washington, DC
+* Philadelphia, PA
+* New York, NY
+* Boston, MA
+
+Accuracy reminders:
+
+* Detroit must be in southeast Michigan on the Detroit River, not in Canada.
+* Minneapolis must be in Minnesota, west of Wisconsin.
+* Omaha must be on the Missouri River in eastern Nebraska, not too far north.
+* Des Moines must be in central Iowa.
+* Sioux Falls must be in eastern South Dakota.
+* Fargo must be eastern North Dakota.
+* Duluth must be at the western end of Lake Superior.
+* Sault Ste. Marie must be at the eastern Upper Peninsula / Soo Locks area.
+* Cheyenne must be southeast Wyoming.
+* North Platte must be central/western Nebraska along the Platte River.
+* Wichita must be south-central Kansas, not down in Texas/Oklahoma.
+* Dallas/Fort Worth must be north Texas, with Austin/San Antonio/Houston correctly placed relative to them.
+
+Deliverable 3: Route data
+
+Create:
+
+* `src/data/routes.ts`
+
+Each route should include:
+
+* id
+* from node id
+* to node id
+* route type: rail, stage, branch, river, sea optional
+* biome: northern, mountain, plains, desert, river, forest, gulf, eastern
+* base risk
+* distance tier
+* payout multiplier
+* express boolean
+* tags for likely hazards
+
+The route graph should support:
+
+* stable node geography
+* route availability randomized per run
+* long-haul express routes that skip one or two “waves” of nodes
+* normal routes that move one node/region at a time
+* visible map from the beginning
+* hidden route danger
+* 30 to 50 percent of active routes having some kind of hidden hazard or complication
+* route branches generated from data, not baked into the map image
+
+Important design:
+The map should feel like a known frontier network with changing opportunities, not a random spaghetti graph. Nodes stay fixed. Some routes vary per run. Express routes appear/disappear or become attractive based on payout/risk.
+
+Starter route logic:
+
+* West Coast corridor: Seattle, Portland, Medford, Sacramento, San Francisco, Los Angeles, San Diego
+* Northwest/mountain routes: Seattle/Spokane/Boise/Bozeman/Great Falls
+* Northern corridor: Great Falls, Fargo, Duluth, Sault Ste. Marie, Detroit, Cleveland/Boston/New York
+* Plains corridor: Denver, Cheyenne, North Platte, Omaha, Des Moines, Chicago, St. Louis
+* Upper Midwest routes: Fargo, Sioux Falls, Minneapolis, Duluth, Milwaukee, Chicago, Des Moines, Omaha
+* South/Central routes: Santa Fe, Albuquerque, Wichita, Oklahoma City, Kansas City, Dallas/Fort Worth, St. Louis
+* Texas/Gulf routes: Dallas, Fort Worth, Austin, San Antonio, Houston, New Orleans
+* Eastern routes: St. Louis, Chicago, Detroit, Cleveland, Pittsburgh, Columbus, Cincinnati, Indianapolis, Nashville, Washington, Philadelphia, New York, Boston, Atlanta, Charlotte
+* Add express routes that jump farther for higher risk and payout, such as Seattle to Fargo, Denver to Chicago, St. Louis to Washington, San Francisco to Salt Lake City, San Antonio to New Orleans, Duluth to Detroit, etc.
+
+Deliverable 4: Map preview
+
+Create a dev preview screen that shows:
+
+* base map
+* projected city nodes
+* labels
+* all route lines
+* hover state for nodes/routes
+* selected route state
+* active/inactive route styling
+* express route styling
+* test buttons to regenerate route availability
+
+This preview must be used to verify that the known cities are correct before deeper gameplay work.
+
+Deliverable 5: Core game loop
+
+Implement the first playable single-player loop.
+
+Player fantasy:
+You are the express manager. You sit over a frontier map and decide how to move money safely through dangerous routes.
+
+No keyboard gameplay.
+This should be almost entirely clickable.
+
+Interaction model:
+
+* click route
+* click prep action
+* click route to assign action
+* click dispatch
+* watch map animation
+* read result
+* continue to next station
+
+Core actions:
+
+* Scout Ahead
+* Hire Guards
+* Send Repair Crew
+* Telegraph Report
+* Decoy Strongbox
+* Insurance
+* Delay One Day
+* Borrow Credit / Credit Line
+
+Possible later/emergency action:
+
+* Backroom Loan or Loan Shark, but keep simple in first pass
+
+Core meters:
+
+* Cash
+* Score
+* Reputation
+* Currency Trust
+* Outlaw Pressure
+* Interest Rate
+* Journey Number
+* Current Shipment Value
+
+Shipments:
+
+* Federal Notes
+* Mine Payroll
+* Bank Drafts
+* Merchant Credit
+* Land Office Documents
+* Silver Reserve
+* Treasury Packet
+
+Hazards:
+
+* Outlaw Ambush
+* Track Cut
+* Washed Bridge
+* Bad Weather
+* Inside Leak
+* Rival Company Sabotage
+* Telegraph Cut
+* False Local Tip
+* Repair Crew Ambushed
+* Scout Missing
+* Clean Passage
+
+Counter relationships:
+
+* Ambush: Scout Ahead, Hire Guards, Decoy Strongbox
+* Track Cut: Scout Ahead, Repair Crew, Guarded Repair Crew
+* Washed Bridge: Scout Ahead, Delay, Repair Crew
+* Weather: Telegraph Report, Delay, alternate route
+* Inside Leak: Decoy Strongbox, Telegraph Report, route change
+* Rival Sabotage: Guards, Telegraph Report, Scout
+* Telegraph Cut: Scout Ahead, Delay
+* False Tip: Paid intel should be more reliable than free tip
+
+Counter bonus:
+If the player gathers intel, chooses the correct counter, and the counter succeeds, award bonus score and reputation.
+
+Example:
+Scout reveals likely ambush.
+Player hires guards.
+Ambush triggers.
+Guards defend shipment.
+Award delivery value + danger bonus + counter bonus.
+
+Scoring:
+Score should reward:
+
+* delivered value
+* distance/risk multiplier
+* express route bonus
+* correct counter bonus
+* unused budget bonus
+* trust streak bonus
+* journey completion bonus
+
+Score should penalize:
+
+* shipment loss
+* reputation damage
+* cash debt
+* delays
+* failed repairs
+* uncountered hazards
+* interest paid
+
+High score:
+Use localStorage high scores.
+Goal is score survival, not one fixed ending.
+After completing a journey, carry remaining cash forward and start another journey with slightly worse odds and higher payouts.
+
+Journey progression:
+
+* First journey starts approachable.
+* Later journeys slightly increase outlaw pressure, route danger, interest rate range, and payout.
+* Difficulty should creep within a range, not suddenly spike.
+
+Lose conditions:
+
+* cash below a hard debt limit
+* reputation reaches zero
+* currency trust reaches zero
+
+Failure screen copy direction:
+“FIRED BY THE BOARD”
+Payroll failed. Merchants refused paper. The route lost trust. The town went back to dust, favors, and shotguns.
+
+Success/milestone copy:
+“ROUTE LEGEND”
+The currency arrived. The towns trusted the notes. The engine kept turning.
+
+Deliverable 6: Animation presentation
+
+Do not build full video files for every hazard.
+Use lightweight board-game-style animations:
+
+* vehicle token moves along selected route
+* active route glows
+* weather overlay appears
+* small incident vignette appears on the map
+* event card flips/reveals result
+* sound effects optional, generated WebAudio only if easy
+
+Initial tokens:
+
+* train
+* stagecoach
+* strongbox
+* scout rider
+* guards marker
+* repair crew marker
+* telegraph marker
+* decoy marker
+
+Event vignette system:
+Create reusable templates rather than unique videos:
+
+* Ambush
+* Defended Ambush
+* Track Cut
+* Repair Crew
+* Snowstorm
+* Sandstorm
+* Bridge Damage
+* Telegraph Warning
+* Successful Delivery
+* Failed Delivery
+
+Use CSS/SVG/canvas animations with layered art. Keep it shippable.
+
+Deliverable 7: Visual/UI style
+
+Visual target:
+Beautiful HD digital board-game style.
+Antique U.S. map, western ledger interface, gold accents, parchment cards, rail/stage route lines, brass node markers, readable labels.
+
+Not:
+
+* 8-bit
+* cartoon western
+* modern satellite map
+* gray-box prototype
+* generic web dashboard
+* AI-fantasy geography
+
+UI layout:
+
+* map is central and dominant
+* left panel: shipment/current contract
+* right panel: prep actions and intel
+* bottom or corner: cash, score, trust, reputation, interest, journey
+* result modal/card after each dispatch
+* title screen
+* how-to screen
+* high score / fired screen
+
+Title:
+Dead Man’s Ledger: The Money Engine
+
+Subtitle:
+The money provided independence. The route was the engine.
+
+Deliverable 8: Image/art asset plan
+
+Generate or create later, but structure folders now:
+
+`public/assets/ui/`
+
+* gold-logo.png or svg
+* parchment-panel.png
+* ledger-card.png
+* button-frame.png
+* brass-node.png
+* route-marker.png
+
+`public/assets/tokens/`
+
+* train.svg
+* stagecoach.svg
+* strongbox.svg
+* scout.svg
+* guards.svg
+* repair-crew.svg
+* telegraph.svg
+* decoy.svg
+
+`public/assets/events/`
+
+* ambush.svg
+* defended-ambush.svg
+* track-cut.svg
+* repair-crew.svg
+* snowstorm.svg
+* sandstorm.svg
+* bridge-damage.svg
+* telegraph-warning.svg
+* successful-delivery.svg
+* failed-delivery.svg
+
+For now, simple custom SVGs are acceptable as placeholders only if styled intentionally. Do not use emoji. Do not use copyrighted assets.
+
+Deliverable 9: Local two-player architecture
+
+Do not build full two-player first unless it is easy.
+But architect for it.
+
+Future mode:
+Rival Express Managers
+Local hot-seat / split-panel mode.
+No network.
+No keyboard required.
+Players take turns with the mouse:
+
+* Player 1 picks route/prep/dispatch
+* Player 2 picks route/prep/dispatch
+* both results resolve
+* score comparison after fixed number of rounds
+
+Leave clear TODO notes/hooks for this mode.
+
+Deliverable 10: Documentation and receipts
+
+Create:
+
+* README.md
+* docs/DESIGN_NOTES.md
+* docs/MAP_SOURCE_NOTES.md
+* docs/ROUTE_GRAPH.md
+* BUILD_RECEIPT_DEAD_MANS_LEDGER_V01.md
+* BUILD_LOG_DEAD_MANS_LEDGER_V01.txt
+
+README must explain:
+
+* what the game is
+* theme fit
+* how to run
+* tools used
+* data sources
+* no Google Maps assets used
+* no copyrighted commercial game assets used
+* map generated from data, not AI geography
+* AI used for ideation/art polish/code assistance as applicable
+
+Run:
+
+* npm install
+* npm run typecheck
+* npm run build
+* npm audit --audit-level=moderate
+* npm run preview and HTTP check if practical
+
+Capture screenshots:
+
+* output/dead-mans-ledger-title-v01.png
+* output/dead-mans-ledger-map-preview-v01.png
+* output/dead-mans-ledger-gameplay-v01.png
+* output/dead-mans-ledger-route-selected-v01.png
+* output/dead-mans-ledger-event-vignette-v01.png
+* output/dead-mans-ledger-result-v01.png
+* output/dead-mans-ledger-fired-v01.png
+* output/dead-mans-ledger-highscores-v01.png
+
+Package:
+
+* dead-mans-ledger-v01-review.zip
+
+Zip should include source, assets, docs, package files, screenshots, receipt, log.
+Exclude node_modules, dist, .git, caches, old zips/logs.
+
+Competitor-reference note for later publication:
+Myles’s Dependency Day also used a branching node graph. Mention that the idea here was independent but adjacent in structural language:
+
+* Dependency Day asks: what do you cut?
+* Dead Man’s Ledger asks: what do you risk?
+* His graph is about breaking dependency.
+* This graph is about keeping currency alive long enough for independence to function.
+
+Do not include this competitor section in the game UI unless it belongs in docs/submission notes.

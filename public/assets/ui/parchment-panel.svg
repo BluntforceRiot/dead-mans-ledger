@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 360">
+  <defs>
+    <filter id="noise"><feTurbulence baseFrequency=".025" numOctaves="3" seed="8"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .16"/></feComponentTransfer></filter>
+  </defs>
+  <rect x="18" y="18" width="484" height="324" rx="22" fill="#d9bd7a" stroke="#5f4324" stroke-width="8"/>
+  <rect x="34" y="34" width="452" height="292" rx="14" fill="#f0dba2" opacity=".62"/>
+  <rect x="18" y="18" width="484" height="324" rx="22" filter="url(#noise)" opacity=".7"/>
+</svg>

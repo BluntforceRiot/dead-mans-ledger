@@ -1,0 +1,17 @@
+node_modules
+dist
+.vite
+coverage
+.cache
+cache
+*.log
+*.zip
+BUILD_LOG_DEAD_MANS_LEDGER_V*.txt
+BUILD_RECEIPT_DEAD_MANS_LEDGER_V*.md
+output
+.playwright-cli
+playwright-report
+.DS_Store
+Thumbs.db
+.env
+.env.*
