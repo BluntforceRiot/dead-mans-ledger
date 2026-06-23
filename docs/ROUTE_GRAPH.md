@@ -2,7 +2,7 @@
 
 ## Summary
 
-v0.1 includes:
+v0.5 includes:
 
 - 55 city nodes.
 - 80 routes.
@@ -10,9 +10,9 @@ v0.1 includes:
 - Standard and express route styling.
 - Hidden route hazards on a portion of active routes.
 - Route-attached prep badges.
-- Separate visual treatments for rail, stage/branch, river/sea, and express routes, with stronger v0.3 hover/selected/dispatch styling.
+- Separate visual treatments for rail, stage/branch, river/sea, and express routes, with stronger v0.5 hover, selected-route, keyboard-focus, and dispatch styling.
 
-Nodes remain fixed. Routes vary per run so the map feels like a known frontier network with changing opportunities.
+Nodes remain fixed. Contract route availability and hazards persist for the current destination contract, so the map feels like a known frontier network with changing opportunities instead of rerolling after every dispatch.
 
 ## Required Corridors Covered
 
@@ -78,16 +78,16 @@ Each route in `src/data/routes.ts` includes:
 
 ## Availability
 
-At run generation:
+At contract generation:
 
 - Core routes are usually active.
 - Swing routes are often active.
 - Rare routes are less common and usually express or high-leverage.
-- If the current station would have no active exits, nearby exits are forced active to prevent a dead run.
+- If the current station would have no active exits, nearby exits are forced active to prevent a dead contract.
 
 ## Hazards
 
-Active routes can hide hazards. The chance rises slightly by journey number and route risk.
+Active routes can hide hazards. The chance is influenced by journey number, route risk, and Outlaw Pressure. Express routes carry higher reward and two incident checks.
 
 Route tags select likely complications:
 
