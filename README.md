@@ -6,9 +6,11 @@ The money provided independence. The route was the engine.
 
 Built for Summer into AI Week 2: Independence Engines.
 
-## Playable v0.3
+Theme connection: Dead Man's Ledger treats independence as economic circulation. Paper money only creates practical independence if it reaches frontier towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
-This build is a public submission candidate built on the geodata-backed board-game foundation:
+## Playable v0.4
+
+This build is the public submission candidate built on the geodata-backed board-game foundation:
 
 - Vite + TypeScript browser app.
 - Real geodata-derived contiguous U.S. base map.
@@ -17,13 +19,14 @@ This build is a public submission candidate built on the geodata-backed board-ga
 - Clickable map preview with active/inactive/express route styling.
 - Single-player score-survival loop with route selection, prep actions, dispatch, event result, meters, fired screen, and local high scores.
 - Custom lightweight SVG UI, tokens, and event vignettes.
-- HD board-table gameplay layout with a dominant framed map and compact side ledgers.
+- HD board-table gameplay layout with a dominant framed map, compact side ledgers, and first-turn guidance.
 - Distinct rail, stage, river/sea, and express route styling.
 - Route-attached prep badges.
 - Scout, Telegraph, and Local Tip intel behaviors.
 - Six-delivery journey segments with a Route Legend milestone card.
 - Generated WebAudio cues with `M` mute toggle.
 - GitHub Pages workflow prepared for later deployment.
+- Static browser game: no backend, no login, and no online leaderboard.
 
 ## Commands
 
@@ -43,6 +46,7 @@ Screenshot capture for review:
 npm run screenshots:v01
 npm run screenshots:v02
 npm run screenshots:v03
+npm run screenshots:v04
 ```
 
 ## Controls
@@ -103,6 +107,18 @@ The current visuals are public-demo symbolic art, not final commercial productio
 - The map base is geodata-derived and styled as a premium antique board map.
 
 No copyrighted commercial game assets are used.
+
+## Submission Notes
+
+- Static browser game.
+- No backend.
+- No login.
+- No online leaderboard.
+- Local scores only.
+- Geodata-backed map base.
+- Runtime city and route overlays from TypeScript data.
+- No Google Maps assets.
+- No AI-generated geography.
 
 ## AI Usage Note
 

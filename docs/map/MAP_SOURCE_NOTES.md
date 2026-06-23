@@ -70,6 +70,10 @@ No AI-generated geography was used.
 
 AI assistance may be used later for decorative art, panels, tokens, or title treatments, but not for U.S. coastline, Great Lakes, city positions, or route coordinates.
 
+## v0.4 Status
+
+The v0.4 public-candidate pass preserves the same geodata pipeline. It only improves UI framing, route readability, event-card presentation, and submission documentation.
+
 ## Known Map Limitations
 
 - State shapes are simplified at the `10m` TopoJSON level.

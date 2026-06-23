@@ -250,14 +250,14 @@ function renderTitle() {
         <div class="title-rails" aria-hidden="true"><span></span><span></span></div>
         <img src="${assetUrl('assets/ui/gold-logo.svg')}" alt="Dead Man's Ledger: The Money Engine" class="logo" />
         <p class="subtitle">The money provided independence. The route was the engine.</p>
-        <p class="title-kicker">Frontier currency routes. Hidden danger. Boardroom consequences.</p>
+        <p class="title-kicker">A frontier board-game sim about currency, risk, trust, and the routes that made paper money useful.</p>
         <div class="title-actions">
           <button data-screen="game">Start Ledger Run</button>
           <button data-screen="preview">Map Preview</button>
           <button data-screen="howto">How To Play</button>
           <button data-screen="scores">High Scores</button>
         </div>
-        <p class="fine-print">Summer into AI Week 2: Independence Engines &middot; v0.3 public submission candidate &middot; M toggles sound</p>
+        <p class="fine-print">Summer into AI Week 2: Independence Engines &middot; v0.4 public submission candidate &middot; M toggles sound</p>
       </div>
     </main>
   `;
@@ -307,7 +307,7 @@ function renderMapPreview() {
         <dl>
           <dt>Nodes</dt><dd>${nodes.length}</dd>
           <dt>Routes</dt><dd>${routes.length}</dd>
-          <dt>High score key</dt><dd><code>${HIGH_SCORE_KEY}</code></dd>
+          <dt>Scores</dt><dd>Local only</dd>
         </dl>
         ${
           selected
@@ -342,7 +342,7 @@ function renderGame() {
         <p>${state.shipment.copy}</p>
         <dl class="compact-list">
           <dt>Station</dt><dd>${findNodeName(state.currentNodeId)}</dd>
-          <dt>Shipment value</dt><dd>${formatMoney(state.shipment.value)}</dd>
+          <dt>Value</dt><dd>${formatMoney(state.shipment.value)}</dd>
           <dt>Active exits</dt><dd>${adjacent.length}</dd>
           <dt>Journey leg</dt><dd>${state.deliveryInJourney}/${LEGS_PER_JOURNEY}</dd>
         </dl>
@@ -365,7 +365,13 @@ function renderGame() {
             : `<div class="station-card"><strong>${findNodeName(state.currentNodeId)} office open</strong><span>${adjacent.length} active exits. Click a glowing route to review the ledger before dispatch.</span></div>`
         }
       </aside>
-      <section class="map-stage">${renderMap('game')}</section>
+      <section class="map-stage">
+        <div class="turn-strip" aria-label="How to play this turn">
+          <strong>How to play this turn</strong>
+          <span>Pick a route &rarr; prepare it &rarr; dispatch the shipment &rarr; survive the ledger.</span>
+        </div>
+        ${renderMap('game')}
+      </section>
       <aside class="side-panel actions-panel">
         <p class="eyebrow">Preparation</p>
         <h2>Route Actions</h2>
@@ -423,16 +429,21 @@ function renderResultModal() {
     return '';
   }
   const eventAsset = eventAssetForResult(result);
+  const effectClass = eventEffectClass(result);
   return `
     <div class="modal-backdrop">
       <article class="result-card ${result.success ? 'success-result' : 'failure-result'} ${result.journeyComplete ? 'legend-result' : ''}">
-        <div class="event-frame">
+        <div class="event-frame ${effectClass}">
           <img src="${assetUrl(`assets/events/${eventAsset}`)}" alt="" class="event-art" />
+          <div class="event-fx event-fx-one"></div>
+          <div class="event-fx event-fx-two"></div>
+          <div class="event-fx event-fx-three"></div>
           <div class="event-spark"></div>
         </div>
         <div>
           <p class="eyebrow">${result.journeyComplete ? 'Journey Complete' : result.success ? 'Route Result' : 'Board Incident'}</p>
           <h1>${result.journeyComplete ? 'ROUTE LEGEND' : result.message}</h1>
+          <p class="result-outcome ${result.success ? 'outcome-good' : 'outcome-bad'}">${result.success ? 'Shipment delivered' : 'Shipment disrupted'}${result.helpfulPrep.length ? ` &middot; ${result.helpfulPrep.length} prep counter${result.helpfulPrep.length === 1 ? '' : 's'} worked` : ''}</p>
           <p>${result.detail}</p>
           ${result.journeyComplete ? '<p class="success-copy">The currency arrived. The towns trusted the notes. The engine kept turning.</p>' : ''}
           <dl class="result-grid">
@@ -440,12 +451,12 @@ function renderResultModal() {
             <dt>Event</dt><dd>${result.hazard.name}</dd>
             <dt>Prep helped</dt><dd>${result.helpfulPrep.length ? result.helpfulPrep.map((id) => actionName(id)).join(', ') : 'None'}</dd>
             <dt>Prep failed</dt><dd>${result.failedPrep.length ? result.failedPrep.map((id) => actionName(id)).join(', ') : 'None'}</dd>
-            <dt>Payout</dt><dd>${formatMoney(result.payout)}</dd>
-            <dt>Score</dt><dd>${signedNumber(result.scoreDelta)}</dd>
-            <dt>Cash</dt><dd>${signedMoney(result.cashDelta)}</dd>
+            <dt>Payout</dt><dd class="money-result">${formatMoney(result.payout)}</dd>
+            <dt>Score</dt><dd class="${result.scoreDelta >= 0 ? 'positive-result' : 'negative-result'}">${signedNumber(result.scoreDelta)}</dd>
+            <dt>Cash</dt><dd class="${result.cashDelta >= 0 ? 'positive-result' : 'negative-result'}">${signedMoney(result.cashDelta)}</dd>
             <dt>Interest paid</dt><dd>-${formatMoney(result.interestCharge)}</dd>
-            <dt>Reputation</dt><dd>${signedNumber(result.reputationDelta)}</dd>
-            <dt>Trust</dt><dd>${signedNumber(result.trustDelta)}</dd>
+            <dt>Reputation</dt><dd class="${result.reputationDelta >= 0 ? 'positive-result' : 'negative-result'}">${signedNumber(result.reputationDelta)}</dd>
+            <dt>Trust</dt><dd class="${result.trustDelta >= 0 ? 'positive-result' : 'negative-result'}">${signedNumber(result.trustDelta)}</dd>
             ${result.journeyComplete ? `<dt>Cash carryover</dt><dd>${formatMoney(result.cashAfter)}</dd><dt>Pressure rise</dt><dd>+${result.pressureDelta}</dd>` : ''}
           </dl>
           ${
@@ -455,7 +466,7 @@ function renderResultModal() {
                 ? '<p class="success-copy">The route engine keeps turning. A harder contract is waiting.</p>'
                 : '<p class="danger-copy">The board permits another journey, but the ledger is bruised.</p>'
           }
-          <button data-action="continue-result">${result.firedReason ? 'Face the Board' : result.journeyComplete ? 'Open Next Ledger' : 'Continue'}</button>
+          <button data-action="continue-result">${result.firedReason ? 'Face the Board' : result.journeyComplete ? 'Begin Next Journey' : 'Continue'}</button>
         </div>
       </article>
     </div>
@@ -466,6 +477,7 @@ function renderFired() {
   return `
     <main class="page-shell fired-screen">
       <section class="paper-page compact">
+        <div class="ledger-stamp">BOARD REVIEW</div>
         <p class="eyebrow">Final Board Review</p>
         <h1>FIRED BY THE BOARD</h1>
         <p>Payroll failed. Merchants refused paper. The route lost trust. The town went back to dust, favors, and shotguns.</p>
@@ -493,9 +505,10 @@ function renderHighScores() {
   const resetMessage = state.resetConfirmUntil && state.resetConfirmUntil > Date.now() ? '<p class="danger-copy">Press R or Reset again to clear local scores.</p>' : '';
   return `
     <main class="page-shell">
-      <section class="paper-page compact">
+      <section class="paper-page compact score-page">
+        <div class="ledger-stamp">LOCAL LEDGER</div>
         <p class="eyebrow">Local Browser Storage</p>
-        <h1>Board Ledger</h1>
+        <h1>High Scores</h1>
         <ol class="score-list">
           ${
             scores.length
@@ -504,7 +517,7 @@ function renderHighScores() {
           }
         </ol>
         ${resetMessage}
-        <p class="hint">Scores live only in <code>${HIGH_SCORE_KEY}</code> on this browser.</p>
+        <p class="hint">Local ledger entries live only in <code>${HIGH_SCORE_KEY}</code> on this browser.</p>
         <div class="page-actions">
           <button data-screen="game">Play Again</button>
           <button data-screen="title">Title</button>
@@ -693,6 +706,28 @@ function eventAssetForResult(result: NonNullable<LedgerState['lastResult']>) {
     return 'inside-leak.svg';
   }
   return result.success ? 'successful-delivery.svg' : result.hazard.asset;
+}
+
+function eventEffectClass(result: NonNullable<LedgerState['lastResult']>) {
+  if (result.success && result.hazard.id === 'clean') {
+    return 'effect-success';
+  }
+  if (!result.success) {
+    return 'effect-failure';
+  }
+  if (result.hazard.tag === 'weather') {
+    return 'effect-weather';
+  }
+  if (result.hazard.tag === 'track' || result.hazard.tag === 'bridge') {
+    return 'effect-sparks';
+  }
+  if (result.hazard.tag === 'ambush' || result.hazard.tag === 'sabotage') {
+    return 'effect-smoke';
+  }
+  if (result.hazard.tag === 'telegraph' || result.hazard.tag === 'inside-leak' || result.hazard.tag === 'false-tip') {
+    return 'effect-telegraph';
+  }
+  return 'effect-success';
 }
 
 function labelOffset(nodeId: NodeId) {

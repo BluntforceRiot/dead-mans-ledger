@@ -10,9 +10,11 @@ The core thesis is:
 The money provided independence. The route was the engine.
 ```
 
-## v0.3 Scope
+Dead Man's Ledger treats independence as economic circulation. Paper money only creates practical independence if it reaches frontier towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
-The third build keeps the v0.1/v0.2 foundation and pushes the artifact toward public submission polish:
+## v0.4 Scope
+
+The fourth build keeps the v0.1-v0.3 foundation and locks the artifact as a public submission candidate:
 
 - Accurate base map pipeline.
 - Fixed city coordinate data.
@@ -20,15 +22,15 @@ The third build keeps the v0.1/v0.2 foundation and pushes the artifact toward pu
 - One-player route/prep/dispatch loop.
 - Score and survival meters.
 - Local high-score storage.
-- Premium board-game event presentation.
+- Premium board-game event presentation with lightweight CSS incident effects.
 - Larger central map presentation at 1440x900 with a stronger physical board frame.
-- More distinct route-type styling, route glow, and route-attached prep badges.
+- More distinct route-type styling, route glow, route-attached prep badges, and first-turn guidance.
 - Scout/Telegraph/Local Tip intel split.
 - Generated WebAudio cues.
 - Six-delivery journey segments and a richer Route Legend milestone.
 - GitHub Pages workflow prepared for static deployment after explicit approval.
 
-It does not attempt final art, online services, multiplayer, or a large simulation economy.
+It does not attempt final art, online services, multiplayer, user login, an online leaderboard, or a large simulation economy.
 
 ## Interaction Model
 
@@ -114,4 +116,4 @@ The current data model keeps player state and route state separate enough to sup
 - Results resolve from the same route graph.
 - Scores compare after a fixed number of rounds.
 
-This is intentionally only a design hook in v0.2.
+This is intentionally only a design hook and is not part of the v0.4 public candidate.
