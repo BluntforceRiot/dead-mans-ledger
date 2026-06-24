@@ -5,7 +5,7 @@
 - Title: Dead Man's Ledger: The Money Engine
 - Event: Summer into AI Week 2
 - Theme: Independence Engines
-- Build: v0.5 final candidate pending live deploy approval
+- Build: v0.6 gold master candidate pending live deploy approval
 
 ## Short Description
 
@@ -42,7 +42,7 @@ Dead Man's Ledger treats independence as economic circulation. Paper money only 
 
 - Mouse-first destination contract loop.
 - Contracts include origin, destination, cargo type, cargo value, delivery fee, trust weight, and leg limit.
-- Prep actions include scouts, guards, repair crews, telegraph reports, local tips, decoys, insurance, delay, and global credit.
+- Prep actions include scouts, guards, repair crews, telegraph reports, station-limited local tips, decoys, insurance, delay, credit, and debt repayment.
 - Scout and Telegraph reveal danger but do not automatically counter it.
 - Credit tracks explicit debt; interest is charged only when debt exists.
 - Outlaw Pressure affects hazard density and counter difficulty.
@@ -50,11 +50,9 @@ Dead Man's Ledger treats independence as economic circulation. Paper money only 
 - Reaching the named destination completes the contract.
 - Generated WebAudio cues can be toggled with `M`.
 
-## Competitor-Reference Note For Substack
+## Competitor Reference
 
-Myles's Dependency Day uses a branching node graph to ask what dependencies you cut. Dead Man's Ledger uses a route graph to ask what risks you take to keep currency moving.
-
-This comparison belongs in external write-up context, not in the game UI.
+The About/Credits screen includes a public competitor-reference card for Myles's Dependency Day with a safe external link. The comparison is friendly and framed around distinct mechanics: severance versus circulation.
 
 ## Expected Demo URL
 
@@ -64,14 +62,15 @@ https://bluntforceriot.github.io/dead-mans-ledger/
 
 ## Review Packet
 
-The v0.5 review packet should include:
+The v0.6 review packet should include:
 
 - Source code.
 - Package files.
 - Public assets.
 - Docs.
-- v0.5 screenshots.
+- v0.6 screenshots.
 - Build receipt.
 - Build log.
 - Balance report.
+- Playtest report.
 - Neuroforge review-loop evidence.

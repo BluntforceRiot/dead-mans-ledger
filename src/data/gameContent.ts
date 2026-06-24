@@ -56,11 +56,11 @@ export const prepActions: PrepAction[] = [
   { id: 'guards', name: 'Hire Guards', cost: 75, short: 'Protects against ambushes, sabotage, and guarded repair trouble.', counters: ['ambush', 'rival-sabotage', 'repair-ambush'], asset: 'guards.svg' },
   { id: 'repair', name: 'Send Repair Crew', cost: 75, short: 'Useful for track cuts and bridge damage.', counters: ['track-cut', 'washed-bridge'], asset: 'repair-crew.svg' },
   { id: 'telegraph', name: 'Telegraph Report', cost: 35, short: 'Reveals official warnings and improves matching counters.', counters: [], asset: 'telegraph.svg' },
-  { id: 'tip', name: 'Local Tip', cost: 0, short: 'Free rumor. Sometimes true, sometimes bait.', counters: [], asset: 'telegraph.svg' },
+  { id: 'tip', name: 'Local Tip', cost: 0, short: 'Station rumor. Free, one-use, and sometimes bait.', counters: [], asset: 'rumor.svg' },
   { id: 'decoy', name: 'Decoy Strongbox', cost: 55, short: 'Confuses ambushes and inside leaks.', counters: ['ambush', 'inside-leak'], asset: 'decoy.svg' },
-  { id: 'insurance', name: 'Insurance', cost: 80, short: 'Softens cash loss when a route goes wrong.', counters: [], asset: 'strongbox.svg' },
+  { id: 'insurance', name: 'Insurance', cost: 80, short: 'Softens cash loss when a route goes wrong.', counters: [], asset: 'insurance.svg' },
   { id: 'delay', name: 'Delay One Day', cost: 25, short: 'Lets weather or cut wires settle before dispatch.', counters: ['washed-bridge', 'bad-weather', 'telegraph-cut', 'false-tip', 'scout-missing'], asset: 'telegraph.svg' },
-  { id: 'borrow', name: 'Borrow Credit', cost: 0, short: 'Adds cash now, raises interest pressure later.', counters: [], asset: 'strongbox.svg' }
+  { id: 'borrow', name: 'Borrow Credit', cost: 0, short: 'Adds cash now, raises interest pressure later.', counters: [], asset: 'credit.svg' }
 ];
 
 export const hazards: Hazard[] = [
@@ -71,7 +71,7 @@ export const hazards: Hazard[] = [
   { id: 'inside-leak', name: 'Inside Leak', tag: 'inside-leak', severity: 0.26, copy: 'Someone knew the manifest before the route was picked.', counters: ['decoy'], asset: 'telegraph-warning.svg' },
   { id: 'rival-sabotage', name: 'Rival Company Sabotage', tag: 'sabotage', severity: 0.24, copy: 'A rival office bought a little silence and a lot of trouble.', counters: ['guards'], asset: 'rival-sabotage.svg' },
   { id: 'telegraph-cut', name: 'Telegraph Cut', tag: 'telegraph', severity: 0.18, copy: 'The wire goes dead before the station can confirm passage.', counters: ['delay'], asset: 'telegraph-cut.svg' },
-  { id: 'false-tip', name: 'False Local Tip', tag: 'false-tip', severity: 0.2, copy: 'Free advice arrives wrapped in a smile and a bad map.', counters: ['delay'], asset: 'ambush.svg' },
+  { id: 'false-tip', name: 'False Local Tip', tag: 'false-tip', severity: 0.2, copy: 'Free advice arrives wrapped in a smile and a bad map.', counters: ['delay'], asset: 'false-tip.svg' },
   { id: 'repair-ambush', name: 'Repair Crew Ambushed', tag: 'ambush', severity: 0.24, copy: 'The crew sent to fix the line becomes the bait.', counters: ['guards'], asset: 'defended-ambush.svg' },
   { id: 'scout-missing', name: 'Scout Missing', tag: 'false-tip', severity: 0.18, copy: 'Your rider does not return before the shipment must move.', counters: ['delay'], asset: 'failed-delivery.svg' },
   { id: 'clean', name: 'Clean Passage', tag: 'clean', severity: 0, copy: 'The route holds. The money arrives with its reputation intact.', counters: [], asset: 'successful-delivery.svg' }

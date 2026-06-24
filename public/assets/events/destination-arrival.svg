@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="Destination Arrival">
+
+  <defs>
+    <style>
+      .glint { animation: glint 2.8s ease-in-out infinite; transform-origin: center; }
+      .dust { animation: dust 3s ease-in-out infinite; }
+      .wire { animation: wire 2.4s steps(2, end) infinite; }
+      .rain { animation: rain 2.2s linear infinite; }
+      @keyframes glint { 0%, 100% { opacity: .28; transform: scale(.82); } 50% { opacity: .95; transform: scale(1.18); } }
+      @keyframes dust { 0%, 100% { opacity: .25; transform: translateX(-6px); } 50% { opacity: .65; transform: translateX(8px); } }
+      @keyframes wire { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+      @keyframes rain { from { transform: translateX(-18px); } to { transform: translateX(18px); } }
+      @media (prefers-reduced-motion: reduce) { .glint, .dust, .wire, .rain { animation: none; } }
+    </style>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
+  </defs>
+  <rect width="360" height="220" rx="18" fill="url(#sky)"/>
+  <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
+  <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
+  <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+  <circle class="dust" cx="92" cy="169" r="18" fill="#d0a464" opacity=".28"/>
+  <circle class="glint" cx="315" cy="62" r="10" fill="#ffe9a8" opacity=".35"/>
+
+  <g filter="url(#shadow)"><path d="M230 94h72v78h-72z" fill="#24363a" stroke="#e0b45d" stroke-width="3"/><path d="M220 98l46-32 47 32z" fill="#704225" stroke="#e0b45d" stroke-width="3"/><rect x="252" y="128" width="20" height="44" fill="#111b20"/><rect x="236" y="112" width="18" height="18" fill="#ffd77a"/><rect x="280" y="112" width="18" height="18" fill="#ffd77a"/></g><g filter="url(#shadow)"><rect x="84" y="92" width="104" height="72" rx="7" fill="#ead7a6" stroke="#e0b45d" stroke-width="4"/><path d="M101 116h68M101 132h54M101 148h62" stroke="#4a2d13" stroke-width="4" stroke-linecap="round"/><circle class="glint" cx="211" cy="118" r="24" fill="#f6c863" stroke="#fff0ad" stroke-width="4"/></g><path d="M191 133l25 18 45-56" fill="none" stroke="#ffe9a8" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path class="glint" d="M250 64l10 18 19 3-14 13 4 19-19-9-17 10 3-20-15-13 20-3z" fill="#fff0ad" opacity=".75"/>
+  <rect x="9" y="9" width="342" height="202" rx="15" fill="none" stroke="#e1b764" stroke-width="3" opacity=".72"/>
+  <text x="180" y="29" text-anchor="middle" font-family="Georgia,serif" font-size="17" font-weight="800" fill="#ffe7a6">Destination Arrival</text>
+</svg>

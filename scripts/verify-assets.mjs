@@ -12,6 +12,7 @@ const required = [
   'public/assets/map/map-base-usa-4k.webp',
   'public/assets/ui/gold-logo.svg',
   'public/assets/events/successful-delivery.svg',
+  'public/assets/events/destination-arrival.svg',
   'public/assets/events/ambush.svg',
   'public/assets/events/defended-ambush.svg',
   'public/assets/events/track-cut.svg',
@@ -23,7 +24,20 @@ const required = [
   'public/assets/events/rival-sabotage.svg',
   'public/assets/events/telegraph-cut.svg',
   'public/assets/events/decoy-success.svg',
-  'public/assets/events/failed-delivery.svg'
+  'public/assets/events/false-tip.svg',
+  'public/assets/events/failed-delivery.svg',
+  'public/assets/tokens/train.svg',
+  'public/assets/tokens/stagecoach.svg',
+  'public/assets/tokens/scout.svg',
+  'public/assets/tokens/guards.svg',
+  'public/assets/tokens/repair-crew.svg',
+  'public/assets/tokens/telegraph.svg',
+  'public/assets/tokens/strongbox.svg',
+  'public/assets/tokens/decoy.svg',
+  'public/assets/tokens/insurance.svg',
+  'public/assets/tokens/credit.svg',
+  'public/assets/tokens/debt.svg',
+  'public/assets/tokens/rumor.svg'
 ];
 
 const raster = new Set(['.png', '.webp', '.jpg', '.jpeg']);

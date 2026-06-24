@@ -7,8 +7,10 @@ export const debtLimit = -500;
 
 export type ScreenId = 'title' | 'office' | 'howto' | 'preview' | 'about' | 'game' | 'fired' | 'scores';
 export type IntelSource = 'scout' | 'telegraph' | 'tip';
-export type IntelQuality = 'true' | 'partial' | 'false' | 'rumor';
+export type IntelQuality = 'true' | 'partial' | 'false' | 'rumor' | 'bait';
 export type OfficeId = 'new-york' | 'st-louis' | 'new-orleans' | 'san-francisco';
+export type MapMode = 'focus' | 'full';
+export type LocalRumorOutcome = 'useful' | 'incomplete' | 'false';
 
 export interface DispatchOffice {
   id: OfficeId;
@@ -28,6 +30,15 @@ export interface IntelReport {
   hazardId?: HazardId;
   confidence: number;
   text: string;
+}
+
+export interface StationRumor {
+  available: boolean;
+  used: boolean;
+  notice: string;
+  reliability: number;
+  quality: IntelQuality;
+  suggestedHazardId?: HazardId;
 }
 
 export interface RouteState {
@@ -79,6 +90,8 @@ export interface LedgerState {
   routeStates: Record<RouteId, RouteState>;
   segmentHistory: Record<string, number>;
   creditBorrowedThisLeg: boolean;
+  stationRumor: StationRumor;
+  mapMode: MapMode;
   selectedRouteId?: RouteId;
   selectedActionId?: PrepActionId;
   dispatchingRouteId?: RouteId;
@@ -111,7 +124,13 @@ export interface DispatchResult {
   prepNotNeeded: PrepActionId[];
   helpfulPrep: PrepActionId[];
   failedPrep: PrepActionId[];
+  countersAttempted: PrepActionId[];
+  countersSucceeded: PrepActionId[];
+  countersFailed: PrepActionId[];
+  protectionHeld: PrepActionId[];
   intelGathered: IntelReport[];
+  localRumorOutcome?: LocalRumorOutcome;
+  debtUsed: number;
   payout: number;
   scoreDelta: number;
   cashDelta: number;
@@ -219,10 +238,11 @@ export function startSeededRun(seed: number, officeId: OfficeId = 'san-francisco
 function buildRunState(seed: number, officeId: OfficeId, screen: ScreenId): LedgerState {
   const office = officeById(officeId);
   const contract = generateContract(seed, 1, office.nodeId);
+  const routeStates = generateRouteStates(seed, 1, office.nodeId, contract, clamp(20 + office.pressureBonus, 0, 95));
   return {
     screen,
     currentNodeId: office.nodeId,
-    cash: 1200 + office.cashBonus,
+    cash: 1320 + office.cashBonus,
     score: 0,
     reputation: clamp(72 + office.reputationBonus, 0, 100),
     trust: clamp(74 + office.trustBonus, 0, 100),
@@ -236,9 +256,11 @@ function buildRunState(seed: number, officeId: OfficeId, screen: ScreenId): Ledg
     contract,
     officeId,
     seed,
-    routeStates: generateRouteStates(seed, 1, office.nodeId, contract, clamp(20 + office.pressureBonus, 0, 95)),
+    routeStates,
     segmentHistory: {},
-    creditBorrowedThisLeg: false
+    creditBorrowedThisLeg: false,
+    stationRumor: generateStationRumor(seed, 1, 1, office.nodeId, routeStates),
+    mapMode: 'focus'
   };
 }
 
@@ -251,7 +273,8 @@ export function generateRouteStates(
 ): Record<RouteId, RouteState> {
   const next = random(seed + journey * 7919 + outlawPressure * 17);
   const pressureLift = outlawPressure / 100;
-  const hazardChance = Math.min(0.72, 0.22 + journey * 0.018 + pressureLift * 0.22);
+  const tutorialEase = journey === 1 ? -0.12 : 0;
+  const hazardChance = Math.min(0.72, Math.max(0.08, 0.22 + journey * 0.018 + pressureLift * 0.22 + tutorialEase));
   const routeStates = Object.fromEntries(
     routes.map((route) => {
       const activeRoll = next();
@@ -287,6 +310,9 @@ export function generateRouteStates(
   }
 
   ensureAdjacentRoute(routeStates, currentNodeId);
+  if (journey === 1 && contract) {
+    softenFirstContractOpening(routeStates, currentNodeId, contract);
+  }
   return routeStates;
 }
 
@@ -322,6 +348,77 @@ function ensureAdjacentRoute(routeStates: Record<RouteId, RouteState>, nodeId: N
     .forEach((route) => {
       routeStates[route.id].active = true;
     });
+}
+
+const stationRumorNotices = [
+  'A freight clerk heard something.',
+  'A card player claims the northern line is watched.',
+  'The bartender says the bridge crew never arrived.',
+  'A station porter swears the wire desk went quiet.',
+  'A rail hand mutters about fresh hoofprints.',
+  'A cashier saw a rival agent asking too many questions.'
+];
+
+export function generateStationRumor(seed: number, journey: number, deliveryInJourney: number, nodeId: NodeId, routeStates: Record<RouteId, RouteState>): StationRumor {
+  const adjacentRoutes = getAdjacentRoutes(nodeId, routeStates);
+  const roll = deterministicRoll(`${seed}:${journey}:${deliveryInJourney}:${nodeId}:rumor-offer`);
+  const stationBoost = nodeId === 'st-louis' || nodeId === 'new-orleans' || nodeId === 'san-francisco' || nodeId === 'new-york' ? 0.08 : 0;
+  const availability = clamp(0.32 + stationBoost - Math.min(0.08, journey * 0.006), 0.26, 0.45);
+  if (roll > availability || adjacentRoutes.length === 0) {
+    return {
+      available: false,
+      used: false,
+      notice: 'No local rumor worth trusting at this station.',
+      reliability: 0,
+      quality: 'rumor'
+    };
+  }
+
+  const qualityRoll = deterministicRoll(`${seed}:${journey}:${deliveryInJourney}:${nodeId}:rumor-quality`);
+  const next = random(seed + journey * 349 + deliveryInJourney * 53 + hashString(nodeId));
+  const realHazards = adjacentRoutes
+    .flatMap((route) => routeStates[route.id]?.hazardIds ?? [])
+    .filter((hazardId): hazardId is HazardId => Boolean(hazardId && hazardId !== 'clean'));
+  const quality: IntelQuality = qualityRoll < 0.3 ? 'true' : qualityRoll < 0.56 ? 'partial' : qualityRoll < 0.78 ? 'false' : qualityRoll < 0.9 ? 'rumor' : 'bait';
+  const suggestedHazardId =
+    quality === 'true' || quality === 'partial'
+      ? realHazards.length
+        ? choose(realHazards, next)
+        : undefined
+      : quality === 'false' || quality === 'bait'
+        ? choose(hazards.filter((hazard) => hazard.id !== 'clean'), next).id
+        : undefined;
+
+  return {
+    available: true,
+    used: false,
+    notice: choose(stationRumorNotices, next),
+    reliability: quality === 'true' ? 0.38 : quality === 'partial' ? 0.28 : quality === 'rumor' ? 0.2 : 0.16,
+    quality,
+    suggestedHazardId
+  };
+}
+
+function softenFirstContractOpening(routeStates: Record<RouteId, RouteState>, nodeId: NodeId, contract: Contract) {
+  const candidates = getAdjacentRoutes(nodeId)
+    .filter((route) => !route.express && routeClosesDistanceForNodes(otherEnd(route, nodeId), nodeId, contract.destination))
+    .sort((a, b) => a.baseRisk - b.baseRisk);
+  const safest = candidates[0] ?? getAdjacentRoutes(nodeId).filter((route) => !route.express).sort((a, b) => a.baseRisk - b.baseRisk)[0];
+  if (!safest) {
+    return;
+  }
+  routeStates[safest.id] = {
+    ...routeStates[safest.id],
+    active: true,
+    hazardId: 'clean',
+    hazardIds: ['clean'],
+    revealed: false,
+    intelReports: []
+  };
+}
+
+function routeClosesDistanceForNodes(nextNodeId: NodeId, currentNodeId: NodeId, destination: NodeId) {
+  return hopDistance(nextNodeId, destination, true) < hopDistance(currentNodeId, destination, true);
 }
 
 export function getAdjacentRoutes(nodeId: NodeId, onlyActive?: Record<RouteId, RouteState>) {
@@ -387,9 +484,40 @@ export function borrowCredit(state: LedgerState): LedgerState {
   };
 }
 
+export function repayDebt(state: LedgerState): LedgerState {
+  if (state.borrowedCredit <= 0 || state.cash <= 0) {
+    return {
+      ...state,
+      routeNotice: 'No debt principal is waiting for repayment.'
+    };
+  }
+  const amount = Math.min(250, state.borrowedCredit, Math.max(0, state.cash - 120));
+  if (amount <= 0) {
+    return {
+      ...state,
+      routeNotice: 'The board requires a small cash reserve before voluntary repayment.'
+    };
+  }
+  return {
+    ...state,
+    cash: state.cash - amount,
+    borrowedCredit: state.borrowedCredit - amount,
+    interestRate: clamp(state.interestRate - 0.18, 3.5, 18),
+    routeNotice: `Repaid ${formatMoneyPlain(amount)} of principal before dispatch.`
+  };
+}
+
 export function applyPrepAction(state: LedgerState, routeId: RouteId, actionId: PrepActionId): LedgerState {
   if (actionId === 'borrow') {
     return borrowCredit(state);
+  }
+
+  if (actionId === 'tip' && (!state.stationRumor.available || state.stationRumor.used)) {
+    return {
+      ...state,
+      selectedActionId: undefined,
+      routeNotice: 'No fresh local rumor is available at this station.'
+    };
   }
 
   const action = actionById(actionId);
@@ -415,6 +543,7 @@ export function applyPrepAction(state: LedgerState, routeId: RouteId, actionId: 
       }
     },
     routeNotice: undefined,
+    stationRumor: actionId === 'tip' ? { ...state.stationRumor, used: true, available: false } : state.stationRumor,
     selectedActionId: undefined,
     selectedRouteId: routeId
   };
@@ -468,11 +597,21 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   }
 
   const prepUsed = uniquePrep(incidents.flatMap((incident) => incident.counterAttempted));
+  const countersAttempted = prepUsed;
+  const countersSucceeded = uniquePrep(incidents.filter((incident) => incident.counterWorked).flatMap((incident) => incident.counterAttempted));
+  const countersFailed = uniquePrep(
+    incidents
+      .filter((incident) => incident.counterAttempted.length > 0 && !incident.counterWorked)
+      .flatMap((incident) => incident.counterAttempted)
+  ).filter((actionId) => !countersSucceeded.includes(actionId));
   const mitigationApplied = uniquePrep([
     ...(!success && insured ? (['insurance'] as PrepActionId[]) : []),
     ...(principalRepaid > 0 ? (['borrow'] as PrepActionId[]) : [])
   ]);
-  const prepNotNeeded = assignments.filter((actionId) => !prepUsed.includes(actionId) && !mitigationApplied.includes(actionId));
+  const protectionActions = new Set<PrepActionId>(['guards', 'repair', 'decoy', 'delay', 'insurance']);
+  const protectionHeld = assignments.filter((actionId) => protectionActions.has(actionId) && !prepUsed.includes(actionId) && !mitigationApplied.includes(actionId));
+  const prepNotNeeded = protectionHeld;
+  const localRumorOutcome = classifyLocalRumor(routeState.intelReports, incidentIds);
   const pressureDelta = calculatePressureDelta(state, route, success, countered);
   const newCash = Math.round(state.cash + cashDelta);
   const newReputation = clamp(state.reputation + reputationDelta, 0, 100);
@@ -492,8 +631,14 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     mitigationApplied,
     prepNotNeeded,
     helpfulPrep: prepUsed,
-    failedPrep: [],
+    failedPrep: countersFailed,
+    countersAttempted,
+    countersSucceeded,
+    countersFailed,
+    protectionHeld,
     intelGathered: routeState.intelReports,
+    localRumorOutcome,
+    debtUsed: state.borrowedCredit,
     payout: grossFee,
     scoreDelta,
     cashDelta,
@@ -535,6 +680,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   } else {
     ensureAdjacentRoute(routeStates, nextNodeId);
   }
+  const stationRumor = generateStationRumor(nextSeed, nextJourney, nextDelivery, nextNodeId, routeStates);
 
   return {
     ...state,
@@ -556,6 +702,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     routeStates,
     segmentHistory,
     creditBorrowedThisLeg: false,
+    stationRumor,
     selectedRouteId: undefined,
     selectedActionId: undefined,
     dispatchingRouteId: undefined,
@@ -739,31 +886,43 @@ function buildIntelForAction(state: LedgerState, routeId: RouteId, actionId: Pre
   }
 
   if (actionId === 'tip') {
-    const roll = deterministicRoll(`${state.seed}:${state.journey}:${state.deliveryInJourney}:${routeId}:tip`);
     const realHazard = hazardIds.find((id) => id !== 'clean') ?? 'clean';
-    if (roll < 0.34) {
+    const rumor = state.stationRumor;
+    if (!rumor.available || rumor.used) {
+      return undefined;
+    }
+    if (rumor.quality === 'true') {
       return {
         source: 'tip',
         quality: 'true',
         hazardId: realHazard === 'clean' ? undefined : realHazard,
-        confidence: 0.38,
+        confidence: rumor.reliability,
         text: realHazard === 'clean' ? 'Tip: locals think the line is quiet.' : `Tip: maybe ${hazardById(realHazard).name}.`
       };
     }
-    if (roll < 0.72) {
-      const wrong = hazards.find((item) => item.id !== realHazard && item.id !== 'clean') ?? hazards[0];
+    if (rumor.quality === 'partial') {
       return {
         source: 'tip',
-        quality: 'false',
+        quality: 'partial',
+        hazardId: rumor.suggestedHazardId === 'clean' ? undefined : rumor.suggestedHazardId,
+        confidence: rumor.reliability,
+        text: rumor.suggestedHazardId ? `Tip: something like ${hazardById(rumor.suggestedHazardId).name}.` : 'Tip: locals think the line is quiet.'
+      };
+    }
+    if (rumor.quality === 'false' || rumor.quality === 'bait') {
+      const wrong = rumor.suggestedHazardId ? hazardById(rumor.suggestedHazardId) : hazards.find((item) => item.id !== realHazard && item.id !== 'clean') ?? hazards[0];
+      return {
+        source: 'tip',
+        quality: rumor.quality,
         hazardId: wrong.id,
-        confidence: 0.24,
-        text: `Tip: maybe ${wrong.name}.`
+        confidence: rumor.reliability,
+        text: rumor.quality === 'bait' ? `Tip: a stranger insists on ${wrong.name}.` : `Tip: maybe ${wrong.name}.`
       };
     }
     return {
       source: 'tip',
       quality: 'rumor',
-      confidence: 0.18,
+      confidence: rumor.reliability,
       text: 'Tip: rumor only.'
     };
   }
@@ -777,6 +936,21 @@ function mergeIntelReports(reports: IntelReport[], report: IntelReport) {
   }
   const withoutSameSource = reports.filter((item) => item.source !== report.source);
   return [...withoutSameSource, report].sort((a, b) => b.confidence - a.confidence);
+}
+
+function classifyLocalRumor(reports: IntelReport[], incidentIds: HazardId[]): LocalRumorOutcome | undefined {
+  const report = reports.find((item) => item.source === 'tip');
+  if (!report) {
+    return undefined;
+  }
+  const realHazards = new Set<HazardId>(incidentIds.filter((id) => id !== 'clean'));
+  if (report.quality === 'true' && (!report.hazardId || realHazards.has(report.hazardId))) {
+    return 'useful';
+  }
+  if (report.quality === 'partial' || report.quality === 'rumor') {
+    return 'incomplete';
+  }
+  return 'false';
 }
 
 function calculatePressureDelta(state: LedgerState, route: LedgerRoute, success: boolean, countered: boolean) {
@@ -847,9 +1021,9 @@ export function generateContract(seed: number, journey: number, origin: NodeId):
   const cargoLift = 1 + Math.min(0.55, journey * 0.035 + plannedHops * 0.035);
   const cargoValue = Math.round(shipment.value * cargoLift);
   const commissionRate = clamp(0.1 + plannedHops * 0.025 + journey * 0.004, 0.12, 0.25);
-  const routeRiskBonus = 1 + Math.min(0.5, plannedHops * 0.06 + journey * 0.012);
-  const deliveryFee = Math.round(cargoValue * commissionRate + plannedHops * 38);
-  const legLimit = plannedHops + 2;
+  const routeRiskBonus = journey === 1 ? 1 + Math.min(0.28, plannedHops * 0.04) : 1 + Math.min(0.5, plannedHops * 0.06 + journey * 0.012);
+  const deliveryFee = Math.round(cargoValue * commissionRate + plannedHops * 38 + (journey === 1 ? 70 : 0));
+  const legLimit = plannedHops + (journey === 1 ? 3 : 2);
   return {
     id: `${journey}-${origin}-${destination}-${Math.floor(next() * 10000)}`,
     origin,

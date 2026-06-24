@@ -1,7 +1,7 @@
 {
   "name": "dead-mans-ledger",
   "description": "Dead Man's Ledger: The Money Engine, a clickable frontier currency-route strategy sim.",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -14,11 +14,13 @@
     "events:generate": "node scripts/generate-event-scenes.mjs",
     "verify:assets": "node scripts/verify-assets.mjs",
     "balance:sim": "node scripts/run-balance-sim.mjs",
+    "playtest:v06": "node scripts/playtest-v06.mjs",
     "screenshots:v01": "node scripts/capture-v01-screenshots.mjs",
     "screenshots:v02": "node scripts/capture-v02-screenshots.mjs",
     "screenshots:v03": "node scripts/capture-v03-screenshots.mjs",
     "screenshots:v04": "node scripts/capture-v04-screenshots.mjs",
-    "screenshots:v05": "node scripts/capture-v05-screenshots.mjs"
+    "screenshots:v05": "node scripts/capture-v05-screenshots.mjs",
+    "screenshots:v06": "node scripts/capture-v06-screenshots.mjs"
   },
   "dependencies": {
     "d3-geo": "^3.1.1"

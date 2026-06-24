@@ -10,9 +10,9 @@ The money provided independence. The route was the engine.
 
 The game treats independence as economic circulation. Paper money only creates practical independence if it reaches towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
-## v0.5 Scope
+## v0.6 Scope
 
-The fifth build turns the polished v0.4 board into a sharper strategy game:
+The sixth build turns the v0.5 mechanics into a gold-master candidate:
 
 - Contracts now have origin, destination, cargo value, delivery fee, trust weight, urgency, and leg limit.
 - The route network persists for the contract instead of rerolling after each dispatch.
@@ -21,8 +21,11 @@ The fifth build turns the polished v0.4 board into a sharper strategy game:
 - Express routes are stronger gambles because they carry two incident checks.
 - Outlaw Pressure affects hazard density and counter difficulty.
 - Credit is a global debt tool with explicit principal, rate, next interest, and repayment.
-- Result cards group intel, threat, prep used, mitigation applied, prep not needed, fee, interest, and score.
-- The action panel uses a compact icon grid with one detail card.
+- Local Tip is now a station-rumor decision instead of always-on busywork.
+- Result cards group intel gathered, counters attempted/succeeded/failed, financial mitigation, and protection held in reserve.
+- The central board uses Focus Contract and Full Map display modes, a contract ribbon, and a selected-route ledger.
+- The action panel groups Intelligence, Protection, Infrastructure, and Finance.
+- Incident cards and board tokens use richer original SVG scenes and metallic board-piece treatment.
 - Route Atlas replaces Map Preview and removes player-facing code references.
 
 ## Visual Direction
@@ -50,14 +53,15 @@ The public-demo look should feel like a premium board-table ledger, not a muddy 
 
 - Scout Ahead: physical intel and counter effectiveness bonus.
 - Telegraph Report: official/system intel and counter effectiveness bonus.
-- Local Tip: free unreliable rumor.
+- Local Tip: free one-use station rumor, only sometimes available.
 - Hire Guards: ambush, sabotage, and repair-crew danger.
 - Send Repair Crew: track and bridge trouble.
 - Decoy Strongbox: ambush and inside leaks.
 - Insurance: mitigation only.
 - Delay One Day: weather, bridge, cut-wire, and rumor timing.
 - Borrow Credit: global once-per-leg cash with explicit debt and interest.
+- Repay Debt: visible principal repayment action when cash allows.
 
 ## Future Art Hook
 
-The v0.5 SVGs are intentional public-demo symbolic art, not final commercial illustration. A later art pass can replace them with hand-painted or higher-fidelity assets without changing the contract/economy rules.
+The v0.6 SVGs are intentional public-demo symbolic art, not final commercial illustration. A later art pass can replace them with hand-painted or higher-fidelity assets without changing the contract/economy rules.

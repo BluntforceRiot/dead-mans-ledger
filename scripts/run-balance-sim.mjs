@@ -6,7 +6,7 @@ import { build } from 'vite';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const outDir = path.join(root, '.tmp', 'balance-sim');
-const reportPath = path.join(root, 'BALANCE_REPORT_DEAD_MANS_LEDGER_V05.md');
+const reportPath = path.join(root, 'BALANCE_REPORT_DEAD_MANS_LEDGER_V06.md');
 const runsPerStrategy = 1000;
 const maxLegs = 200;
 
@@ -101,7 +101,7 @@ function prepareRoute(state, route, strategy) {
   }
 
   if (strategy === 'cautious') {
-    for (const action of ['tip', 'scout', 'telegraph', 'insurance', 'delay']) {
+    for (const action of ['tip', 'scout', 'telegraph', 'guards', 'repair', 'decoy', 'delay', 'insurance']) {
       state = applyAction(state, route.id, action);
     }
     return state;
@@ -165,11 +165,22 @@ function simulate(strategy, index) {
   let destinations = 0;
   let expressLegs = 0;
   let interestWithZeroDebt = 0;
+  const firstContractId = state.contract.id;
+  let firstContractResolved = false;
+  let firstContractComplete = false;
+  let rumorAvailableLegs = 0;
+  let rumorUnavailableLegs = 0;
+  const localRumorOutcomes = {};
 
   while (!state.firedReason && legs < maxLegs) {
     const route = chooseRoute(state, strategy, next);
     if (!route) {
       break;
+    }
+    if (state.stationRumor.available && !state.stationRumor.used) {
+      rumorAvailableLegs += 1;
+    } else {
+      rumorUnavailableLegs += 1;
     }
     expressLegs += route.express ? 1 : 0;
     const debtBeforePrep = state.borrowedCredit;
@@ -191,6 +202,13 @@ function simulate(strategy, index) {
     successes += result.success ? 1 : 0;
     failures += result.success ? 0 : 1;
     destinations += result.arrivedAtDestination ? 1 : 0;
+    if (!firstContractResolved && result.contract.id === firstContractId && result.contractEnded) {
+      firstContractResolved = true;
+      firstContractComplete = result.arrivedAtDestination;
+    }
+    if (result.localRumorOutcome) {
+      localRumorOutcomes[result.localRumorOutcome] = (localRumorOutcomes[result.localRumorOutcome] ?? 0) + 1;
+    }
     for (const action of result.prepUsed) {
       prepUse[action] = (prepUse[action] ?? 0) + 1;
     }
@@ -218,6 +236,11 @@ function simulate(strategy, index) {
     finalDebt: state.borrowedCredit,
     finalScore: state.score,
     finalPressure: state.outlawPressure,
+    firstContractComplete,
+    firstContractResolved,
+    rumorAvailableLegs,
+    rumorUnavailableLegs,
+    localRumorOutcomes,
     prepUse,
     prepAssigned,
     mitigationUse,
@@ -261,6 +284,7 @@ const rows = strategies.map((strategy) => {
   const prepAssigned = {};
   const mitigationUse = {};
   const intelUse = {};
+  const localRumorOutcomes = {};
   for (const item of items) {
     for (const [action, count] of Object.entries(item.prepUse)) {
       prepUse[action] = (prepUse[action] ?? 0) + count;
@@ -273,6 +297,9 @@ const rows = strategies.map((strategy) => {
     }
     for (const [source, count] of Object.entries(item.intelUse)) {
       intelUse[source] = (intelUse[source] ?? 0) + count;
+    }
+    for (const [outcome, count] of Object.entries(item.localRumorOutcomes)) {
+      localRumorOutcomes[outcome] = (localRumorOutcomes[outcome] ?? 0) + count;
     }
   }
   return {
@@ -287,11 +314,17 @@ const rows = strategies.map((strategy) => {
     averageFinalCash: mean(items.map((item) => item.finalCash)),
     maxFinalCash: Math.max(...items.map((item) => item.finalCash)),
     averageFinalDebt: mean(items.map((item) => item.finalDebt)),
+    firstContractCompletionRate: items.filter((item) => item.firstContractComplete).length / Math.max(1, items.length),
+    firstContractResolutionRate: items.filter((item) => item.firstContractResolved).length / Math.max(1, items.length),
+    rumorAvailabilityRate:
+      items.reduce((sum, item) => sum + item.rumorAvailableLegs, 0) /
+      Math.max(1, items.reduce((sum, item) => sum + item.rumorAvailableLegs + item.rumorUnavailableLegs, 0)),
     interestBug,
     prepUse,
     prepAssigned,
     mitigationUse,
-    intelUse
+    intelUse,
+    localRumorOutcomes
   };
 });
 
@@ -333,20 +366,24 @@ const acceptance = [
   ['Interest is zero at zero debt', rows.every((row) => row.interestBug === 0)],
   ['Outlaw Pressure materially changes outcomes', highPressureRate > lowPressureRate + 0.08],
   ['Express routes have higher incident exposure', expressHeavy.expressAverage > noPrep.expressAverage],
-  ['Prepared play outperforms no-prep play', bestPreparedMedian > noPrep.medianLegs && prepared.successRate > noPrep.successRate],
+  ['Prepared play outperforms no-prep play', prepared.successRate > noPrep.successRate + 0.15 && prepared.destinationAverage > noPrep.destinationAverage],
   ['Destination-directed play is rewarded over bouncing', prepared.destinationAverage > noPrep.destinationAverage],
   ['Every preparation action has meaningful evidence', Object.values(prepEvidence).every(Boolean)],
-  ['Cash does not explode from cargo value', rows.every((row) => row.averageFinalCash < 5000 && row.maxFinalCash < 15000)]
+  ['Cash does not explode from cargo value', rows.every((row) => row.averageFinalCash < 5000 && row.maxFinalCash < 15000)],
+  ['Cautious Contract 1 completion is in tutorial target range', cautious.firstContractCompletionRate >= 0.6 && cautious.firstContractCompletionRate <= 0.8],
+  ['No-prep Contract 1 remains materially worse than cautious play', noPrep.firstContractCompletionRate + 0.12 < cautious.firstContractCompletionRate],
+  ['Reckless express Contract 1 remains risky', expressHeavy.firstContractCompletionRate < cautious.firstContractCompletionRate],
+  ['Local Tip is not always available', rows.every((row) => row.rumorAvailabilityRate > 0.2 && row.rumorAvailabilityRate < 0.55)]
 ];
 
 const table = rows
   .map(
     (row) =>
-      `| ${row.strategy} | ${row.medianLegs} | ${row.averageLegs.toFixed(1)} | ${row.maxLegs} | ${row.reached200} | ${(row.successRate * 100).toFixed(1)}% | ${row.destinationAverage.toFixed(2)} | ${row.expressAverage.toFixed(2)} | $${Math.round(row.averageFinalCash).toLocaleString()} | $${Math.round(row.maxFinalCash).toLocaleString()} | $${Math.round(row.averageFinalDebt).toLocaleString()} | ${row.interestBug} |`
+      `| ${row.strategy} | ${row.medianLegs} | ${row.averageLegs.toFixed(1)} | ${row.maxLegs} | ${row.reached200} | ${(row.successRate * 100).toFixed(1)}% | ${(row.firstContractCompletionRate * 100).toFixed(1)}% | ${(row.rumorAvailabilityRate * 100).toFixed(1)}% | ${row.destinationAverage.toFixed(2)} | ${row.expressAverage.toFixed(2)} | $${Math.round(row.averageFinalCash).toLocaleString()} | $${Math.round(row.maxFinalCash).toLocaleString()} | $${Math.round(row.averageFinalDebt).toLocaleString()} | ${row.interestBug} |`
   )
   .join('\n');
 
-const report = `# Dead Man's Ledger v0.5 Balance Report
+const report = `# Dead Man's Ledger v0.6 Balance Report
 
 Generated by \`npm run balance:sim\`.
 
@@ -362,8 +399,8 @@ Generated by \`npm run balance:sim\`.
 
 ## Aggregate Results
 
-| Strategy | Median legs | Avg legs | Max legs | 200-leg survivors | Success rate | Avg destinations | Avg express legs | Avg final cash | Max final cash | Avg final debt | Zero-debt interest bugs |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Strategy | Median legs | Avg legs | Max legs | 200-leg survivors | Success rate | Contract 1 completion | Rumor availability | Avg destinations | Avg express legs | Avg final cash | Max final cash | Avg final debt | Zero-debt interest bugs |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 ${table}
 
 ## Pressure Check
@@ -374,6 +411,16 @@ ${table}
 ## Acceptance Checks
 
 ${acceptance.map(([label, ok]) => `- ${ok ? 'PASS' : 'FAIL'}: ${label}`).join('\n')}
+
+## Contract 1 And Local Rumor Checks
+
+- Cautious first-contract completion: ${(cautious.firstContractCompletionRate * 100).toFixed(1)}%
+- No-prep first-contract completion: ${(noPrep.firstContractCompletionRate * 100).toFixed(1)}%
+- Express-heavy first-contract completion: ${(expressHeavy.firstContractCompletionRate * 100).toFixed(1)}%
+- Average Local Tip availability: ${(mean(rows.map((row) => row.rumorAvailabilityRate)) * 100).toFixed(1)}%
+- Local rumor outcomes: ${rows
+  .map((row) => `${row.strategy} ${Object.entries(row.localRumorOutcomes).map(([key, value]) => `${key}: ${value}`).join(', ') || 'none'}`)
+  .join('; ')}
 
 ## Prep Use Evidence
 

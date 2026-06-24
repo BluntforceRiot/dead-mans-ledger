@@ -8,6 +8,17 @@ const outDir = path.join(root, 'public', 'assets', 'events');
 
 const common = `
   <defs>
+    <style>
+      .glint { animation: glint 2.8s ease-in-out infinite; transform-origin: center; }
+      .dust { animation: dust 3s ease-in-out infinite; }
+      .wire { animation: wire 2.4s steps(2, end) infinite; }
+      .rain { animation: rain 2.2s linear infinite; }
+      @keyframes glint { 0%, 100% { opacity: .28; transform: scale(.82); } 50% { opacity: .95; transform: scale(1.18); } }
+      @keyframes dust { 0%, 100% { opacity: .25; transform: translateX(-6px); } 50% { opacity: .65; transform: translateX(8px); } }
+      @keyframes wire { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+      @keyframes rain { from { transform: translateX(-18px); } to { transform: translateX(18px); } }
+      @media (prefers-reduced-motion: reduce) { .glint, .dust, .wire, .rain { animation: none; } }
+    </style>
     <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#203744"/><stop offset="1" stop-color="#0d171d"/></linearGradient>
     <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff0ae"/><stop offset=".5" stop-color="#d59d3e"/><stop offset="1" stop-color="#fff1b8"/></linearGradient>
     <filter id="shadow"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#000" flood-opacity=".55"/></filter>
@@ -16,6 +27,8 @@ const common = `
   <path d="M0 154 C65 126 118 142 176 127 S286 124 360 96 V220 H0z" fill="#2d402d"/>
   <path d="M0 178 C82 154 130 173 200 148 S301 146 360 128 V220 H0z" fill="#6b4c28"/>
   <path d="M18 184 C94 169 154 174 242 157 S322 150 352 142" fill="none" stroke="#d0a464" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+  <circle class="dust" cx="92" cy="169" r="18" fill="#d0a464" opacity=".28"/>
+  <circle class="glint" cx="315" cy="62" r="10" fill="#ffe9a8" opacity=".35"/>
 `;
 
 function scene(title, body) {
@@ -35,16 +48,18 @@ const guard = `<g filter="url(#shadow)" fill="#1f3a42" stroke="#f0c36d" stroke-w
 const strongbox = `<g filter="url(#shadow)"><rect x="154" y="136" width="54" height="36" rx="5" fill="#213238" stroke="#f0c36d" stroke-width="4"/><path d="M154 149h54" stroke="#f0c36d" stroke-width="3"/><circle cx="181" cy="154" r="6" fill="url(#gold)"/></g>`;
 const station = `<g filter="url(#shadow)"><path d="M230 94h72v78h-72z" fill="#24363a" stroke="#e0b45d" stroke-width="3"/><path d="M220 98l46-32 47 32z" fill="#704225" stroke="#e0b45d" stroke-width="3"/><rect x="252" y="128" width="20" height="44" fill="#111b20"/><rect x="236" y="112" width="18" height="18" fill="#ffd77a"/><rect x="280" y="112" width="18" height="18" fill="#ffd77a"/></g>`;
 const telegraph = `<g filter="url(#shadow)"><path d="M270 72v99" stroke="#2c1c10" stroke-width="7"/><path d="M238 86h63" stroke="#2c1c10" stroke-width="6"/><path d="M246 91l-26 45M294 91l-28 50" stroke="#f1c66e" stroke-width="3"/><path d="M220 72l20 14-22 8 24 13" fill="none" stroke="#ffeaa7" stroke-width="4" stroke-linecap="round"/></g>`;
+const ledgerStamp = `<g filter="url(#shadow)"><rect x="84" y="92" width="104" height="72" rx="7" fill="#ead7a6" stroke="#e0b45d" stroke-width="4"/><path d="M101 116h68M101 132h54M101 148h62" stroke="#4a2d13" stroke-width="4" stroke-linecap="round"/><circle class="glint" cx="211" cy="118" r="24" fill="#f6c863" stroke="#fff0ad" stroke-width="4"/></g>`;
 
 const scenes = {
   'successful-delivery.svg': scene('Clean Passage', `${train}${station}<path d="M80 86c36-22 68-19 91 2" fill="none" stroke="#ffe9a8" stroke-width="4" opacity=".6"/>`),
+  'destination-arrival.svg': scene('Destination Arrival', `${station}${ledgerStamp}<path d="M191 133l25 18 45-56" fill="none" stroke="#ffe9a8" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path class="glint" d="M250 64l10 18 19 3-14 13 4 19-19-9-17 10 3-20-15-13 20-3z" fill="#fff0ad" opacity=".75"/>`),
   'ambush.svg': scene('Outlaw Ambush', `${coach}${outlaws}<path d="M66 104l45 34M306 96l-52 39" stroke="#f06f4e" stroke-width="4" stroke-linecap="round"/>`),
   'defended-ambush.svg': scene('Defended Ambush', `${guard}${coach}${outlaws}<path d="M113 126l50 19M248 132l-44 18" stroke="#ffe5a1" stroke-width="4" stroke-linecap="round"/>`),
   'track-cut.svg': scene('Track Cut', `${train}<path d="M86 174h92M208 174h78" stroke="#0e0d0b" stroke-width="7" stroke-linecap="round"/><path d="M177 162l24 27M201 160l-28 30" stroke="#ff9b62" stroke-width="6" stroke-linecap="round"/>`),
   'bridge-damage.svg': scene('Washed Bridge', `${coach}<path d="M54 170h92M214 170h92" stroke="#2b1c11" stroke-width="9" stroke-linecap="round"/><path d="M145 170c24 16 49 16 70 0" fill="none" stroke="#5fa8b3" stroke-width="12" stroke-linecap="round"/><path d="M152 150l25 25 25-26" fill="none" stroke="#f06f4e" stroke-width="5"/>`),
   'repair-crew.svg': scene('Repair Crew Success', `${train}<g filter="url(#shadow)" fill="#2c4a4d" stroke="#f0c36d" stroke-width="3"><circle cx="80" cy="128" r="11"/><path d="M70 140h22l-5 35H75z"/><circle cx="272" cy="128" r="11"/><path d="M262 140h22l-5 35h-12z"/></g><path d="M98 162l42-23M250 162l-42-23" stroke="#ffe7a6" stroke-width="5" stroke-linecap="round"/>`),
   'repair-ambush.svg': scene('Repair Crew Ambushed', `${outlaws}<g filter="url(#shadow)" fill="#2c4a4d" stroke="#f0c36d" stroke-width="3"><circle cx="174" cy="123" r="12"/><path d="M162 136h25l-7 39h-14z"/></g><path d="M78 113l78 35M293 110l-80 40" stroke="#f06f4e" stroke-width="4"/>`),
-  'bad-weather.svg': scene('Bad Weather', `${coach}<path d="M28 64h120M16 91h168M188 62h138M164 95h160" stroke="#dce8e9" stroke-width="6" stroke-linecap="round" opacity=".7"/><path d="M90 56l-13 31M132 54l-14 34M244 56l-16 35M294 58l-13 32" stroke="#9fd4df" stroke-width="4" opacity=".85"/>`),
+  'bad-weather.svg': scene('Bad Weather', `${coach}<g class="rain"><path d="M28 64h120M16 91h168M188 62h138M164 95h160" stroke="#dce8e9" stroke-width="6" stroke-linecap="round" opacity=".7"/><path d="M90 56l-13 31M132 54l-14 34M244 56l-16 35M294 58l-13 32" stroke="#9fd4df" stroke-width="4" opacity=".85"/></g>`),
   'snowstorm.svg': scene('Bad Weather', `${coach}<g fill="#e8f4f2" opacity=".85"><circle cx="70" cy="70" r="5"/><circle cx="116" cy="96" r="4"/><circle cx="190" cy="71" r="5"/><circle cx="246" cy="95" r="4"/><circle cx="300" cy="68" r="5"/><circle cx="318" cy="124" r="4"/></g><path d="M36 82h274" stroke="#e8f4f2" stroke-width="5" opacity=".45"/>`),
   'sandstorm.svg': scene('Bad Weather', `${coach}<path d="M22 74c76 22 133-18 207 4s82-3 112 6M18 106c72 18 137-17 210 3s82-7 113 7" fill="none" stroke="#e0b369" stroke-width="7" opacity=".72"/>`),
   'inside-leak.svg': scene('Inside Leak', `${strongbox}<g filter="url(#shadow)"><path d="M91 90h72v82H91z" fill="#213238" stroke="#e0b45d" stroke-width="3"/><path d="M104 111h46M104 128h38M104 145h50" stroke="#ffe2a2" stroke-width="4"/></g><path d="M178 112c38-16 68-13 96 12" fill="none" stroke="#f06f4e" stroke-width="5" stroke-dasharray="8 8"/>`),
@@ -52,6 +67,7 @@ const scenes = {
   'telegraph-cut.svg': scene('Telegraph Cut', `${telegraph}<path d="M247 88l44 48M290 88l-46 48" stroke="#f06f4e" stroke-width="6" stroke-linecap="round"/>`),
   'telegraph-warning.svg': scene('Telegraph Sparks', `${telegraph}<path d="M206 72l22 15-24 10 28 15-31 12" fill="none" stroke="#ffeaa7" stroke-width="5" stroke-linecap="round"/><circle cx="232" cy="92" r="18" fill="#ffeaa7" opacity=".18"/>`),
   'decoy-success.svg': scene('Decoy Success', `${strongbox}<g filter="url(#shadow)"><rect x="232" y="138" width="56" height="32" rx="5" fill="#3a241b" stroke="#e0b45d" stroke-width="3"/><path d="M241 154h38" stroke="#ffe7a6" stroke-width="4"/></g><path d="M211 147c32-30 63-32 90-2" fill="none" stroke="#ffe7a6" stroke-width="5" stroke-dasharray="9 8"/>`),
+  'false-tip.svg': scene('False Local Rumor', `${coach}<g filter="url(#shadow)"><path d="M62 92h76v58H62z" fill="#ead7a6" stroke="#e0b45d" stroke-width="4"/><path d="M76 111h45M76 128h32" stroke="#4a2d13" stroke-width="4"/><path d="M121 92l20 15-20 15" fill="#7d2e24" stroke="#ffbd77" stroke-width="3"/></g><path d="M169 98c32-22 69-18 102 7" fill="none" stroke="#f06f4e" stroke-width="6" stroke-dasharray="10 8"/>`),
   'failed-delivery.svg': scene('Failed Delivery', `${coach}<path d="M120 100l126 78M246 100l-126 78" stroke="#f06f4e" stroke-width="11" stroke-linecap="round" opacity=".8"/><path d="M72 171h214" stroke="#15110d" stroke-width="6" stroke-linecap="round"/>`)
 };
 

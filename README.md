@@ -6,9 +6,9 @@ The money provided independence. The route was the engine.
 
 Built for Summer into AI Week 2: Independence Engines.
 
-## Playable v0.5
+## Playable v0.6
 
-This build is a final-candidate mechanics and polish pass:
+This build is the gold-master candidate pass:
 
 - Vite + TypeScript static browser app.
 - Real geodata-derived contiguous U.S. base map.
@@ -23,6 +23,9 @@ This build is a final-candidate mechanics and polish pass:
 - About/Credits shows proof notes, AI usage, local-score scope, and the current journey seed.
 - Local high scores only; no backend, login, or online leaderboard.
 - Generated WebAudio cues with `M` mute toggle.
+- Station rumors replace always-on Local Tip busywork.
+- Focus Contract and Full Map display modes support play and planning.
+- About/Credits includes a public, respectful competitor reference.
 
 ## Commands
 
@@ -34,6 +37,7 @@ npm run verify:assets
 npm run typecheck
 npm run build
 npm run balance:sim
+npm run playtest:v06
 npm run preview
 npm audit --audit-level=moderate
 ```
@@ -41,7 +45,7 @@ npm audit --audit-level=moderate
 Screenshot capture for review:
 
 ```sh
-npm run screenshots:v05
+npm run screenshots:v06
 ```
 
 ## Controls
@@ -76,13 +80,14 @@ Immediate backtracking is allowed when necessary, but it sharply reduces fee and
 
 - Scout Ahead reveals physical threats and improves matching counter odds.
 - Telegraph Report reveals official/system threats and improves matching counter odds.
-- Local Tip is free and unreliable.
+- Local Tip is a free one-use station rumor. It appears only at some stations and may be useful, incomplete, false, or bait.
 - Hire Guards counters ambushes, sabotage, and repair-crew danger.
 - Send Repair Crew counters track cuts and washed bridges.
 - Decoy Strongbox counters ambushes and inside leaks.
 - Insurance mitigates losses.
 - Delay One Day helps with weather, bridge, wire, and rumor timing.
 - Borrow Credit is global once per leg, adds explicit debt, and charges interest only when debt exists.
+- Repay Debt lets the player voluntarily reduce principal when cash allows.
 
 ## Map And Data
 

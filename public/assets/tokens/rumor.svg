@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 110" role="img" aria-label="Local rumor token">
+  <defs>
+    <linearGradient id="rim" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fff0ad"/><stop offset=".48" stop-color="#b77929"/><stop offset="1" stop-color="#ffe19a"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="7" stdDeviation="4" flood-color="#000" flood-opacity=".55"/></filter>
+  </defs>
+  <ellipse cx="65" cy="90" rx="45" ry="12" fill="#020608" opacity=".5"/>
+  <g filter="url(#shadow)">
+    <circle cx="65" cy="54" r="45" fill="#18252b" stroke="url(#rim)" stroke-width="7"/>
+    <path d="M35 44c17-19 43-19 60 0" fill="none" stroke="#ffe19a" stroke-width="7" stroke-linecap="round"/>
+    <path d="M43 61c13-12 31-12 44 0" fill="none" stroke="#f0c56e" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="44" cy="34" r="8" fill="#e9c06a"/>
+    <circle cx="86" cy="34" r="8" fill="#e9c06a"/>
+    <path d="M49 79h32" stroke="#ffe19a" stroke-width="6" stroke-linecap="round"/>
+    <path d="M98 66l13-5-5 13" fill="none" stroke="#ff9b62" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
