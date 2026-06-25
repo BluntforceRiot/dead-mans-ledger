@@ -10,6 +10,16 @@ The money provided independence. The route was the engine.
 
 The game treats independence as economic circulation. Paper money only creates practical independence if it reaches towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
+## v0.7.1 Scope
+
+The v0.7.1 truth-and-release patch keeps the v0.7 showmanship intact and fixes final release truth issues:
+
+- Route-state generation now finalizes active connectivity before assigning hazards, so destination-activated routes are not secret clean corridors.
+- Tutorial protection is explicit: one first-contract opening route is board-cleared, displayed as `0% protected`, and explained in the tooltip/aria label.
+- Gameplay route labels now show actual travel direction from the current station; the Route Atlas remains undirected.
+- Result cards keep the primary ledger visible and move extended details into `FULL LEDGER DETAILS`.
+- Review zips are generated with portable forward-slash paths and verified by extraction.
+
 ## v0.7 Scope
 
 The v0.7 final showmanship bundle keeps the v0.6.1 mechanics intact and adds theater, memory, and tactility:

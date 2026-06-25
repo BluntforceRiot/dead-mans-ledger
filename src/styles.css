@@ -564,8 +564,15 @@ code {
 
 .destination-seal strong,
 .shipment-seal strong,
-.route-direction strong {
+.route-direction strong,
+.tutorial-protection strong {
   color: #ffe39d;
+}
+
+.tutorial-protection {
+  border-color: rgba(255, 218, 115, 0.32);
+  background:
+    linear-gradient(180deg, rgba(105, 72, 22, 0.3), rgba(8, 16, 21, 0.62)) !important;
 }
 
 .map-mode-toggle {
@@ -833,12 +840,29 @@ code {
   }
 
   .chronicle-main {
-    grid-template-columns: minmax(150px, 0.42fr) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(132px, 0.36fr) minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+
+  .chronicle-route {
+    gap: 4px;
+    overflow-x: hidden;
   }
 
   .chronicle-station {
-    min-width: 88px;
-    max-width: 128px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    padding: 4px 5px;
+  }
+
+  .chronicle-station em {
+    font-size: 0.52rem;
+  }
+
+  .chronicle-station strong {
+    font-size: 0.66rem;
+    overflow-wrap: anywhere;
   }
 
   .event-seal {
@@ -1700,10 +1724,53 @@ code {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  margin: 14px 0 16px;
+  margin: 12px 0 10px;
   max-height: none;
   overflow: visible;
   padding-right: 4px;
+}
+
+.result-primary-sections {
+  align-items: stretch;
+}
+
+.result-detail-sections {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-height: min(30vh, 260px);
+  overflow: auto;
+  padding: 2px 4px 4px 0;
+}
+
+.full-ledger-details {
+  margin: 6px 0 10px;
+  border: 1px solid rgba(211, 164, 76, 0.24);
+  border-radius: 12px;
+  background: rgba(6, 13, 17, 0.38);
+}
+
+.full-ledger-details summary {
+  cursor: pointer;
+  padding: 8px 10px;
+  color: #f3ca73;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.prep-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.prep-chip-list b {
+  border: 1px solid rgba(238, 196, 103, 0.34);
+  border-radius: 999px;
+  padding: 3px 7px;
+  color: #ffe4a1;
+  background: rgba(188, 128, 43, 0.14);
+  font-size: 0.72rem;
 }
 
 .result-section {

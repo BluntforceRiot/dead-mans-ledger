@@ -2,6 +2,8 @@ import { prepActions, hazards, hazardTagFallbacks, shipments, type Hazard, type 
 import { nodes, type NodeId } from '../data/nodes';
 import { routes, routesById, type LedgerRoute, type RouteId } from '../data/routes';
 
+export { nodes, routes, routesById };
+
 export const BORROW_AMOUNT = 350;
 export const debtLimit = -500;
 
@@ -46,6 +48,11 @@ export interface RouteState {
   active: boolean;
   hazardId: HazardId;
   hazardIds: HazardId[];
+  hazardsGenerated: boolean;
+  activatedInitially: boolean;
+  activatedForDestination: boolean;
+  activatedForAdjacency: boolean;
+  tutorialProtected: boolean;
   revealed: boolean;
   assigned: PrepActionId[];
   intelReports: IntelReport[];
@@ -113,6 +120,7 @@ export interface IncidentResolution {
 
 export interface DispatchResult {
   route: LedgerRoute;
+  fromNodeId: NodeId;
   contract: Contract;
   incidents: IncidentResolution[];
   hazard: Hazard;
@@ -305,14 +313,18 @@ export function generateRouteStates(
         active = active || next() < 0.76;
       }
 
-      const hazardIds = active ? generateHazardsForRoute(route, journey, outlawPressure, next) : ['clean'];
       return [
         route.id,
         {
           routeId: route.id,
           active,
-          hazardId: hazardIds[0],
-          hazardIds,
+          hazardId: 'clean',
+          hazardIds: ['clean'],
+          hazardsGenerated: false,
+          activatedInitially: active,
+          activatedForDestination: false,
+          activatedForAdjacency: false,
+          tutorialProtected: false,
           revealed: false,
           assigned: [],
           intelReports: []
@@ -326,6 +338,7 @@ export function generateRouteStates(
   }
 
   ensureAdjacentRoute(routeStates, currentNodeId);
+  ensureHazardsForActiveRoutes(routeStates, seed, journey, outlawPressure);
   if (journey === 1 && contract) {
     softenFirstContractOpening(routeStates, currentNodeId, contract);
   }
@@ -354,12 +367,14 @@ export function estimateRouteIncidentProbability(route: LedgerRoute, journey: nu
   };
 }
 
-function generateHazardsForRoute(route: LedgerRoute, journey: number, outlawPressure: number, next: () => number): HazardId[] {
+function generateHazardsForRoute(route: LedgerRoute, seed: number, journey: number, outlawPressure: number): HazardId[] {
   const exposure = incidentExposure(route);
   const hazardIds: HazardId[] = [];
   for (let index = 0; index < exposure; index += 1) {
     const chance = routeIncidentCheckProbability(route, journey, outlawPressure, index);
-    hazardIds.push(next() < chance ? pickHazard(route, next, outlawPressure).id : 'clean');
+    const routeSeed = `${seed}:${journey}:${outlawPressure}:${route.id}:${index}`;
+    const hazardNext = random(hashString(routeSeed));
+    hazardIds.push(deterministicRoll(routeSeed) < chance ? pickHazard(route, hazardNext, outlawPressure).id : 'clean');
   }
   const filtered = hazardIds.filter((id) => id !== 'clean');
   return filtered.length ? filtered : ['clean'];
@@ -372,7 +387,7 @@ export function incidentExposure(route: LedgerRoute) {
 function activatePathToDestination(routeStates: Record<RouteId, RouteState>, origin: NodeId, destination: NodeId) {
   const path = shortestPath(origin, destination, false);
   for (const route of path) {
-    routeStates[route.id].active = true;
+    activateRoute(routeStates, route.id, 'destination');
   }
 }
 
@@ -384,8 +399,38 @@ function ensureAdjacentRoute(routeStates: Record<RouteId, RouteState>, nodeId: N
   getAdjacentRoutes(nodeId)
     .slice(0, 2)
     .forEach((route) => {
-      routeStates[route.id].active = true;
+      activateRoute(routeStates, route.id, 'adjacency');
     });
+}
+
+function activateRoute(routeStates: Record<RouteId, RouteState>, routeId: RouteId, reason: 'destination' | 'adjacency') {
+  const routeState = routeStates[routeId];
+  if (!routeState) {
+    return;
+  }
+  const wasActive = routeState.active;
+  routeStates[routeId] = {
+    ...routeState,
+    active: true,
+    activatedForDestination: routeState.activatedForDestination || (!wasActive && reason === 'destination'),
+    activatedForAdjacency: routeState.activatedForAdjacency || (!wasActive && reason === 'adjacency')
+  };
+}
+
+function ensureHazardsForActiveRoutes(routeStates: Record<RouteId, RouteState>, seed: number, journey: number, outlawPressure: number) {
+  for (const route of routes) {
+    const routeState = routeStates[route.id];
+    if (!routeState?.active || routeState.hazardsGenerated || routeState.tutorialProtected) {
+      continue;
+    }
+    const hazardIds = generateHazardsForRoute(route, seed, journey, outlawPressure);
+    routeStates[route.id] = {
+      ...routeState,
+      hazardId: hazardIds[0],
+      hazardIds,
+      hazardsGenerated: true
+    };
+  }
 }
 
 const stationRumorNotices = [
@@ -450,6 +495,8 @@ function softenFirstContractOpening(routeStates: Record<RouteId, RouteState>, no
     active: true,
     hazardId: 'clean',
     hazardIds: ['clean'],
+    hazardsGenerated: true,
+    tutorialProtected: true,
     revealed: false,
     intelReports: []
   };
@@ -659,6 +706,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const resultContract = state.contract;
   const result: DispatchResult = {
     route,
+    fromNodeId: state.currentNodeId,
     contract: resultContract,
     incidents,
     hazard,
@@ -717,6 +765,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     routeStates = generateRouteStates(nextSeed, nextJourney, nextNodeId, nextContract, nextPressure);
   } else {
     ensureAdjacentRoute(routeStates, nextNodeId);
+    ensureHazardsForActiveRoutes(routeStates, state.seed, nextJourney, nextPressure);
   }
   const stationRumor = generateStationRumor(nextSeed, nextJourney, nextDelivery, nextNodeId, routeStates);
 
@@ -814,6 +863,7 @@ function markRouteResolved(routeStates: Record<RouteId, RouteState>, routeId: Ro
     ...next[routeId],
     hazardId: 'clean',
     hazardIds: ['clean'],
+    hazardsGenerated: true,
     assigned: [],
     intelReports: [],
     revealed: false

@@ -56,6 +56,7 @@ interface ChronicleLeg {
   routeId: RouteId;
   from: NodeId;
   to: NodeId;
+  routeLabel: string;
   seal: EventSeal;
   status: string;
   headline: string;
@@ -521,9 +522,9 @@ function renderMapPreview() {
         ${
           selected
             ? `<div class="route-card">
-                <h2>${routeName(selected)}</h2>
+                <h2>${routeAtlasName(selected)}</h2>
                 <p class="route-note">${selected.note}</p>
-                <p><strong>${selected.type.toUpperCase()}</strong> &middot; ${selected.distanceTier} &middot; danger ${routeDangerLabel(selected)} &middot; exposure ${incidentExposure(selected)} &middot; ${selected.express ? 'EXPRESS' : 'standard'}</p>
+                <p><strong>${selected.type.toUpperCase()}</strong> &middot; ${selected.distanceTier} &middot; danger ${routeDangerLabel(selected, selectedState)} &middot; exposure ${incidentExposure(selected)} &middot; ${selected.express ? 'EXPRESS' : 'standard'}</p>
                 <p>${selectedState?.active ? 'Open this contract' : 'Closed this contract'} &middot; Intel: ${selectedState ? describeIntel(selectedState) : 'Unknown'}</p>
               </div>`
             : '<p class="hint">Click a route line to inspect status, risk, exposure, and route type.</p>'
@@ -619,7 +620,7 @@ function renderStationRumorNotice() {
 
 function renderContractRibbon() {
   const selected = state.selectedRouteId ? routesById[state.selectedRouteId] : undefined;
-  const direction = selected ? `${findNodeName(state.currentNodeId)} to ${findNodeName(otherEnd(selected, state.currentNodeId))}` : `Choose a route toward ${findNodeName(state.contract.destination)}`;
+  const direction = selected ? routeTravelName(selected, state.currentNodeId) : `Choose a route toward ${findNodeName(state.contract.destination)}`;
   return `
     <header class="contract-ribbon">
       <div>
@@ -668,7 +669,7 @@ function renderSelectedRouteLedger(selected?: LedgerRoute, selectedState?: Ledge
     <footer class="selected-route-ledger">
       <div>
         <span>Selected Route</span>
-        <strong>${routeName(selected)}</strong>
+        <strong>${routeTravelName(selected, state.currentNodeId)}</strong>
       </div>
       <div>
         <span>Type</span>
@@ -676,8 +677,13 @@ function renderSelectedRouteLedger(selected?: LedgerRoute, selectedState?: Ledge
       </div>
       <div>
         <span>Danger</span>
-        <strong>${routeDangerLabel(selected)}</strong>
+        <strong>${routeDangerLabel(selected, selectedState)}</strong>
       </div>
+      ${
+        selectedState.tutorialProtected
+          ? '<div class="tutorial-protection"><span>Board Note</span><strong>Board-cleared starter route</strong></div>'
+          : ''
+      }
       <div>
         <span>Exposure</span>
         <strong>${incidentExposure(selected)} check${incidentExposure(selected) === 1 ? '' : 's'}</strong>
@@ -703,7 +709,10 @@ function renderSelectedRouteLedger(selected?: LedgerRoute, selectedState?: Ledge
   `;
 }
 
-function routeDangerLabel(route: LedgerRoute) {
+function routeDangerLabel(route: LedgerRoute, routeState?: LedgerState['routeStates'][RouteId]) {
+  if (routeState?.tutorialProtected) {
+    return '0% protected';
+  }
   const estimate = estimateRouteIncidentProbability(route, state.journey, state.outlawPressure);
   const percent = Math.round(estimate.probability * 100);
   const prefix = state.journey === 1 && !route.express && percent <= 32 ? 'Tutorial ' : '';
@@ -729,7 +738,7 @@ function renderDispatchChronicle() {
     ? chronicle.legs
         .map(
           (leg, index) => `
-            <span class="event-seal seal-${leg.seal}" title="${escapeHtml(leg.status)}: ${escapeHtml(leg.headline)}">
+            <span class="event-seal seal-${leg.seal}" title="${escapeHtml(leg.routeLabel)} | ${escapeHtml(leg.status)}: ${escapeHtml(leg.headline)}">
               <b>${sealIcon(leg.seal)}</b>
               <em>${index + 1}</em>
             </span>
@@ -766,7 +775,7 @@ function renderDispatchCinematic(route: LedgerRoute) {
   return `
     <div class="dispatch-cinematic" role="status" aria-live="polite">
       <strong>Dispatch moving</strong>
-      <span>${routeName(route)}</span>
+      <span>${routeTravelName(route, state.currentNodeId)}</span>
       <button data-action="skip-dispatch">Skip Animation</button>
     </div>
   `;
@@ -935,13 +944,17 @@ function renderLedgerWireCurrent(result: DispatchResultView) {
 
 function renderResultSections(result: NonNullable<LedgerState['lastResult']>) {
   const overview = [
-    ['Contract', `${findNodeName(result.contract.origin)} to ${findNodeName(result.contract.destination)}`],
-    ['Cargo value', formatMoney(result.contract.cargoValue)],
-    ['Route', routeName(result.route)],
-    ['Threat encountered', result.incidents.map((incident) => incident.hazard.name).join(' + ')],
-    ['Incident exposure', `${result.incidents.length}`]
+    ['Route', routeTravelName(result.route, result.fromNodeId)],
+    ['Threat', result.incidents.map((incident) => incident.hazard.name).join(' + ')],
+    ['Counter result', result.countersSucceeded.length ? `${result.countersSucceeded.map((id) => actionName(id)).join(', ')} worked` : result.countersAttempted.length ? 'Counter attempted; incident still pressed through' : 'No counter required'],
+    ['Exposure', `${result.incidents.length} check${result.incidents.length === 1 ? '' : 's'}`]
   ];
-  const intel = result.intelGathered.map((report) => [intelLabel(report.source), `${report.text} ${intelQualityText(report.quality)}`]);
+  const contractRows = [
+    ['Contract', `${findNodeName(result.contract.origin)} -> ${findNodeName(result.contract.destination)}`],
+    ['Cargo value', formatMoney(result.contract.cargoValue)],
+    ['Cargo type', result.contract.cargoType]
+  ];
+  const intel = result.intelGathered.map((report) => [intelLabel(report.source), compactIntelText(report)]);
   if (result.localRumorOutcome) {
     intel.push(['Local rumor followed', localRumorOutcomeText(result.localRumorOutcome)]);
   }
@@ -967,20 +980,35 @@ function renderResultSections(result: NonNullable<LedgerState['lastResult']>) {
     ...amountRow('Currency trust', result.trustDelta, 'signed-number', 'trust'),
     ...amountRow('Outlaw Pressure', result.pressureDelta, 'signed-number', 'pressure')
   ];
-  const reserve = result.protectionHeld.map((id) => [actionName(id), 'Held in reserve; no matching incident required it.']);
+  const reserve = result.protectionHeld.length ? [['Protection held in reserve', renderPrepChipList(result.protectionHeld)]] : [];
   const backtrack = result.backtrackPenalty ? [['Backtrack penalty', 'Fee and score reduced.']] : [];
+  const primarySections = [
+    renderResultSection('Route Summary', overview),
+    renderResultSection('Ledger Settlement', financial),
+    renderResultSection('Intel Summary', intel.slice(0, 3)),
+    renderResultSection('Protection Held In Reserve', reserve)
+  ].join('');
+  const detailSections = [
+    renderResultSection('Contract Details', contractRows),
+    renderResultSection('Intel Gathered', intel),
+    renderResultSection('Counters Attempted', attempted),
+    renderResultSection('Counters Succeeded', succeeded),
+    renderResultSection('Counters Failed', failed),
+    renderResultSection('Other Ledger Notes', backtrack)
+  ].join('');
 
   return `
-    <div class="result-sections">
-      ${renderResultSection('Route Summary', overview)}
-      ${renderResultSection('Intel Gathered', intel)}
-      ${renderResultSection('Counters Attempted', attempted)}
-      ${renderResultSection('Financial Mitigation', financial)}
-      ${renderResultSection('Counters Succeeded', succeeded)}
-      ${renderResultSection('Counters Failed', failed)}
-      ${renderResultSection('Protection Held In Reserve', reserve)}
-      ${renderResultSection('Other Ledger Notes', backtrack)}
+    <div class="result-sections result-primary-sections">
+      ${primarySections}
     </div>
+    ${
+      detailSections.trim()
+        ? `<details class="full-ledger-details">
+            <summary>Full Ledger Details</summary>
+            <div class="result-sections result-detail-sections">${detailSections}</div>
+          </details>`
+        : ''
+    }
   `;
 }
 
@@ -1030,6 +1058,19 @@ function intelQualityText(quality: string) {
   return '(unverified rumor)';
 }
 
+function compactIntelText(report: { source: string; quality: string; text: string }) {
+  const cleaned = report.text
+    .replace(/^Scout:\s*/i, '')
+    .replace(/^Wire:\s*/i, '')
+    .replace(/^Tip:\s*/i, '')
+    .replace(/\.$/, '');
+  return `${cleaned}; ${intelQualityText(report.quality).replace(/[()]/g, '')}`;
+}
+
+function renderPrepChipList(ids: PrepActionId[]) {
+  return `<span class="prep-chip-list">${ids.map((id) => `<b>${escapeHtml(actionName(id))}</b>`).join('')}</span>`;
+}
+
 function localRumorOutcomeText(outcome: string) {
   if (outcome === 'useful') {
     return 'Useful local intelligence.';
@@ -1070,8 +1111,9 @@ function recordChronicleLeg(before: LedgerState, result: DispatchResultView) {
       ...chronicle.legs,
       {
         routeId: result.route.id,
-        from: before.currentNodeId,
+        from: result.fromNodeId,
         to: result.nextNodeId,
+        routeLabel: routeTravelName(result.route, result.fromNodeId),
         seal: eventSealForResult(result),
         status,
         headline
@@ -1134,16 +1176,15 @@ function sealIcon(seal: EventSeal) {
 function buildLedgerHeadline(result: DispatchResultView) {
   const cargo = headlineCargo(result.contract.cargoType);
   const destination = findNodeName(result.contract.destination).toUpperCase();
-  const routeEnd = findNodeName(result.nextNodeId).toUpperCase();
-  const route = routeName(result.route).toUpperCase();
+  const route = routeTravelName(result.route, result.fromNodeId).toUpperCase();
   const net = result.netFee >= 0 ? `NET ${formatMoney(result.netFee)}` : `COST ${formatMoney(Math.abs(result.netFee))}`;
 
   if (result.arrivedAtDestination) {
-    return `${cargo} REACHES ${destination} WITH ${net}`;
+    return `${cargo} REACHES ${destination} VIA ${route} WITH ${net}`;
   }
   if (!result.success) {
     if (result.localRumorOutcome === 'false' || result.hazard.id === 'false-tip' || result.hazard.id === 'scout-missing') {
-      return `FALSE RUMOR SENDS CREW INTO EMPTY COUNTRY`;
+      return `FALSE RUMOR SENDS CREW ON ${route} INTO EMPTY COUNTRY`;
     }
     return `${cargo} LOSS ON ${route} SHAKES ${destination} TRUST`;
   }
@@ -1151,16 +1192,16 @@ function buildLedgerHeadline(result: DispatchResultView) {
     return `GUARDS BREAK AMBUSH ON ${route}`;
   }
   if (result.hazard.id === 'track-cut') {
-    return `TRACK REOPENED BEFORE ${cargo} LOSES TRUST`;
+    return `TRACK REOPENED ON ${route} BEFORE ${cargo} LOSES TRUST`;
   }
   if (result.hazard.id === 'washed-bridge') {
-    return `BRIDGE CREW KEEPS ${cargo} MOVING TO ${routeEnd}`;
+    return `BRIDGE CREW KEEPS ${cargo} MOVING ON ${route}`;
   }
   if (result.hazard.id === 'bad-weather') {
-    return `${cargo} BEATS WEATHER INTO ${routeEnd}`;
+    return `${cargo} BEATS WEATHER ON ${route}`;
   }
   if (result.hazard.id === 'clean') {
-    return `${cargo} CLEARS ${routeEnd} WITHOUT INCIDENT`;
+    return `${cargo} CLEARS ${route} WITHOUT INCIDENT`;
   }
   return `${cargo} HOLDS ON ${route} FOR ${net}`;
 }
@@ -1352,7 +1393,7 @@ function renderMap(mode: 'preview' | 'game') {
       ].join(' ');
       const aria = routeAriaLabel(route, routeState, mode);
       return `
-        <path d="${d}" class="route-hit ${inspectable ? '' : 'disabled'}" ${inspectable ? `data-route-id="${route.id}" tabindex="0" role="button" aria-label="${escapeHtml(aria)}"` : 'tabindex="-1" aria-hidden="true"'}><title>${escapeHtml(routeTooltip(route, routeState))}</title></path>
+        <path d="${d}" class="route-hit ${inspectable ? '' : 'disabled'}" ${inspectable ? `data-route-id="${route.id}" tabindex="0" role="button" aria-label="${escapeHtml(aria)}"` : 'tabindex="-1" aria-hidden="true"'}><title>${escapeHtml(routeTooltip(route, routeState, mode))}</title></path>
         <path d="${d}" class="${classes}"></path>
         ${routeState?.assigned.length ? renderRouteBadges(route, routeState.assigned) : ''}
         ${routeState?.revealed && routeState.hazardId !== 'clean' ? renderHazardPip(route) : ''}
@@ -1533,18 +1574,26 @@ function routeMidPoint(route: LedgerRoute) {
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
 }
 
-function routeName(route: LedgerRoute) {
-  return `${findNodeName(route.from)} to ${findNodeName(route.to)}`;
+function routeAtlasName(route: LedgerRoute) {
+  return `${findNodeName(route.from)} <-> ${findNodeName(route.to)}`;
 }
 
-function routeTooltip(route: LedgerRoute, routeState?: { active: boolean; assigned: PrepActionId[]; revealed: boolean }) {
+function routeTravelName(route: LedgerRoute, fromNodeId: NodeId) {
+  return `${findNodeName(fromNodeId)} -> ${findNodeName(otherEnd(route, fromNodeId))}`;
+}
+
+function routeTooltip(route: LedgerRoute, routeState: LedgerState['routeStates'][RouteId] | undefined, mode: 'preview' | 'game') {
   const prep = routeState?.assigned.length ? routeState.assigned.map((id) => actionName(id)).join(', ') : 'No prep assigned';
-  return `${routeName(route)} | ${route.type} ${route.express ? 'express' : 'route'} | danger ${routeDangerLabel(route)} | fee x${route.payoutMultiplier.toFixed(2)} | exposure ${incidentExposure(route)} | ${routeState?.active ? 'open' : 'closed'} | ${prep}`;
+  const name = mode === 'game' && (route.from === state.currentNodeId || route.to === state.currentNodeId) ? routeTravelName(route, state.currentNodeId) : routeAtlasName(route);
+  const tutorial = routeState?.tutorialProtected ? ' | BOARD-CLEARED STARTER ROUTE: The board cleared one opening route so the first contract can teach the ledger.' : '';
+  return `${name} | ${route.type} ${route.express ? 'express' : 'route'} | danger ${routeDangerLabel(route, routeState)}${tutorial} | fee x${route.payoutMultiplier.toFixed(2)} | exposure ${incidentExposure(route)} | ${routeState?.active ? 'open' : 'closed'} | ${prep}`;
 }
 
 function routeAriaLabel(route: LedgerRoute, routeState: LedgerState['routeStates'][RouteId] | undefined, mode: 'preview' | 'game') {
   const status = mode === 'preview' ? (routeState?.active ? 'open this contract' : 'closed this contract') : routeStatusLabel(state, route);
-  return `${routeName(route)}, ${status}, ${route.type}${route.express ? ' express' : ''}, danger ${routeDangerLabel(route)}, fee multiplier ${route.payoutMultiplier.toFixed(2)}, incident exposure ${incidentExposure(route)}`;
+  const name = mode === 'game' && (route.from === state.currentNodeId || route.to === state.currentNodeId) ? routeTravelName(route, state.currentNodeId) : routeAtlasName(route);
+  const tutorial = routeState?.tutorialProtected ? ', board-cleared starter route, 0 percent protected, the board cleared one opening route so the first contract can teach the ledger' : '';
+  return `${name}, ${status}, ${route.type}${route.express ? ' express' : ''}, danger ${routeDangerLabel(route, routeState)}${tutorial}, fee multiplier ${route.payoutMultiplier.toFixed(2)}, incident exposure ${incidentExposure(route)}`;
 }
 
 function renderPrepBadge(actionId: PrepActionId) {
