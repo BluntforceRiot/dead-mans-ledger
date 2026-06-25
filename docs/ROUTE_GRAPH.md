@@ -2,7 +2,7 @@
 
 ## Summary
 
-v0.7.3 includes:
+v0.7.4 includes:
 
 - 55 city nodes.
 - 84 routes.

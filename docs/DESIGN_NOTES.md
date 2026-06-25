@@ -10,6 +10,18 @@ The money provided independence. The route was the engine.
 
 The game treats independence as economic circulation. Paper money only creates practical independence if it reaches towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
+## v0.7.4 Scope
+
+The v0.7.4 production-truth pass closes Review11 release blockers without changing the core loop:
+
+- Protected express starter routes now store and resolve two clean protected checks, matching the advertised express exposure.
+- Prep assignment, route selection, borrowing, and debt repayment are frozen as soon as dispatch is committed; Skip Animation and view/sound controls remain available.
+- Multi-incident aggregate results now name the first failed non-clean incident. Partial counter success on an overall loss no longer earns a gold `COUNTER WORKED` stamp.
+- Ledger Wire false-rumor headlines no longer claim "empty country" when a real incident broke through.
+- Settlement results explicitly store and render deadline penalty, cargo liability, debt before dispatch, borrowed-this-leg amount, and debt after dispatch.
+- Local Tip UI now uses non-probabilistic "confidence unverified" language instead of a deterministic hidden-quality percentage.
+- Reverse-direction dispatch animation follows the same canonical route curve backward instead of mirroring the line.
+
 ## v0.7.3 Scope
 
 The v0.7.3 production-hardening pass closes Review10 release blockers without changing the core loop:

@@ -1,7 +1,7 @@
 {
   "name": "dead-mans-ledger",
   "description": "Dead Man's Ledger: The Money Engine, a clickable frontier currency-route strategy sim.",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -17,6 +17,7 @@
     "route-integrity:v071": "node scripts/route-integrity-v071.mjs",
     "review9:regression": "node scripts/review9-regression.mjs",
     "review10:regression": "node scripts/review10-regression.mjs",
+    "review11:regression": "node scripts/review11-regression.mjs",
     "review:zip": "node scripts/create-review-zip.mjs",
     "playtest:v06": "node scripts/playtest-v06.mjs",
     "playtest:v061": "node scripts/playtest-v061.mjs",
@@ -24,6 +25,7 @@
     "playtest:v071": "node scripts/playtest-v071.mjs",
     "playtest:v072": "node scripts/playtest-v071.mjs",
     "playtest:v073": "node scripts/playtest-v071.mjs",
+    "playtest:v074": "node scripts/playtest-v071.mjs",
     "screenshots:v01": "node scripts/capture-v01-screenshots.mjs",
     "screenshots:v02": "node scripts/capture-v02-screenshots.mjs",
     "screenshots:v03": "node scripts/capture-v03-screenshots.mjs",
@@ -34,7 +36,8 @@
     "screenshots:v07": "node scripts/capture-v07-screenshots.mjs",
     "screenshots:v071": "node scripts/capture-v071-screenshots.mjs",
     "screenshots:v072": "node scripts/capture-v071-screenshots.mjs",
-    "screenshots:v073": "node scripts/capture-v071-screenshots.mjs"
+    "screenshots:v073": "node scripts/capture-v071-screenshots.mjs",
+    "screenshots:v074": "node scripts/capture-v071-screenshots.mjs"
   },
   "dependencies": {
     "d3-geo": "^3.1.1"

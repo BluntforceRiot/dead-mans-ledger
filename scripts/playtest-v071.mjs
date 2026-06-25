@@ -8,7 +8,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const outDir = path.join(root, '.tmp', 'playtest-v071-sim');
 const baseUrl = process.argv[2] ?? process.env.PLAYTEST_BASE_URL ?? 'http://127.0.0.1:4173/';
-const reportPath = path.join(root, 'PLAYTEST_REPORT_DEAD_MANS_LEDGER_V073.md');
+const packageJson = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'));
+const versionLabel = `v${packageJson.version}`;
+const versionTag = `V${packageJson.version.replace(/\./g, '')}`;
+const reportPath = path.join(root, `PLAYTEST_REPORT_DEAD_MANS_LEDGER_${versionTag}.md`);
 
 const passes = [];
 const findings = [];
@@ -86,7 +89,7 @@ function headlineMatches(status, headline) {
     return /BREAK|REOPENED|BRIDGE|WEATHER|HOLDS|MOVING/.test(headline);
   }
   if (status === 'SHIPMENT DISRUPTED') {
-    return /LOSS|FALSE RUMOR/.test(headline);
+    return /LOSS|FALSE RUMOR|BAD TIP/.test(headline);
   }
   return headline.length > 10;
 }
@@ -252,8 +255,39 @@ async function dispatchAndSkip() {
   assert((await page.locator('.route-line.dispatching').count()) > 0, 'Cinematic dispatch highlights the active route');
   assert((await page.locator('.incident-pulse').count()) > 0, 'Cinematic dispatch shows an incident pulse');
   assert((await page.locator('[data-action=skip-dispatch]').count()) > 0, 'Skip Animation is available during dispatch');
+  assert((await page.locator('[data-prep-id]:not([disabled])').count()) === 0, 'Prep actions are disabled during committed dispatch');
+  assert((await page.locator('[data-action="repay-debt"]:not([disabled])').count()) === 0, 'Debt repayment is disabled during committed dispatch');
+  const clickableRouteHits = await page.locator('.route-hit[data-route-id]:not(.disabled)').count();
+  assert(clickableRouteHits === 0, 'Route hit targets are disabled during committed dispatch');
   await page.locator('[data-action=skip-dispatch]').first().click();
   await page.waitForSelector('.result-card', { timeout: 1600 });
+}
+
+async function assertReverseAnimationUsesCanonicalCurve(testCase) {
+  await startSeededFromOffice(testCase.seed, testCase.officeIndex);
+  await clickRouteId(testCase.route.id);
+  await page.locator('[data-action=dispatch]:not([disabled])').first().click();
+  await page.waitForSelector('.dispatch-cinematic', { timeout: 1000 });
+  const paths = await page.evaluate(() => {
+    const routeLine = document.querySelector('.route-line.dispatching');
+    const motion = document.querySelector('.vehicle-token.moving animateMotion');
+    return {
+      line: routeLine?.getAttribute('d') ?? '',
+      motion: motion?.getAttribute('path') ?? ''
+    };
+  });
+  const parse = (value) => {
+    const match = value.match(/^M ([\d.-]+) ([\d.-]+) Q ([\d.-]+) ([\d.-]+) ([\d.-]+) ([\d.-]+)$/);
+    return match ? match.slice(1).map(Number) : [];
+  };
+  const line = parse(paths.line);
+  const motion = parse(paths.motion);
+  assert(line.length === 6 && motion.length === 6, 'Dispatch route and moving token paths are parseable');
+  assert(line[2] === motion[2] && line[3] === motion[3], 'Reverse dispatch token uses the displayed route control point');
+  assert(line[0] === motion[4] && line[1] === motion[5] && line[4] === motion[0] && line[5] === motion[1], 'Reverse dispatch token travels backward on the displayed route curve');
+  await page.locator('[data-action=skip-dispatch]').first().click();
+  await page.waitForSelector('.result-card', { timeout: 1600 });
+  await continueResult();
 }
 
 async function continueResult() {
@@ -333,6 +367,7 @@ assert(!/candidate|pending/i.test(await page.locator('body').innerText()), 'No c
 
 await assertRouteDirection(forwardCase, 'Forward direction case');
 await assertRouteDirection(reverseCase, 'Reverse direction case');
+await assertReverseAnimationUsesCanonicalCurve(reverseCase);
 
 await startSeededFromOffice(9100, 0);
 assert((await page.locator('.contract-accepted-stamp[aria-label="CONTRACT ACCEPTED"]').count()) > 0, 'Contract Accepted stamp appears on new game');
@@ -379,11 +414,13 @@ assert(legCount >= 1, 'Chronicle records the completed route leg');
 await assertResultDirection(failureDirectionCase);
 
 await startSeededFromOffice(falseRumorCase.seed, falseRumorCase.officeIndex);
+const rumorText = await page.locator('.rumor-strip').filter({ hasText: /local tip available/i }).first().innerText();
+assert(!/% reliable/i.test(rumorText) && /confidence unverified/i.test(rumorText), 'Local Tip no longer displays a deterministic reliability percentage');
 await clickRouteId(falseRumorCase.route.id);
 await assignPrepToRoute('tip', falseRumorCase.route.id);
 await dispatchAndSkip();
 const falseRumorHeadline = ((await page.locator('[data-testid="ledger-wire-headline"]').getAttribute('data-headline')) ?? '').toUpperCase();
-assert(falseRumorHeadline.includes('FALSE RUMOR') && falseRumorHeadline.includes(falseRumorCase.expectedDirection.toUpperCase()), 'False-rumor Ledger Wire headline includes actual travel direction');
+assert(!falseRumorHeadline.includes('EMPTY COUNTRY') && falseRumorHeadline.includes(falseRumorCase.expectedDirection.toUpperCase()), 'False-rumor Ledger Wire headline avoids empty-country claims when real danger broke through');
 await continueResult();
 
 await startSeededFromOffice(cleanReserveCase.seed, cleanReserveCase.officeIndex);
@@ -451,7 +488,7 @@ assert((await page.locator('.atlas-stamp[aria-label="ROUTE LEGEND"]').count()) >
 await browser.close();
 
 const report = [
-  "# Dead Man's Ledger v0.7.3 Truth-And-Release Playtest Report",
+  `# Dead Man's Ledger ${versionLabel} Truth-And-Release Playtest Report`,
   '',
   `Base URL: ${baseUrl}`,
   '',

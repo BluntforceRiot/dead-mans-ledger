@@ -8,7 +8,7 @@ Built for Summer into AI Week 2: Independence Engines.
 
 ## Playable Submission Build
 
-This build is the v0.7.3 production-hardening patch for the v1.0 submission build:
+This build is the v0.7.4 production-truth patch for the v1.0 submission build:
 
 - Vite + TypeScript static browser app.
 - Real geodata-derived contiguous U.S. base map.
@@ -27,6 +27,7 @@ This build is the v0.7.3 production-hardening patch for the v1.0 submission buil
 - v0.7.1 fixes route-generation integrity, truthful tutorial protection, directional route labels, compact result cards, and portable review packaging.
 - v0.7.2 fixes hidden-intel truth leaks, express second-slot intel, opening deadhead classification, shared deadhead warnings, and applied settlement deltas.
 - v0.7.3 makes repeat protection contract-scoped, chooses protected starters with shared deadhead logic, removes negative-intel side channels, preserves mixed express counter outcomes, fixes rumor accuracy labels, completes settlement-delta truth, and packages review zips with portable paths.
+- v0.7.4 fixes protected express exposure cardinality, freezes prep/finance during committed dispatch, selects the actual failed incident as aggregate cause, removes false-rumor empty-country claims when real danger broke through, exposes deadline/liability/debt settlement fields, hides Local Tip probability labels, and keeps reverse-direction animation on the same route curve.
 - Station rumors replace always-on Local Tip busywork.
 - Focus Contract now adaptively frames the active contract corridor, while Full Map restores the complete network.
 - Displayed danger uses the same incident-probability model as route generation.
@@ -49,10 +50,11 @@ npm run balance:sim
 npm run route-integrity:v071
 npm run review9:regression
 npm run review10:regression
+npm run review11:regression
 npm run review:zip
 npm run playtest:v061
 npm run playtest:v07
-npm run playtest:v073
+npm run playtest:v074
 npm run preview
 npm audit --audit-level=moderate
 ```
@@ -60,7 +62,7 @@ npm audit --audit-level=moderate
 Screenshot capture for review:
 
 ```sh
-npm run screenshots:v073
+npm run screenshots:v074
 ```
 
 ## Controls

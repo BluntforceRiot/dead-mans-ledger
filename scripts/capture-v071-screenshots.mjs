@@ -1,13 +1,15 @@
-import { mkdir, readdir, rm } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright';
 
 const baseUrl = process.argv[2] ?? process.env.SCREENSHOT_BASE_URL ?? 'http://127.0.0.1:4173/';
 const outputDir = path.resolve('output', 'playwright');
+const packageJson = JSON.parse(await readFile(path.resolve('package.json'), 'utf8'));
+const versionTag = `v${packageJson.version.replace(/\./g, '')}`;
 
 await mkdir(outputDir, { recursive: true });
 for (const file of await readdir(outputDir)) {
-  if (file.includes('-v073') && file.endsWith('.png')) {
+  if (file.includes(`-${versionTag}`) && file.endsWith('.png')) {
     await rm(path.join(outputDir, file), { force: true });
   }
 }
@@ -16,7 +18,7 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 
 async function shot(name) {
-  await page.screenshot({ path: path.join(outputDir, name), type: 'png', scale: 'css' });
+  await page.screenshot({ path: path.join(outputDir, name.replace(/v\d+(?=\.png$)/, versionTag)), type: 'png', scale: 'css' });
 }
 
 async function startFromOffice(index = 0) {
@@ -361,4 +363,4 @@ await page.waitForSelector('.score-page');
 await shot('dead-mans-ledger-high-score-ledger-v073.png');
 
 await browser.close();
-console.log(`v0.7.3 screenshots written to ${outputDir} from ${baseUrl}`);
+console.log(`v${packageJson.version} screenshots written to ${outputDir} from ${baseUrl}`);

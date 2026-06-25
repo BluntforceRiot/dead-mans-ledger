@@ -97,6 +97,7 @@ export interface LedgerState {
   routeStates: Record<RouteId, RouteState>;
   segmentHistory: Record<string, number>;
   creditBorrowedThisLeg: boolean;
+  borrowedThisLegAmount: number;
   stationRumor: StationRumor;
   mapMode: MapMode;
   selectedRouteId?: RouteId;
@@ -139,6 +140,9 @@ export interface DispatchResult {
   intelGathered: IntelReport[];
   localRumorOutcome?: LocalRumorOutcome;
   debtUsed: number;
+  debtBefore: number;
+  debtAfter: number;
+  borrowedThisLeg: number;
   payout: number;
   scoreDelta: number;
   cashDelta: number;
@@ -147,7 +151,9 @@ export interface DispatchResult {
   netFee: number;
   interestCharge: number;
   principalRepaid: number;
+  cargoLiability: number;
   insuranceMitigation: number;
+  deadlinePenalty: number;
   reputationDelta: number;
   trustDelta: number;
   pressureDelta: number;
@@ -291,6 +297,7 @@ function buildRunState(seed: number, officeId: OfficeId, screen: ScreenId): Ledg
     routeStates,
     segmentHistory: {},
     creditBorrowedThisLeg: false,
+    borrowedThisLegAmount: 0,
     stationRumor: generateStationRumor(seed, 1, 1, office.nodeId, routeStates),
     mapMode: 'focus'
   };
@@ -510,7 +517,7 @@ function softenFirstContractOpening(routeStates: Record<RouteId, RouteState>, no
     ...routeStates[safest.id],
     active: true,
     hazardId: 'clean',
-    hazardIds: ['clean'],
+    hazardIds: Array.from({ length: incidentExposure(safest) }, () => 'clean'),
     hazardsGenerated: true,
     tutorialProtected: true,
     revealed: false,
@@ -569,6 +576,9 @@ export function nextInterestCharge(state: LedgerState) {
 }
 
 export function borrowCredit(state: LedgerState): LedgerState {
+  if (state.dispatchingRouteId) {
+    return state;
+  }
   if (state.creditBorrowedThisLeg || state.borrowedCredit >= creditLimit(state)) {
     return state;
   }
@@ -580,12 +590,16 @@ export function borrowCredit(state: LedgerState): LedgerState {
     interestRate: clamp(state.interestRate + 0.45, 3.5, 18),
     trust: clamp(state.trust - 2, 0, 100),
     creditBorrowedThisLeg: true,
+    borrowedThisLegAmount: state.borrowedThisLegAmount + amount,
     selectedActionId: undefined,
     routeNotice: `Borrowed ${formatMoneyPlain(amount)} against the company credit line.`
   };
 }
 
 export function repayDebt(state: LedgerState): LedgerState {
+  if (state.dispatchingRouteId) {
+    return state;
+  }
   if (state.borrowedCredit <= 0 || state.cash <= 0) {
     return {
       ...state,
@@ -609,6 +623,9 @@ export function repayDebt(state: LedgerState): LedgerState {
 }
 
 export function applyPrepAction(state: LedgerState, routeId: RouteId, actionId: PrepActionId): LedgerState {
+  if (state.dispatchingRouteId) {
+    return state;
+  }
   if (actionId === 'borrow') {
     return borrowCredit(state);
   }
@@ -659,8 +676,12 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const incidentIds = routeState.hazardIds.length ? routeState.hazardIds : [routeState.hazardId];
   const incidents = incidentIds.map((hazardId, index) => resolveIncident(state, route, routeState, hazardById(hazardId), index));
   const success = incidents.every((incident) => incident.success);
-  const hazard = incidents.find((incident) => incident.hazard.id !== 'clean')?.hazard ?? hazardById('clean');
-  const countered = incidents.some((incident) => incident.counterWorked);
+  const hazard =
+    incidents.find((incident) => !incident.success && incident.hazard.id !== 'clean')?.hazard ??
+    incidents.find((incident) => incident.hazard.id !== 'clean')?.hazard ??
+    hazardById('clean');
+  const anyCounterWorked = incidents.some((incident) => incident.counterWorked);
+  const countered = success && anyCounterWorked;
   const arrivedAtDestination = success && nextNodeId === state.contract.destination;
   const contractEnded = arrivedAtDestination || !success || state.contract.legsRemaining <= 1;
   const repeatCount = state.segmentHistory[segmentKey(route)] ?? 0;
@@ -686,6 +707,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const insuredLiability = Math.round(state.contract.cargoValue * 0.2 * liabilityRiskMultiplier);
   const liability = success ? 0 : insured ? insuredLiability : uninsuredLiability;
   const insuranceMitigation = !success && insured ? uninsuredLiability - insuredLiability : 0;
+  const deadlinePenalty = state.contract.legsRemaining <= 1 && !arrivedAtDestination ? Math.round(state.contract.cargoValue * 0.22) : 0;
 
   const initialCash = state.cash;
   const initialScore = state.score;
@@ -707,9 +729,9 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     trustDeltaRaw = Math.min(trustDeltaRaw, -2);
   }
 
-  if (state.contract.legsRemaining <= 1 && !arrivedAtDestination) {
-    cashDeltaRaw -= Math.round(state.contract.cargoValue * 0.22);
-    scoreDeltaRaw -= Math.round(state.contract.cargoValue * 0.22);
+  if (deadlinePenalty > 0) {
+    cashDeltaRaw -= deadlinePenalty;
+    scoreDeltaRaw -= deadlinePenalty;
     reputationDeltaRaw -= 7;
     trustDeltaRaw -= 9;
   }
@@ -764,7 +786,10 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     protectionHeld,
     intelGathered: routeState.intelReports,
     localRumorOutcome,
-    debtUsed: state.borrowedCredit,
+    debtUsed: state.borrowedThisLegAmount,
+    debtBefore: state.borrowedCredit,
+    debtAfter: newDebt,
+    borrowedThisLeg: state.borrowedThisLegAmount,
     payout: grossFee,
     scoreDelta,
     cashDelta,
@@ -773,7 +798,9 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     netFee,
     interestCharge,
     principalRepaid,
+    cargoLiability: liability,
     insuranceMitigation,
+    deadlinePenalty,
     reputationDelta,
     trustDelta,
     pressureDelta,
@@ -833,6 +860,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     routeStates,
     segmentHistory: nextSegmentHistory,
     creditBorrowedThisLeg: false,
+    borrowedThisLegAmount: 0,
     stationRumor,
     selectedRouteId: undefined,
     selectedActionId: undefined,

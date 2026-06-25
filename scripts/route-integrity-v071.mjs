@@ -6,7 +6,10 @@ import { build } from 'vite';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const outDir = path.join(root, '.tmp', 'route-integrity-v071-sim');
-const reportPath = path.join(root, 'ROUTE_GENERATION_INTEGRITY_REPORT_V073.md');
+const packageJson = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'));
+const versionLabel = `v${packageJson.version}`;
+const versionTag = `V${packageJson.version.replace(/\./g, '')}`;
+const reportPath = path.join(root, `ROUTE_GENERATION_INTEGRITY_REPORT_${versionTag}.md`);
 const contractsPerOfficeJourney = 5000;
 const journeys = [1, 5, 10];
 
@@ -367,7 +370,7 @@ const officeRows = [...officeBuckets.values()].map((bucket) => {
   return `| ${item.label} | ${item.contracts} | ${item.contractsWithConnectivity} | ${item.destinationActivatedRoutes} | ${item.adjacencyActivatedRoutes} | ${pct(item.connectivityCleanRate)} | ${pct(item.empiricalIncidentRate)} | ${pct(item.displayedRisk)} | ${item.tutorialProtectedRoutes} |`;
 });
 
-const report = `# Dead Man's Ledger v0.7.3 Route Generation Integrity Report
+const report = `# Dead Man's Ledger ${versionLabel} Route Generation Integrity Report
 
 ## Summary
 

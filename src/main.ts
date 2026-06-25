@@ -38,6 +38,7 @@ import {
   type OfficeId,
   type ScreenId
 } from './game/sim';
+import { buildLedgerHeadline } from './game/ledgerWire';
 import { MAP_HEIGHT, MAP_WIDTH, projectPoint } from './map/projection';
 
 const appRoot = document.querySelector<HTMLDivElement>('#app')!;
@@ -246,6 +247,9 @@ function handlePrepClick(prepId: PrepActionId) {
   if (state.screen !== 'game') {
     return;
   }
+  if (state.dispatchingRouteId) {
+    return;
+  }
 
   playCue('click');
   if (prepId === 'borrow') {
@@ -267,6 +271,9 @@ function handleRouteClick(routeId: RouteId) {
   }
 
   if (state.screen !== 'game') {
+    return;
+  }
+  if (state.dispatchingRouteId) {
     return;
   }
 
@@ -615,7 +622,7 @@ function renderStationRumorNotice() {
   return `
     <div class="rumor-strip">
       <strong>Local Tip Available</strong>
-      <span>${escapeHtml(rumor.notice)} ${Math.round(rumor.reliability * 100)}% reliable.</span>
+      <span>${escapeHtml(rumor.notice)} Confidence unverified.</span>
     </div>
   `;
 }
@@ -819,9 +826,10 @@ function renderPrepAction(actionId: PrepActionId) {
   }
   const selected = state.selectedActionId === action.id;
   const disabled =
-    action.id === 'borrow'
+    Boolean(state.dispatchingRouteId) ||
+    (action.id === 'borrow'
       ? state.creditBorrowedThisLeg || state.borrowedCredit >= creditLimit(state)
-      : action.cost > state.cash;
+      : action.cost > state.cash);
   const costLine =
     action.id === 'borrow'
       ? state.creditBorrowedThisLeg
@@ -842,7 +850,7 @@ function renderPrepAction(actionId: PrepActionId) {
 }
 
 function renderRepayAction() {
-  const disabled = state.borrowedCredit <= 0 || state.cash <= 120;
+  const disabled = Boolean(state.dispatchingRouteId) || state.borrowedCredit <= 0 || state.cash <= 120;
   return `
     <button class="prep-action finance-action" data-action="repay-debt" ${disabled ? 'disabled' : ''}>
       <img src="${assetUrl('assets/tokens/debt.svg')}" alt="" />
@@ -976,24 +984,30 @@ function renderResultSections(result: NonNullable<LedgerState['lastResult']>) {
     ? [['Failed', result.countersFailed.map((id) => actionName(id)).join(', ')], ['Effect', 'Attempted, but the incident still broke through.']]
     : [];
   const financial = [
-    ...amountRow('Payout', result.grossFee, 'money', 'coin'),
-    ...amountRow('Net fee', result.netFee, 'signed-money', 'coin'),
+    ...amountRow('Route fee earned', result.grossFee, 'money', 'coin'),
+    ...amountRow('Principal repaid from fee', -result.principalRepaid, 'signed-money', 'debt'),
+    ...amountRow('Interest paid', -result.interestCharge, 'signed-money', 'interest'),
     ...amountRow('Deadhead operating charge', -result.deadheadPenalty, 'signed-money', 'cash'),
+    ...amountRow('Cargo liability', -result.cargoLiability, 'signed-money', 'cash'),
+    ...amountRow('Deadline penalty', -result.deadlinePenalty, 'signed-money', 'cash'),
     ...amountRow('Score', result.scoreDelta, 'signed-number', 'coin'),
     ...amountRow('Cash', result.cashDelta, 'signed-money', 'cash'),
-    ...amountRow('Insurance applied', result.insuranceMitigation, 'money', 'cash'),
-    ...amountRow('Debt principal used', result.debtUsed, 'money', 'debt'),
-    ...amountRow('Debt principal repaid', result.principalRepaid, 'money', 'debt'),
-    ...amountRow('Interest paid', result.interestCharge, 'money', 'interest'),
     ...amountRow('Reputation', result.reputationDelta, 'signed-number', 'reputation'),
     ...amountRow('Currency trust', result.trustDelta, 'signed-number', 'trust'),
     ...amountRow('Outlaw Pressure', result.pressureDelta, 'signed-number', 'pressure')
   ];
+  const debtRows = [
+    ...staticMoneyRow('Debt before dispatch', result.debtBefore),
+    ...amountRow('Borrowed this leg', result.borrowedThisLeg, 'money', 'debt'),
+    ...staticMoneyRow('Debt after dispatch', result.debtAfter)
+  ];
   const reserve = result.protectionHeld.length ? [['Protection held in reserve', renderPrepChipList(result.protectionHeld)]] : [];
   const backtrack = result.backtrackPenalty ? [['Backtrack penalty', 'Fee and score reduced.']] : [];
+  const insurance = result.insuranceMitigation ? [['Insurance liability reduction', formatMoney(result.insuranceMitigation)]] : [];
   const primarySections = [
     renderResultSection('Route Summary', overview),
     renderResultSection('Ledger Settlement', financial),
+    renderResultSection('Debt Ledger', debtRows),
     renderResultSection('Intel Summary', intel.slice(0, 3)),
     renderResultSection('Protection Held In Reserve', reserve)
   ].join('');
@@ -1003,6 +1017,7 @@ function renderResultSections(result: NonNullable<LedgerState['lastResult']>) {
     renderResultSection('Counters Attempted', attempted),
     renderResultSection('Counters Succeeded', succeeded),
     renderResultSection('Counters Failed', failed),
+    renderResultSection('Insurance Detail', insurance),
     renderResultSection('Other Ledger Notes', backtrack)
   ].join('');
 
@@ -1061,6 +1076,13 @@ function amountRow(label: string, value: number, mode: 'money' | 'signed-money' 
       `<span class="${moneyClass} settlement-value settlement-${category}" data-settle-value data-to="${Math.round(value)}" data-format="${mode}" data-final="${escapeHtml(rendered)}" aria-label="${escapeHtml(rendered)}">${prefersReducedMotion() ? rendered : mode === 'signed-number' || mode === 'signed-money' ? '+0' : '$0'}</span>`
     ]
   ];
+}
+
+function staticMoneyRow(label: string, value: number) {
+  if (Math.round(value) === 0) {
+    return [];
+  }
+  return [[label, `<span class="money-result">${formatMoney(value)}</span>`]];
 }
 
 function intelLabel(source: string) {
@@ -1193,43 +1215,6 @@ function sealIcon(seal: EventSeal) {
     loss: 'LS'
   };
   return icons[seal];
-}
-
-function buildLedgerHeadline(result: DispatchResultView) {
-  const cargo = headlineCargo(result.contract.cargoType);
-  const destination = findNodeName(result.contract.destination).toUpperCase();
-  const route = routeTravelName(result.route, result.fromNodeId).toUpperCase();
-  const net = result.netFee >= 0 ? `NET ${formatMoney(result.netFee)}` : `COST ${formatMoney(Math.abs(result.netFee))}`;
-
-  if (result.arrivedAtDestination) {
-    return `${cargo} REACHES ${destination} VIA ${route} WITH ${net}`;
-  }
-  if (!result.success) {
-    if (result.localRumorOutcome === 'false' || result.hazard.id === 'false-tip' || result.hazard.id === 'scout-missing') {
-      return `FALSE RUMOR SENDS CREW ON ${route} INTO EMPTY COUNTRY`;
-    }
-    return `${cargo} LOSS ON ${route} SHAKES ${destination} TRUST`;
-  }
-  if (result.countered && (result.hazard.tag === 'ambush' || result.hazard.tag === 'sabotage')) {
-    return `GUARDS BREAK AMBUSH ON ${route}`;
-  }
-  if (result.hazard.id === 'track-cut') {
-    return `TRACK REOPENED ON ${route} BEFORE ${cargo} LOSES TRUST`;
-  }
-  if (result.hazard.id === 'washed-bridge') {
-    return `BRIDGE CREW KEEPS ${cargo} MOVING ON ${route}`;
-  }
-  if (result.hazard.id === 'bad-weather') {
-    return `${cargo} BEATS WEATHER ON ${route}`;
-  }
-  if (result.hazard.id === 'clean') {
-    return `${cargo} CLEARS ${route} WITHOUT INCIDENT`;
-  }
-  return `${cargo} HOLDS ON ${route} FOR ${net}`;
-}
-
-function headlineCargo(cargoType: string) {
-  return cargoType.replace(/\s+/g, ' ').trim().toUpperCase();
 }
 
 function stampLabelForResult(result: DispatchResultView) {
@@ -1401,7 +1386,7 @@ function renderMap(mode: 'preview' | 'game') {
       const dispatching = state.dispatchingRouteId === route.id;
       const connected = route.from === state.currentNodeId || route.to === state.currentNodeId;
       const reachable = Boolean(routeState?.active && connected);
-      const inspectable = mode === 'preview' || reachable;
+      const inspectable = mode === 'preview' || (reachable && !state.dispatchingRouteId);
       const d = routePath(route);
       const classes = [
         'route-line',
@@ -1580,11 +1565,10 @@ function renderMovingToken(route: LedgerRoute) {
 }
 
 function routePath(route: LedgerRoute, startNodeId: NodeId = route.from) {
-  const start = nodesById[startNodeId];
-  const endNodeId = startNodeId === route.from ? route.to : route.from;
-  const end = nodesById[endNodeId];
-  const a = projectPoint(start.longitude, start.latitude);
-  const b = projectPoint(end.longitude, end.latitude);
+  const from = nodesById[route.from];
+  const to = nodesById[route.to];
+  const a = projectPoint(from.longitude, from.latitude);
+  const b = projectPoint(to.longitude, to.latitude);
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const distance = Math.hypot(dx, dy) || 1;
@@ -1592,7 +1576,9 @@ function routePath(route: LedgerRoute, startNodeId: NodeId = route.from) {
   const curve = (route.express ? 0.17 : route.type === 'river' ? 0.1 : 0.065) * sign;
   const mx = (a.x + b.x) / 2 + (-dy / distance) * distance * curve;
   const my = (a.y + b.y) / 2 + (dx / distance) * distance * curve;
-  return `M ${a.x.toFixed(1)} ${a.y.toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
+  const start = startNodeId === route.to ? b : a;
+  const end = startNodeId === route.to ? a : b;
+  return `M ${start.x.toFixed(1)} ${start.y.toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${end.x.toFixed(1)} ${end.y.toFixed(1)}`;
 }
 
 function routeMidPoint(route: LedgerRoute) {
