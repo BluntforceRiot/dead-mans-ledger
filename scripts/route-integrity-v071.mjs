@@ -6,7 +6,7 @@ import { build } from 'vite';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const outDir = path.join(root, '.tmp', 'route-integrity-v071-sim');
-const reportPath = path.join(root, 'ROUTE_GENERATION_INTEGRITY_REPORT_V072.md');
+const reportPath = path.join(root, 'ROUTE_GENERATION_INTEGRITY_REPORT_V073.md');
 const contractsPerOfficeJourney = 5000;
 const journeys = [1, 5, 10];
 
@@ -182,6 +182,7 @@ function createBucket(label) {
     missingLegalExits: 0,
     missingContinuationExits: 0,
     missingFeeEligibleOpeningRoutes: 0,
+    deadheadProtectedStarters: 0,
     falseRumorExactMatches: 0,
     activeWithoutGeneratedHazards: 0,
     nonTutorialProtectedCleanGuarantees: 0
@@ -256,6 +257,9 @@ for (const office of sim.dispatchOffices) {
       bucket.tutorialProtectedRoutes += protectedRoutes.length;
       if (journey === 1 && protectedRoutes.length !== 1) {
         fail(`Expected exactly one tutorial-protected route for ${office.id} seed ${seed}; saw ${protectedRoutes.length}.`);
+      }
+      if (journey === 1 && protectedRoutes.some((route) => sim.wouldDeadhead(openingState, route))) {
+        bucket.deadheadProtectedStarters += 1;
       }
       if (journey !== 1 && protectedRoutes.length !== 0) {
         fail(`Unexpected tutorial-protected route for journey ${journey}, ${office.id}, seed ${seed}.`);
@@ -342,6 +346,7 @@ assert(summary.riskDelta <= 0.12, `Empirical incident rate broadly matches displ
 assert(overall.missingDestinationPaths === 0, 'Every generated contract has a valid active destination path.');
 assert(overall.missingLegalExits === 0, 'Every current station has at least one legal exit.');
 assert(overall.missingFeeEligibleOpeningRoutes === 0, 'Every sampled opening contract has at least one legal fee-eligible route toward the destination.');
+assert(overall.deadheadProtectedStarters === 0, 'Every sampled tutorial-protected starter route is fee-eligible under shared deadhead classification.');
 assert(overall.missingContinuationExits === 0, 'Every sampled active-route arrival has a non-backtracking continuation after runtime route repair.');
 assert(overall.falseRumorExactMatches === 0, 'False and bait local rumors never exactly match an adjacent real hazard.');
 assert(overall.activeWithoutGeneratedHazards === 0, 'Every active route has generated hazards or explicit tutorial protection.');
@@ -362,7 +367,7 @@ const officeRows = [...officeBuckets.values()].map((bucket) => {
   return `| ${item.label} | ${item.contracts} | ${item.contractsWithConnectivity} | ${item.destinationActivatedRoutes} | ${item.adjacencyActivatedRoutes} | ${pct(item.connectivityCleanRate)} | ${pct(item.empiricalIncidentRate)} | ${pct(item.displayedRisk)} | ${item.tutorialProtectedRoutes} |`;
 });
 
-const report = `# Dead Man's Ledger v0.7.2 Route Generation Integrity Report
+const report = `# Dead Man's Ledger v0.7.3 Route Generation Integrity Report
 
 ## Summary
 
@@ -375,6 +380,7 @@ const report = `# Dead Man's Ledger v0.7.2 Route Generation Integrity Report
 - Adjacency-activated routes: ${overall.adjacencyActivatedRoutes}
 - Adjacency-only probe activations: ${adjacencyProbeActivations}
 - Contracts missing a fee-eligible opening route: ${overall.missingFeeEligibleOpeningRoutes}
+- Tutorial-protected starter deadheads: ${overall.deadheadProtectedStarters}
 - Runtime-repaired active arrival continuation gaps: ${overall.missingContinuationExits}
 - False/bait rumor exact hazard matches: ${overall.falseRumorExactMatches}
 - Connectivity clean rate: ${pct(summary.connectivityCleanRate)}

@@ -8,7 +8,7 @@ Built for Summer into AI Week 2: Independence Engines.
 
 ## Playable Submission Build
 
-This build is the v0.7.2 truth-and-release hardening patch for the v1.0 submission build:
+This build is the v0.7.3 production-hardening patch for the v1.0 submission build:
 
 - Vite + TypeScript static browser app.
 - Real geodata-derived contiguous U.S. base map.
@@ -26,6 +26,7 @@ This build is the v0.7.2 truth-and-release hardening patch for the v1.0 submissi
 - Gold ledger stamps, Dispatch Chronicle, Ledger Wire headlines, cinematic dispatch focus, and animated settlement deltas.
 - v0.7.1 fixes route-generation integrity, truthful tutorial protection, directional route labels, compact result cards, and portable review packaging.
 - v0.7.2 fixes hidden-intel truth leaks, express second-slot intel, opening deadhead classification, shared deadhead warnings, and applied settlement deltas.
+- v0.7.3 makes repeat protection contract-scoped, chooses protected starters with shared deadhead logic, removes negative-intel side channels, preserves mixed express counter outcomes, fixes rumor accuracy labels, completes settlement-delta truth, and packages review zips with portable paths.
 - Station rumors replace always-on Local Tip busywork.
 - Focus Contract now adaptively frames the active contract corridor, while Full Map restores the complete network.
 - Displayed danger uses the same incident-probability model as route generation.
@@ -47,9 +48,11 @@ npm run build
 npm run balance:sim
 npm run route-integrity:v071
 npm run review9:regression
+npm run review10:regression
+npm run review:zip
 npm run playtest:v061
 npm run playtest:v07
-npm run playtest:v072
+npm run playtest:v073
 npm run preview
 npm audit --audit-level=moderate
 ```
@@ -57,7 +60,7 @@ npm audit --audit-level=moderate
 Screenshot capture for review:
 
 ```sh
-npm run screenshots:v072
+npm run screenshots:v073
 ```
 
 ## Controls

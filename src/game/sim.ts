@@ -147,6 +147,7 @@ export interface DispatchResult {
   netFee: number;
   interestCharge: number;
   principalRepaid: number;
+  insuranceMitigation: number;
   reputationDelta: number;
   trustDelta: number;
   pressureDelta: number;
@@ -492,10 +493,16 @@ export function generateStationRumor(seed: number, journey: number, deliveryInJo
 }
 
 function softenFirstContractOpening(routeStates: Record<RouteId, RouteState>, nodeId: NodeId, contract: Contract) {
-  const candidates = getAdjacentRoutes(nodeId)
-    .filter((route) => !route.express && routeClosesDistanceForNodes(otherEnd(route, nodeId), nodeId, contract.destination))
-    .sort((a, b) => a.baseRisk - b.baseRisk);
-  const safest = candidates[0] ?? getAdjacentRoutes(nodeId).filter((route) => !route.express).sort((a, b) => a.baseRisk - b.baseRisk)[0];
+  const openingState = {
+    currentNodeId: nodeId,
+    contract,
+    routeStates,
+    segmentHistory: {}
+  } as LedgerState;
+  const candidates = getAdjacentRoutes(nodeId, routeStates)
+    .filter((route) => !wouldDeadhead(openingState, route))
+    .sort((a, b) => Number(a.express) - Number(b.express) || a.baseRisk - b.baseRisk || a.id.localeCompare(b.id));
+  const safest = candidates[0] ?? getAdjacentRoutes(nodeId, routeStates).sort((a, b) => a.baseRisk - b.baseRisk || a.id.localeCompare(b.id))[0];
   if (!safest) {
     return;
   }
@@ -674,8 +681,11 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const interestCharge = nextInterestCharge(state);
   const netFee = grossFee - principalRepaid - interestCharge;
   const insured = assignments.includes('insurance');
-  const liability = success ? 0 : Math.round(state.contract.cargoValue * (insured ? 0.2 : 0.5) * (1 + route.baseRisk * 0.8));
-  const insuranceMitigation = !success && insured ? Math.round(state.contract.cargoValue * 0.3) : 0;
+  const liabilityRiskMultiplier = 1 + route.baseRisk * 0.8;
+  const uninsuredLiability = Math.round(state.contract.cargoValue * 0.5 * liabilityRiskMultiplier);
+  const insuredLiability = Math.round(state.contract.cargoValue * 0.2 * liabilityRiskMultiplier);
+  const liability = success ? 0 : insured ? insuredLiability : uninsuredLiability;
+  const insuranceMitigation = !success && insured ? uninsuredLiability - insuredLiability : 0;
 
   const initialCash = state.cash;
   const initialScore = state.score;
@@ -711,7 +721,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     incidents
       .filter((incident) => incident.counterAttempted.length > 0 && !incident.counterWorked)
       .flatMap((incident) => incident.counterAttempted)
-  ).filter((actionId) => !countersSucceeded.includes(actionId));
+  );
   const mitigationApplied = uniquePrep([
     ...(!success && insured ? (['insurance'] as PrepActionId[]) : []),
     ...(principalRepaid > 0 ? (['borrow'] as PrepActionId[]) : [])
@@ -720,7 +730,9 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const protectionHeld = assignments.filter((actionId) => protectionActions.has(actionId) && !prepUsed.includes(actionId) && !mitigationApplied.includes(actionId));
   const prepNotNeeded = protectionHeld;
   const localRumorOutcome = classifyLocalRumor(routeState.intelReports, incidentIds);
-  const pressureDelta = calculatePressureDelta(state, route, success, countered);
+  const pressureDeltaRaw = calculatePressureDelta(state, route, success, countered);
+  const newPressure = clamp(state.outlawPressure + pressureDeltaRaw, 0, 95);
+  const pressureDelta = newPressure - state.outlawPressure;
   const newCash = Math.round(initialCash + cashDeltaRaw);
   const newScore = Math.max(0, initialScore + scoreDeltaRaw);
   const newReputation = clamp(initialReputation + reputationDeltaRaw, 0, 100);
@@ -761,6 +773,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     netFee,
     interestCharge,
     principalRepaid,
+    insuranceMitigation,
     reputationDelta,
     trustDelta,
     pressureDelta,
@@ -779,11 +792,12 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const nextJourney = contractEnded ? state.journey + 1 : state.journey;
   const nextDelivery = contractEnded ? 1 : state.deliveryInJourney + 1;
   const nextSeed = (state.seed + nextJourney * 104729 + nextDelivery * 53 + Math.floor(state.contract.cargoValue * 13) + hashString(routeId)) >>> 0;
-  const segmentHistory = {
+  const updatedSegmentHistory = {
     ...state.segmentHistory,
     [segmentKey(route)]: repeatCount + 1
   };
-  const nextPressure = clamp(state.outlawPressure + pressureDelta, 0, 95);
+  const nextPressure = newPressure;
+  const nextSegmentHistory = contractEnded && !firedReason ? {} : updatedSegmentHistory;
 
   let nextContract = {
     ...state.contract,
@@ -802,7 +816,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   return {
     ...state,
     currentNodeId: nextNodeId,
-    previousNodeId: state.currentNodeId,
+    previousNodeId: contractEnded && !firedReason ? undefined : state.currentNodeId,
     cash: newCash,
     score: newScore,
     reputation: newReputation,
@@ -817,7 +831,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     contract: nextContract,
     seed: nextSeed,
     routeStates,
-    segmentHistory,
+    segmentHistory: nextSegmentHistory,
     creditBorrowedThisLeg: false,
     stationRumor,
     selectedRouteId: undefined,
@@ -987,7 +1001,6 @@ function buildIntelForAction(state: LedgerState, routeId: RouteId, actionId: Pre
 
   if (actionId === 'scout') {
     const found = hazardIds.find((id) => physicalIntelHazards.has(id));
-    const allClean = hazardIds.every((id) => id === 'clean');
     if (found) {
       return {
         source: 'scout',
@@ -997,25 +1010,16 @@ function buildIntelForAction(state: LedgerState, routeId: RouteId, actionId: Pre
         text: `Scout: ${hazardById(found).name}.`
       };
     }
-    if (allClean) {
-      return {
-        source: 'scout',
-        quality: 'partial',
-        confidence: 0.58,
-        text: 'Scout: physical trail looks clear.'
-      };
-    }
     return {
       source: 'scout',
       quality: 'partial',
-      confidence: 0.45,
-      text: 'Scout: no physical sign; official trouble still possible.'
+      confidence: 0.58,
+      text: 'Scout: physical trail looks clear.'
     };
   }
 
   if (actionId === 'telegraph') {
     const found = hazardIds.find((id) => officialIntelHazards.has(id));
-    const allClean = hazardIds.every((id) => id === 'clean');
     if (found) {
       return {
         source: 'telegraph',
@@ -1025,19 +1029,11 @@ function buildIntelForAction(state: LedgerState, routeId: RouteId, actionId: Pre
         text: `Wire: ${hazardById(found).name}.`
       };
     }
-    if (allClean) {
-      return {
-        source: 'telegraph',
-        quality: 'partial',
-        confidence: 0.6,
-        text: 'Wire: no official warning posted.'
-      };
-    }
     return {
       source: 'telegraph',
       quality: 'partial',
-      confidence: 0.45,
-      text: 'Wire: official desk is quiet; physical danger unknown.'
+      confidence: 0.6,
+      text: 'Wire: no official warning posted.'
     };
   }
 
@@ -1104,14 +1100,14 @@ function classifyLocalRumor(reports: IntelReport[], incidentIds: HazardId[]): Lo
   const realHazards = new Set<HazardId>(incidentIds.filter((id) => id !== 'clean'));
   const reportedClean = !report.hazardId;
   const exactHazardMatch = Boolean(report.hazardId && realHazards.has(report.hazardId));
-  if ((reportedClean && realHazards.size === 0) || exactHazardMatch) {
+  if (exactHazardMatch) {
     return report.quality === 'partial' || report.quality === 'rumor' ? 'incomplete' : 'useful';
   }
-  if (report.quality === 'true' && reportedClean && realHazards.size === 0) {
-    return 'useful';
+  if (reportedClean && realHazards.size === 0) {
+    return report.quality === 'partial' || report.quality === 'rumor' ? 'incomplete' : 'useful';
   }
-  if (report.quality === 'partial' || report.quality === 'rumor') {
-    return 'incomplete';
+  if (reportedClean || report.hazardId) {
+    return 'false';
   }
   return 'false';
 }

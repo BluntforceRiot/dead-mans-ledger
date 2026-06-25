@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const outDir = path.join(root, '.tmp', 'playtest-v071-sim');
 const baseUrl = process.argv[2] ?? process.env.PLAYTEST_BASE_URL ?? 'http://127.0.0.1:4173/';
-const reportPath = path.join(root, 'PLAYTEST_REPORT_DEAD_MANS_LEDGER_V072.md');
+const reportPath = path.join(root, 'PLAYTEST_REPORT_DEAD_MANS_LEDGER_V073.md');
 
 const passes = [];
 const findings = [];
@@ -451,7 +451,7 @@ assert((await page.locator('.atlas-stamp[aria-label="ROUTE LEGEND"]').count()) >
 await browser.close();
 
 const report = [
-  "# Dead Man's Ledger v0.7.2 Truth-And-Release Playtest Report",
+  "# Dead Man's Ledger v0.7.3 Truth-And-Release Playtest Report",
   '',
   `Base URL: ${baseUrl}`,
   '',

@@ -2,7 +2,7 @@
 
 ## Summary
 
-v0.7.2 includes:
+v0.7.3 includes:
 
 - 55 city nodes.
 - 84 routes.
@@ -87,6 +87,8 @@ At contract generation:
 - If the current station would have no active exits, nearby exits are forced active to prevent a dead contract.
 - Contract openings are checked so at least one legal active route is fee-eligible toward the destination.
 - Deadhead classification uses the active contract graph rather than inactive express shortcuts.
+- Tutorial-protected starter routes are chosen by the same shared deadhead classifier used by the simulation and UI.
+- Repeat history is scoped to the current contract and resets when a new destination contract is posted.
 
 ## Hazards
 

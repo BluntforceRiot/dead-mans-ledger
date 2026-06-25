@@ -602,7 +602,7 @@ function renderFirstTurnRecommendation() {
   return `
     <div class="rumor-strip recommendation-strip">
       <strong>First-turn note</strong>
-      <span>Scout or Telegraph a standard route toward ${findNodeName(state.contract.destination)}, assign a matching counter, then dispatch.</span>
+      <span>Scout or Telegraph a fee-eligible route toward ${findNodeName(state.contract.destination)}, assign a matching counter, then dispatch.</span>
     </div>
   `;
 }
@@ -954,7 +954,7 @@ function renderResultSections(result: NonNullable<LedgerState['lastResult']>) {
   const overview = [
     ['Route', routeTravelName(result.route, result.fromNodeId)],
     ['Threat', result.incidents.map((incident) => incident.hazard.name).join(' + ')],
-    ['Counter result', result.countersSucceeded.length ? `${result.countersSucceeded.map((id) => actionName(id)).join(', ')} worked` : result.countersAttempted.length ? 'Counter attempted; incident still pressed through' : 'No counter required'],
+    ['Counter result', counterResultSummary(result)],
     ['Exposure', `${result.incidents.length} check${result.incidents.length === 1 ? '' : 's'}`]
   ];
   const contractRows = [
@@ -981,7 +981,7 @@ function renderResultSections(result: NonNullable<LedgerState['lastResult']>) {
     ...amountRow('Deadhead operating charge', -result.deadheadPenalty, 'signed-money', 'cash'),
     ...amountRow('Score', result.scoreDelta, 'signed-number', 'coin'),
     ...amountRow('Cash', result.cashDelta, 'signed-money', 'cash'),
-    ...amountRow('Insurance applied', result.mitigationApplied.includes('insurance') ? Math.round(result.contract.cargoValue * 0.3) : 0, 'money', 'cash'),
+    ...amountRow('Insurance applied', result.insuranceMitigation, 'money', 'cash'),
     ...amountRow('Debt principal used', result.debtUsed, 'money', 'debt'),
     ...amountRow('Debt principal repaid', result.principalRepaid, 'money', 'debt'),
     ...amountRow('Interest paid', result.interestCharge, 'money', 'interest'),
@@ -1019,6 +1019,19 @@ function renderResultSections(result: NonNullable<LedgerState['lastResult']>) {
         : ''
     }
   `;
+}
+
+function counterResultSummary(result: NonNullable<LedgerState['lastResult']>) {
+  const incidentSummaries = result.incidents
+    .filter((incident) => incident.hazard.id !== 'clean')
+    .map((incident) => {
+      if (incident.counterAttempted.length === 0) {
+        return `No counter attempted against ${incident.hazard.name}`;
+      }
+      const counters = incident.counterAttempted.map((id) => actionName(id)).join(', ');
+      return `${counters} ${incident.counterWorked ? 'worked' : 'failed'} against ${incident.hazard.name}`;
+    });
+  return incidentSummaries.length ? incidentSummaries.join(' / ') : 'No counter required';
 }
 
 function renderResultSection(title: string, rows: string[][]) {

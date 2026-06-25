@@ -7,7 +7,7 @@ const outputDir = path.resolve('output', 'playwright');
 
 await mkdir(outputDir, { recursive: true });
 for (const file of await readdir(outputDir)) {
-  if (file.includes('-v072') && file.endsWith('.png')) {
+  if (file.includes('-v073') && file.endsWith('.png')) {
     await rm(path.join(outputDir, file), { force: true });
   }
 }
@@ -161,47 +161,47 @@ async function captureIncident(name, finder, setup, predicate, attempts = 100) {
 
 await page.goto(baseUrl);
 await page.waitForSelector('.title-screen');
-await shot('dead-mans-ledger-title-v072.png');
+await shot('dead-mans-ledger-title-v073.png');
 
 await page.goto(`${baseUrl}#/office`);
 await page.waitForSelector('.office-grid');
-await shot('dead-mans-ledger-office-selection-v072.png');
+await shot('dead-mans-ledger-office-selection-v073.png');
 
 await page.goto(`${baseUrl}#/about`);
 await page.waitForSelector('.competitor-card');
 await page.locator('.competitor-card').scrollIntoViewIfNeeded();
 await page.waitForTimeout(120);
-await shot('dead-mans-ledger-about-credits-competitor-reference-v072.png');
+await shot('dead-mans-ledger-about-credits-competitor-reference-v073.png');
 
 await page.goto(`${baseUrl}#/preview`);
 await page.waitForSelector('.map-stage');
-await shot('dead-mans-ledger-route-atlas-v072.png');
+await shot('dead-mans-ledger-route-atlas-v073.png');
 await page.waitForTimeout(1500);
-await shot('dead-mans-ledger-route-legend-stamp-v072.png');
+await shot('dead-mans-ledger-route-legend-stamp-v073.png');
 
 await startSeededFromOffice(9100, 0);
-await shot('dead-mans-ledger-contract-accepted-v072.png');
-await shot('dead-mans-ledger-focus-contract-v072.png');
+await shot('dead-mans-ledger-contract-accepted-v073.png');
+await shot('dead-mans-ledger-focus-contract-v073.png');
 await page.locator('[data-action="map-full"]').first().click();
 await page.waitForTimeout(120);
-await shot('dead-mans-ledger-full-map-v072.png');
+await shot('dead-mans-ledger-full-map-v073.png');
 await page.locator('[data-action="map-focus"]').first().click();
 await page.waitForTimeout(120);
 
 await clickReachableRoute();
-await shot('dead-mans-ledger-selected-route-correct-direction-v072.png');
+await shot('dead-mans-ledger-selected-route-correct-direction-v073.png');
 await assignPrepIfAvailable('scout');
 await assignPrepIfAvailable('telegraph');
-await shot('dead-mans-ledger-intelligence-gathered-v072.png');
+await shot('dead-mans-ledger-intelligence-gathered-v073.png');
 await assignPrepIfAvailable('guards');
-await shot('dead-mans-ledger-counter-assigned-v072.png');
+await shot('dead-mans-ledger-counter-assigned-v073.png');
 
 let capturedRumor = false;
 for (let attempt = 0; attempt < 32 && !capturedRumor; attempt += 1) {
   await startSeededFromOffice(9000 + attempt * 41, attempt % 4);
   const rumorNotice = page.locator('.rumor-strip').filter({ hasText: /local tip available/i });
   if ((await rumorNotice.count()) > 0) {
-    await shot('dead-mans-ledger-station-rumor-available-v072.png');
+    await shot('dead-mans-ledger-station-rumor-available-v073.png');
     capturedRumor = true;
   }
 }
@@ -214,12 +214,12 @@ await clickReachableRoute();
 await dispatch({ skip: false });
 await page.waitForSelector('.dispatch-cinematic');
 await page.waitForTimeout(420);
-await shot('dead-mans-ledger-dispatch-cinematic-v072.png');
+await shot('dead-mans-ledger-dispatch-cinematic-v073.png');
 await page.locator('[data-action=skip-dispatch]').first().click();
 await waitForResult();
-await shot('dead-mans-ledger-ledger-wire-v072.png');
-await shot('dead-mans-ledger-compact-result-ledger-v072.png');
-await shot('dead-mans-ledger-clean-passage-v072.png');
+await shot('dead-mans-ledger-ledger-wire-v073.png');
+await shot('dead-mans-ledger-compact-result-ledger-v073.png');
+await shot('dead-mans-ledger-clean-passage-v073.png');
 await continueResult();
 
 let capturedChronicle = false;
@@ -238,7 +238,7 @@ for (let attempt = 0; attempt < 18 && !capturedChronicle; attempt += 1) {
     await continueResult();
     const count = Number(await page.locator('.dispatch-chronicle').getAttribute('data-chronicle-leg-count'));
     if (count >= 3) {
-      await shot('dead-mans-ledger-dispatch-chronicle-several-legs-v072.png');
+      await shot('dead-mans-ledger-dispatch-chronicle-several-legs-v073.png');
       capturedChronicle = true;
       break;
     }
@@ -252,14 +252,14 @@ if (!capturedChronicle) {
 }
 
 await captureIncident(
-  'dead-mans-ledger-outlaw-ambush-v072.png',
+  'dead-mans-ledger-outlaw-ambush-v073.png',
   () => findRouteByIntel({ prepId: 'scout', includes: 'Outlaw Ambush' }),
   async () => {},
   (text) => text.includes('Outlaw Ambush') && text.includes('SHIPMENT DISRUPTED')
 );
 
 await captureIncident(
-  'dead-mans-ledger-defended-ambush-v072.png',
+  'dead-mans-ledger-defended-ambush-v073.png',
   () => findRouteByIntel({ prepId: 'scout', includes: 'Outlaw Ambush' }),
   async (routeId) => {
     await assignPrepToRoute('guards', routeId);
@@ -270,7 +270,7 @@ await captureIncident(
 );
 
 await captureIncident(
-  'dead-mans-ledger-track-repair-v072.png',
+  'dead-mans-ledger-track-repair-v073.png',
   () => findRouteByIntel({ prepId: 'scout', includes: 'Track Cut' }),
   async (routeId) => {
     await assignPrepToRoute('repair', routeId);
@@ -280,7 +280,7 @@ await captureIncident(
 );
 
 await captureIncident(
-  'dead-mans-ledger-bad-weather-v072.png',
+  'dead-mans-ledger-bad-weather-v073.png',
   () => findRouteByIntel({ prepId: 'telegraph', includes: 'Bad Weather' }),
   async (routeId) => {
     await assignPrepToRoute('delay', routeId);
@@ -290,7 +290,7 @@ await captureIncident(
 );
 
 await captureIncident(
-  'dead-mans-ledger-false-rumor-v072.png',
+  'dead-mans-ledger-false-rumor-v073.png',
   async () => {
     if ((await page.locator('[data-prep-id="tip"]:not([disabled])').count()) === 0) {
       return undefined;
@@ -319,7 +319,7 @@ for (let attempt = 0; attempt < 12; attempt += 1) {
     await waitForResult();
     const text = await page.locator('.result-card').innerText();
     if (text.includes('CONTRACT DELIVERED') && text.includes('DELIVERED')) {
-      await shot('dead-mans-ledger-delivered-contract-v072.png');
+      await shot('dead-mans-ledger-delivered-contract-v073.png');
       capturedDestination = true;
       attempt = 99;
       break;
@@ -350,15 +350,15 @@ for (let i = 0; i < 90; i += 1) {
   await continueResult();
 }
 if ((await page.locator('.fired-screen').count()) > 0) {
-  await shot('dead-mans-ledger-fired-screen-v072.png');
+  await shot('dead-mans-ledger-fired-screen-v073.png');
 } else {
   await page.goto(`${baseUrl}#/scores`);
-  await shot('dead-mans-ledger-fired-screen-v072.png');
+  await shot('dead-mans-ledger-fired-screen-v073.png');
 }
 
 await page.goto(`${baseUrl}#/scores`);
 await page.waitForSelector('.score-page');
-await shot('dead-mans-ledger-high-score-ledger-v072.png');
+await shot('dead-mans-ledger-high-score-ledger-v073.png');
 
 await browser.close();
-console.log(`v0.7.2 screenshots written to ${outputDir} from ${baseUrl}`);
+console.log(`v0.7.3 screenshots written to ${outputDir} from ${baseUrl}`);

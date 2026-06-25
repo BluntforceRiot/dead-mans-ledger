@@ -10,6 +10,19 @@ The money provided independence. The route was the engine.
 
 The game treats independence as economic circulation. Paper money only creates practical independence if it reaches towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
+## v0.7.3 Scope
+
+The v0.7.3 production-hardening pass closes Review10 release blockers without changing the core loop:
+
+- Repeat/backtrack protection is scoped to the current contract; route history and previous-station memory reset when a new contract is posted.
+- Tutorial-protected starter routes are selected with the shared active-graph deadhead classifier and are always fee-eligible in sampled openings.
+- First-turn copy no longer promises a standard route when express is the only valid fee-eligible opening.
+- Scout and Telegraph negative reports no longer leak whether hidden danger exists in the opposite intel category.
+- Multi-incident express results keep counter successes and failures incident-specific; one action may appear in both when it worked once and failed once.
+- Partial and ordinary rumors are classified by factual match against the selected route, not by the hidden generation label.
+- Outlaw Pressure and insurance settlement rows now render exact applied values.
+- Review zips are built with forward-slash paths and fail validation if any entry contains a backslash.
+
 ## v0.7.2 Scope
 
 The v0.7.2 hardening pass keeps the showmanship and balance intact while closing Review9 truth and accounting findings:
