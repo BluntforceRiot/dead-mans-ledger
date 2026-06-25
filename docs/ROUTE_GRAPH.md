@@ -2,10 +2,10 @@
 
 ## Summary
 
-v0.6.1 includes:
+v0.7.2 includes:
 
 - 55 city nodes.
-- 80 routes.
+- 84 routes.
 - Core, swing, and rare route availability.
 - Standard and express route styling.
 - Hidden route hazards on a portion of active routes.
@@ -85,6 +85,8 @@ At contract generation:
 - Swing routes are often active.
 - Rare routes are less common and usually express or high-leverage.
 - If the current station would have no active exits, nearby exits are forced active to prevent a dead contract.
+- Contract openings are checked so at least one legal active route is fee-eligible toward the destination.
+- Deadhead classification uses the active contract graph rather than inactive express shortcuts.
 
 ## Hazards
 

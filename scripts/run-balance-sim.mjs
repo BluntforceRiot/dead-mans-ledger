@@ -6,7 +6,7 @@ import { build } from 'vite';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const outDir = path.join(root, '.tmp', 'balance-sim');
-const reportPath = path.join(root, 'BALANCE_REPORT_DEAD_MANS_LEDGER_V071.md');
+const reportPath = path.join(root, 'BALANCE_REPORT_DEAD_MANS_LEDGER_V072.md');
 const runsPerStrategy = 1000;
 const maxLegs = 200;
 
@@ -35,7 +35,8 @@ const strategies = [
   'intel-only',
   'intel-plus-correct-counter',
   'express-heavy',
-  'credit-heavy'
+  'credit-heavy',
+  'route-bounce'
 ];
 
 function rand(seed) {
@@ -59,6 +60,15 @@ function chooseRoute(state, strategy, next) {
   const legal = sim.getLegalAdjacentRoutes(state);
   if (!legal.length) {
     return undefined;
+  }
+  if (strategy === 'route-bounce') {
+    const backtrack = legal.find((route) => sim.otherEnd(route, state.currentNodeId) === state.previousNodeId);
+    if (backtrack) {
+      return backtrack;
+    }
+    const away = legal.filter((route) => !sim.routeClosesDistance(state, route) && sim.otherEnd(route, state.currentNodeId) !== state.contract.destination);
+    const nonDestination = legal.filter((route) => sim.otherEnd(route, state.currentNodeId) !== state.contract.destination);
+    return [...(away.length ? away : nonDestination.length ? nonDestination : legal)].sort((a, b) => a.baseRisk - b.baseRisk || a.id.localeCompare(b.id))[0];
   }
   const nonBacktrack = legal.filter((route) => sim.otherEnd(route, state.currentNodeId) !== state.previousNodeId);
   const usable = nonBacktrack.length ? nonBacktrack : legal;
@@ -92,7 +102,7 @@ function applyAction(state, routeId, actionId) {
 }
 
 function prepareRoute(state, route, strategy) {
-  if (strategy === 'no-prep') {
+  if (strategy === 'no-prep' || strategy === 'route-bounce') {
     return state;
   }
 
@@ -154,6 +164,7 @@ function simulate(strategy, index) {
   const seed = (0x515000 + index * 8191 + strategies.indexOf(strategy) * 9973) >>> 0;
   const office = sim.dispatchOffices[index % sim.dispatchOffices.length].id;
   let state = sim.startSeededRun(seed, office);
+  const startingCash = state.cash;
   const next = rand(seed ^ 0xa53a9);
   const prepUse = {};
   const prepAssigned = {};
@@ -233,6 +244,7 @@ function simulate(strategy, index) {
     interestWithZeroDebt,
     fired: Boolean(state.firedReason),
     finalCash: state.cash,
+    cashChange: state.cash - startingCash,
     finalDebt: state.borrowedCredit,
     finalScore: state.score,
     finalPressure: state.outlawPressure,
@@ -313,7 +325,11 @@ const rows = strategies.map((strategy) => {
     expressAverage: mean(items.map((item) => item.expressLegs)),
     averageFinalCash: mean(items.map((item) => item.finalCash)),
     maxFinalCash: Math.max(...items.map((item) => item.finalCash)),
+    averageCashChange: mean(items.map((item) => item.cashChange)),
+    maxCashChange: Math.max(...items.map((item) => item.cashChange)),
     averageFinalDebt: mean(items.map((item) => item.finalDebt)),
+    averageFinalScore: mean(items.map((item) => item.finalScore)),
+    maxFinalScore: Math.max(...items.map((item) => item.finalScore)),
     firstContractCompletionRate: items.filter((item) => item.firstContractComplete).length / Math.max(1, items.length),
     firstContractResolutionRate: items.filter((item) => item.firstContractResolved).length / Math.max(1, items.length),
     rumorAvailabilityRate:
@@ -336,6 +352,7 @@ const cautious = rows.find((row) => row.strategy === 'cautious');
 const intelOnly = rows.find((row) => row.strategy === 'intel-only');
 const expressHeavy = rows.find((row) => row.strategy === 'express-heavy');
 const creditHeavy = rows.find((row) => row.strategy === 'credit-heavy');
+const routeBounce = rows.find((row) => row.strategy === 'route-bounce');
 const bestPreparedMedian = Math.max(cautious.medianLegs, prepared.medianLegs);
 const aggregatePrepUse = rows.reduce(
   (acc, row) => {
@@ -367,7 +384,14 @@ const acceptance = [
   ['Outlaw Pressure materially changes outcomes', highPressureRate > lowPressureRate + 0.08],
   ['Express routes have higher incident exposure', expressHeavy.expressAverage > noPrep.expressAverage],
   ['Prepared play outperforms no-prep play', prepared.successRate > noPrep.successRate + 0.15 && prepared.destinationAverage > noPrep.destinationAverage],
-  ['Destination-directed play is rewarded over bouncing', prepared.destinationAverage > noPrep.destinationAverage],
+  [
+    'Destination-directed play is rewarded over bouncing',
+    prepared.destinationAverage > routeBounce.destinationAverage + 0.5 && prepared.averageFinalScore > routeBounce.averageFinalScore + 1500
+  ],
+  [
+    'Deliberate route bouncing cannot farm cash or score',
+    routeBounce.averageCashChange <= 0 && routeBounce.maxCashChange <= 0 && routeBounce.averageFinalScore <= 0 && routeBounce.maxFinalScore <= 0
+  ],
   ['Every preparation action has meaningful evidence', Object.values(prepEvidence).every(Boolean)],
   ['Cash does not explode from cargo value', rows.every((row) => row.averageFinalCash < 5000 && row.maxFinalCash < 15000)],
   ['Cautious Contract 1 completion is in tutorial target range', cautious.firstContractCompletionRate >= 0.6 && cautious.firstContractCompletionRate <= 0.8],
@@ -379,11 +403,11 @@ const acceptance = [
 const table = rows
   .map(
     (row) =>
-      `| ${row.strategy} | ${row.medianLegs} | ${row.averageLegs.toFixed(1)} | ${row.maxLegs} | ${row.reached200} | ${(row.successRate * 100).toFixed(1)}% | ${(row.firstContractCompletionRate * 100).toFixed(1)}% | ${(row.rumorAvailabilityRate * 100).toFixed(1)}% | ${row.destinationAverage.toFixed(2)} | ${row.expressAverage.toFixed(2)} | $${Math.round(row.averageFinalCash).toLocaleString()} | $${Math.round(row.maxFinalCash).toLocaleString()} | $${Math.round(row.averageFinalDebt).toLocaleString()} | ${row.interestBug} |`
+      `| ${row.strategy} | ${row.medianLegs} | ${row.averageLegs.toFixed(1)} | ${row.maxLegs} | ${row.reached200} | ${(row.successRate * 100).toFixed(1)}% | ${(row.firstContractCompletionRate * 100).toFixed(1)}% | ${(row.rumorAvailabilityRate * 100).toFixed(1)}% | ${row.destinationAverage.toFixed(2)} | ${row.expressAverage.toFixed(2)} | $${Math.round(row.averageFinalCash).toLocaleString()} | $${Math.round(row.averageCashChange).toLocaleString()} | $${Math.round(row.maxCashChange).toLocaleString()} | ${Math.round(row.averageFinalScore).toLocaleString()} | ${Math.round(row.maxFinalScore).toLocaleString()} | $${Math.round(row.averageFinalDebt).toLocaleString()} | ${row.interestBug} |`
   )
   .join('\n');
 
-const report = `# Dead Man's Ledger v0.7.1 Balance Report
+const report = `# Dead Man's Ledger v0.7.2 Balance Report
 
 Generated by \`npm run balance:sim\`.
 
@@ -395,13 +419,22 @@ Generated by \`npm run balance:sim\`.
 - ${runsPerStrategy.toLocaleString()} intel-plus-correct-counter runs
 - ${runsPerStrategy.toLocaleString()} express-heavy runs
 - ${runsPerStrategy.toLocaleString()} credit-heavy runs
+- ${runsPerStrategy.toLocaleString()} route-bounce runs
 - Hard cap: ${maxLegs} legs per run
 
 ## Aggregate Results
 
-| Strategy | Median legs | Avg legs | Max legs | 200-leg survivors | Success rate | Contract 1 completion | Rumor availability | Avg destinations | Avg express legs | Avg final cash | Max final cash | Avg final debt | Zero-debt interest bugs |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Strategy | Median legs | Avg legs | Max legs | 200-leg survivors | Success rate | Contract 1 completion | Rumor availability | Avg destinations | Avg express legs | Avg final cash | Avg cash change | Max cash change | Avg final score | Max final score | Avg final debt | Zero-debt interest bugs |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 ${table}
+
+## Bounce Farming Check
+
+- Route-bounce average cash change: $${Math.round(routeBounce.averageCashChange).toLocaleString()}
+- Route-bounce max cash change: $${Math.round(routeBounce.maxCashChange).toLocaleString()}
+- Route-bounce average final score: ${Math.round(routeBounce.averageFinalScore).toLocaleString()}
+- Route-bounce max final score: ${Math.round(routeBounce.maxFinalScore).toLocaleString()}
+- Route-bounce average destinations: ${routeBounce.destinationAverage.toFixed(2)}
 
 ## Pressure Check
 

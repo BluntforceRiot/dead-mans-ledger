@@ -5,7 +5,7 @@
 - Title: Dead Man's Ledger: The Money Engine
 - Event: Summer into AI Week 2
 - Theme: Independence Engines
-- Build: v1.0 submission build, v0.7.1 truth-and-release patch
+- Build: v1.0 submission build, v0.7.2 truth-and-release hardening patch
 
 ## Short Description
 
@@ -53,6 +53,7 @@ Dead Man's Ledger treats independence as economic circulation. Paper money only 
 - Generated WebAudio cues can be toggled with `M`.
 - The final showmanship bundle adds gold ledger stamps, Dispatch Chronicle contract history, deterministic Ledger Wire headlines, cinematic route focus with Skip Animation, and animated settlement deltas.
 - The v0.7.1 truth patch fixes route-generation connectivity hazards, honest tutorial protection, actual travel-direction labels, compact result ledgers, and portable review-package extraction.
+- The v0.7.2 hardening patch fixes hidden-intel truth leaks, cross-source intel separation, `[clean, hazard]` express-route reporting, opening deadhead classification, shared UI/sim deadhead warnings, and actual before/after settlement deltas.
 
 ## Competitor Reference
 
@@ -67,16 +68,17 @@ https://github.com/BluntforceRiot/dead-mans-ledger
 
 ## Review Packet
 
-The v0.7.1 review packet should include:
+The v0.7.2 review packet should include:
 
 - Source code.
 - Package files.
 - Public assets.
 - Docs.
-- v0.7.1 screenshots.
+- v0.7.2 screenshots.
 - Build receipt.
 - Build log.
 - Balance report.
 - Playtest report.
 - Route-generation integrity report.
+- Review9 regression output.
 - Neuroforge review-loop evidence.

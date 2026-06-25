@@ -8,7 +8,7 @@ Built for Summer into AI Week 2: Independence Engines.
 
 ## Playable Submission Build
 
-This build is the v0.7.1 truth-and-release patch for the v1.0 submission build:
+This build is the v0.7.2 truth-and-release hardening patch for the v1.0 submission build:
 
 - Vite + TypeScript static browser app.
 - Real geodata-derived contiguous U.S. base map.
@@ -25,6 +25,7 @@ This build is the v0.7.1 truth-and-release patch for the v1.0 submission build:
 - Generated WebAudio cues with `M` mute toggle.
 - Gold ledger stamps, Dispatch Chronicle, Ledger Wire headlines, cinematic dispatch focus, and animated settlement deltas.
 - v0.7.1 fixes route-generation integrity, truthful tutorial protection, directional route labels, compact result cards, and portable review packaging.
+- v0.7.2 fixes hidden-intel truth leaks, express second-slot intel, opening deadhead classification, shared deadhead warnings, and applied settlement deltas.
 - Station rumors replace always-on Local Tip busywork.
 - Focus Contract now adaptively frames the active contract corridor, while Full Map restores the complete network.
 - Displayed danger uses the same incident-probability model as route generation.
@@ -45,9 +46,10 @@ npm run typecheck
 npm run build
 npm run balance:sim
 npm run route-integrity:v071
+npm run review9:regression
 npm run playtest:v061
 npm run playtest:v07
-npm run playtest:v071
+npm run playtest:v072
 npm run preview
 npm audit --audit-level=moderate
 ```
@@ -55,7 +57,7 @@ npm audit --audit-level=moderate
 Screenshot capture for review:
 
 ```sh
-npm run screenshots:v071
+npm run screenshots:v072
 ```
 
 ## Controls
@@ -85,7 +87,7 @@ Successful legs earn fee portions, score, trust, and reputation. Reaching the de
 
 Failure turns cargo value into liability. Insurance mitigates loss but does not make failure harmless.
 
-Immediate backtracking is allowed when necessary, but it sharply reduces fee and score so bouncing between two nodes is not profitable.
+Immediate backtracking is allowed when necessary. Repeated non-destination travel is treated as deadhead movement: no route fee, no score farming, an operating charge, and small reputation/trust pressure. A successful leg that reaches the destination is exempt, and every opening contract has at least one legal fee-eligible route.
 
 ## Prep And Economy
 

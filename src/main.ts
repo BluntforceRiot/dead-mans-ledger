@@ -31,6 +31,8 @@ import {
   routeClosesDistance,
   routeStatusLabel,
   startNewRun,
+  visibleHazardIdFromIntel,
+  wouldDeadhead,
   type LedgerState,
   type MapMode,
   type OfficeId,
@@ -665,6 +667,7 @@ function renderSelectedRouteLedger(selected?: LedgerRoute, selectedState?: Ledge
       </footer>
     `;
   }
+  const selectedDeadhead = wouldDeadhead(state, selected);
   return `
     <footer class="selected-route-ledger">
       <div>
@@ -682,6 +685,11 @@ function renderSelectedRouteLedger(selected?: LedgerRoute, selectedState?: Ledge
       ${
         selectedState.tutorialProtected
           ? '<div class="tutorial-protection"><span>Board Note</span><strong>Board-cleared starter route</strong></div>'
+          : ''
+      }
+      ${
+        selectedDeadhead
+          ? '<div class="tutorial-protection"><span>Deadhead</span><strong>No route fee or score</strong></div>'
           : ''
       }
       <div>
@@ -970,6 +978,7 @@ function renderResultSections(result: NonNullable<LedgerState['lastResult']>) {
   const financial = [
     ...amountRow('Payout', result.grossFee, 'money', 'coin'),
     ...amountRow('Net fee', result.netFee, 'signed-money', 'coin'),
+    ...amountRow('Deadhead operating charge', -result.deadheadPenalty, 'signed-money', 'cash'),
     ...amountRow('Score', result.scoreDelta, 'signed-number', 'coin'),
     ...amountRow('Cash', result.cashDelta, 'signed-money', 'cash'),
     ...amountRow('Insurance applied', result.mitigationApplied.includes('insurance') ? Math.round(result.contract.cargoValue * 0.3) : 0, 'money', 'cash'),
@@ -1396,7 +1405,7 @@ function renderMap(mode: 'preview' | 'game') {
         <path d="${d}" class="route-hit ${inspectable ? '' : 'disabled'}" ${inspectable ? `data-route-id="${route.id}" tabindex="0" role="button" aria-label="${escapeHtml(aria)}"` : 'tabindex="-1" aria-hidden="true"'}><title>${escapeHtml(routeTooltip(route, routeState, mode))}</title></path>
         <path d="${d}" class="${classes}"></path>
         ${routeState?.assigned.length ? renderRouteBadges(route, routeState.assigned) : ''}
-        ${routeState?.revealed && routeState.hazardId !== 'clean' ? renderHazardPip(route) : ''}
+        ${routeState?.revealed && visibleHazardIdFromIntel(routeState) ? renderHazardPip(route) : ''}
         ${dispatching ? renderIncidentPulse(route) : ''}
       `;
     })
@@ -1484,9 +1493,10 @@ function clampValue(value: number, min: number, max: number) {
 
 function renderIncidentPulse(route: LedgerRoute) {
   const routeState = state.routeStates[route.id];
-  const hazard = hazardById(routeState.hazardIds.find((id) => id !== 'clean') ?? routeState.hazardId);
+  const visibleHazardId = visibleHazardIdFromIntel(routeState);
+  const visibleHazard = visibleHazardId ? hazardById(visibleHazardId) : undefined;
   const mid = routeMidPoint(route);
-  const label = hazard.id === 'clean' ? 'Clean passage check' : hazard.name;
+  const label = visibleHazard ? `Reported: ${visibleHazard.name}` : 'Route incident check';
   return `
     <g class="incident-pulse" transform="translate(${mid.x.toFixed(1)} ${mid.y.toFixed(1)})">
       <circle class="incident-ring" r="22"></circle>
@@ -1498,12 +1508,16 @@ function renderIncidentPulse(route: LedgerRoute) {
 
 function renderHazardPip(route: LedgerRoute) {
   const mid = routeMidPoint(route);
-  const hazard = hazardById(state.routeStates[route.id].hazardId);
+  const hazardId = visibleHazardIdFromIntel(state.routeStates[route.id]);
+  if (!hazardId) {
+    return '';
+  }
+  const hazard = hazardById(hazardId);
   return `
     <g class="hazard-pip" transform="translate(${mid.x.toFixed(1)} ${mid.y.toFixed(1)})">
       <circle r="18"></circle>
       <text y="8">!</text>
-      <title>${escapeHtml(hazard.name)}</title>
+      <title>Reported: ${escapeHtml(hazard.name)}</title>
     </g>
   `;
 }

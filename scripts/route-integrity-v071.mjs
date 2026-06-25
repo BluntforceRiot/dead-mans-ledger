@@ -6,7 +6,7 @@ import { build } from 'vite';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const outDir = path.join(root, '.tmp', 'route-integrity-v071-sim');
-const reportPath = path.join(root, 'ROUTE_GENERATION_INTEGRITY_REPORT_V071.md');
+const reportPath = path.join(root, 'ROUTE_GENERATION_INTEGRITY_REPORT_V072.md');
 const contractsPerOfficeJourney = 5000;
 const journeys = [1, 5, 10];
 
@@ -75,6 +75,95 @@ function hasActivePath(routeStates, from, to) {
   return false;
 }
 
+function cloneRouteStates(routeStates) {
+  return Object.fromEntries(
+    Object.entries(routeStates).map(([routeId, routeState]) => [
+      routeId,
+      {
+        ...routeState,
+        hazardIds: [...routeState.hazardIds],
+        assigned: [...routeState.assigned],
+        intelReports: [...routeState.intelReports]
+      }
+    ])
+  );
+}
+
+function countRuntimeContinuationGaps(routeStates, contract) {
+  let gaps = 0;
+  const activeRoutes = sim.routes.filter((route) => routeStates[route.id]?.active);
+  for (const route of activeRoutes) {
+    for (const [previousNode, arrivalNode] of [
+      [route.from, route.to],
+      [route.to, route.from]
+    ]) {
+      if (arrivalNode === contract.destination) {
+        continue;
+      }
+      const repairedStates = cloneRouteStates(routeStates);
+      sim.ensureAdjacentRoute(repairedStates, arrivalNode, previousNode);
+      const forward = sim.getAdjacentRoutes(arrivalNode, repairedStates).filter((candidate) => sim.otherEnd(candidate, arrivalNode) !== previousNode);
+      if (forward.length === 0) {
+        gaps += 1;
+      }
+    }
+  }
+  return gaps;
+}
+
+function verifyRouteGraph() {
+  const nodeIds = new Set(sim.nodes.map((node) => node.id));
+  const endpointPairs = new Map();
+  for (const route of sim.routes) {
+    if (!nodeIds.has(route.from) || !nodeIds.has(route.to)) {
+      fail(`Route ${route.id} references unknown endpoint ${route.from} -> ${route.to}.`);
+    }
+    const key = [route.from, route.to].sort().join('::');
+    const existing = endpointPairs.get(key);
+    if (existing) {
+      fail(`Duplicate undirected route endpoints ${key}: ${existing} and ${route.id}.`);
+    }
+    endpointPairs.set(key, route.id);
+  }
+
+  const start = sim.nodes[0]?.id;
+  const connected = new Set(start ? [start] : []);
+  const queue = start ? [start] : [];
+  while (queue.length) {
+    const nodeId = queue.shift();
+    for (const route of sim.getAdjacentRoutes(nodeId)) {
+      const nextNode = sim.otherEnd(route, nodeId);
+      if (!connected.has(nextNode)) {
+        connected.add(nextNode);
+        queue.push(nextNode);
+      }
+    }
+  }
+  const isolated = sim.nodes.filter((node) => !connected.has(node.id));
+  if (isolated.length) {
+    fail(`Route graph has isolated nodes: ${isolated.map((node) => node.id).join(', ')}.`);
+  }
+}
+
+function countAdjacencyProbeActivations() {
+  let activations = 0;
+  for (const office of sim.dispatchOffices) {
+    const routeStates = sim.generateRouteStates(91071 + office.id.length * 8191, 8, office.nodeId, undefined, 90);
+    for (const routeState of Object.values(routeStates)) {
+      routeState.active = false;
+      routeState.activatedInitially = false;
+      routeState.activatedForDestination = false;
+      routeState.activatedForAdjacency = false;
+    }
+    sim.ensureAdjacentRoute(routeStates, office.nodeId);
+    activations += Object.values(routeStates).filter((routeState) => routeState.activatedForAdjacency).length;
+  }
+  return activations;
+}
+
+verifyRouteGraph();
+const adjacencyProbeActivations = countAdjacencyProbeActivations();
+
 function createBucket(label) {
   return {
     label,
@@ -91,6 +180,9 @@ function createBucket(label) {
     tutorialProtectedRoutes: 0,
     missingDestinationPaths: 0,
     missingLegalExits: 0,
+    missingContinuationExits: 0,
+    missingFeeEligibleOpeningRoutes: 0,
+    falseRumorExactMatches: 0,
     activeWithoutGeneratedHazards: 0,
     nonTutorialProtectedCleanGuarantees: 0
   };
@@ -134,6 +226,30 @@ for (const office of sim.dispatchOffices) {
       }
       if (sim.getAdjacentRoutes(office.nodeId, routeStates).length === 0) {
         bucket.missingLegalExits += 1;
+      }
+      const openingState = {
+        currentNodeId: office.nodeId,
+        previousNodeId: undefined,
+        contract,
+        routeStates,
+        segmentHistory: {}
+      };
+      const feeEligibleOpeningRoutes = sim.getAdjacentRoutes(office.nodeId, routeStates).filter((route) => !sim.wouldDeadhead(openingState, route));
+      if (contract.destination !== office.nodeId && feeEligibleOpeningRoutes.length === 0) {
+        bucket.missingFeeEligibleOpeningRoutes += 1;
+      }
+      bucket.missingContinuationExits += countRuntimeContinuationGaps(routeStates, contract);
+      const rumor = sim.generateStationRumor(seed, journey, 1, office.nodeId, routeStates);
+      if ((rumor.quality === 'false' || rumor.quality === 'bait') && rumor.suggestedHazardId) {
+        const adjacentHazards = new Set(
+          sim
+            .getAdjacentRoutes(office.nodeId, routeStates)
+            .flatMap((route) => routeStates[route.id].hazardIds)
+            .filter((hazardId) => hazardId !== 'clean')
+        );
+        if (adjacentHazards.has(rumor.suggestedHazardId)) {
+          bucket.falseRumorExactMatches += 1;
+        }
       }
 
       const protectedRoutes = activeRoutes.filter((route) => routeStates[route.id].tutorialProtected);
@@ -218,13 +334,16 @@ const summary = summarize(overall);
 
 assert(overall.contracts === contractsPerOfficeJourney * journeys.length * sim.dispatchOffices.length, 'Expected contract sample size generated.');
 assert(overall.destinationActivatedRoutes > 0, 'Destination path activation occurred in sampled contracts.');
-assert(overall.adjacencyActivatedRoutes >= 0, 'Adjacency activation counted.');
+assert(adjacencyProbeActivations > 0, `Adjacency activation occurred in no-contract probe (${adjacencyProbeActivations} activations).`);
 assert(overall.connectivityRoutes > 0, 'Connectivity-activated routes were measured.');
 assert(summary.connectivityCleanRate < 0.98, `Connectivity-activated routes are not universally clean (${pct(summary.connectivityCleanRate)} clean).`);
 assert(summary.empiricalIncidentRate > 0.1, `Empirical incident rate is nonzero (${pct(summary.empiricalIncidentRate)}).`);
 assert(summary.riskDelta <= 0.12, `Empirical incident rate broadly matches displayed risk (${pct(summary.empiricalIncidentRate)} vs ${pct(summary.displayedRisk)}).`);
 assert(overall.missingDestinationPaths === 0, 'Every generated contract has a valid active destination path.');
 assert(overall.missingLegalExits === 0, 'Every current station has at least one legal exit.');
+assert(overall.missingFeeEligibleOpeningRoutes === 0, 'Every sampled opening contract has at least one legal fee-eligible route toward the destination.');
+assert(overall.missingContinuationExits === 0, 'Every sampled active-route arrival has a non-backtracking continuation after runtime route repair.');
+assert(overall.falseRumorExactMatches === 0, 'False and bait local rumors never exactly match an adjacent real hazard.');
 assert(overall.activeWithoutGeneratedHazards === 0, 'Every active route has generated hazards or explicit tutorial protection.');
 assert(overall.tutorialProtectedRoutes === contractsPerOfficeJourney * sim.dispatchOffices.length, 'Only first-journey contracts receive exactly one tutorial-protected route.');
 
@@ -243,7 +362,7 @@ const officeRows = [...officeBuckets.values()].map((bucket) => {
   return `| ${item.label} | ${item.contracts} | ${item.contractsWithConnectivity} | ${item.destinationActivatedRoutes} | ${item.adjacencyActivatedRoutes} | ${pct(item.connectivityCleanRate)} | ${pct(item.empiricalIncidentRate)} | ${pct(item.displayedRisk)} | ${item.tutorialProtectedRoutes} |`;
 });
 
-const report = `# Dead Man's Ledger v0.7.1 Route Generation Integrity Report
+const report = `# Dead Man's Ledger v0.7.2 Route Generation Integrity Report
 
 ## Summary
 
@@ -254,6 +373,10 @@ const report = `# Dead Man's Ledger v0.7.1 Route Generation Integrity Report
 - Contracts with connectivity-activated routes: ${overall.contractsWithConnectivity}
 - Destination-activated routes: ${overall.destinationActivatedRoutes}
 - Adjacency-activated routes: ${overall.adjacencyActivatedRoutes}
+- Adjacency-only probe activations: ${adjacencyProbeActivations}
+- Contracts missing a fee-eligible opening route: ${overall.missingFeeEligibleOpeningRoutes}
+- Runtime-repaired active arrival continuation gaps: ${overall.missingContinuationExits}
+- False/bait rumor exact hazard matches: ${overall.falseRumorExactMatches}
 - Connectivity clean rate: ${pct(summary.connectivityCleanRate)}
 - Empirical incident rate: ${pct(summary.empiricalIncidentRate)}
 - Displayed estimated risk: ${pct(summary.displayedRisk)}

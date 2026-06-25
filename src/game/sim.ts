@@ -150,6 +150,8 @@ export interface DispatchResult {
   reputationDelta: number;
   trustDelta: number;
   pressureDelta: number;
+  deadheadRun: boolean;
+  deadheadPenalty: number;
   message: string;
   detail: string;
   nextNodeId: NodeId;
@@ -228,6 +230,8 @@ export const dispatchOffices: DispatchOffice[] = [
 
 const physicalIntelHazards = new Set<HazardId>(['ambush', 'track-cut', 'washed-bridge', 'repair-ambush', 'scout-missing']);
 const officialIntelHazards = new Set<HazardId>(['bad-weather', 'inside-leak', 'rival-sabotage', 'telegraph-cut', 'false-tip']);
+const deadheadCashPenaltyBase = 45;
+const deadheadScorePenaltyBase = 800;
 
 function random(seed: number) {
   let value = seed >>> 0;
@@ -376,8 +380,7 @@ function generateHazardsForRoute(route: LedgerRoute, seed: number, journey: numb
     const hazardNext = random(hashString(routeSeed));
     hazardIds.push(deterministicRoll(routeSeed) < chance ? pickHazard(route, hazardNext, outlawPressure).id : 'clean');
   }
-  const filtered = hazardIds.filter((id) => id !== 'clean');
-  return filtered.length ? filtered : ['clean'];
+  return hazardIds.length ? hazardIds : ['clean'];
 }
 
 export function incidentExposure(route: LedgerRoute) {
@@ -391,12 +394,14 @@ function activatePathToDestination(routeStates: Record<RouteId, RouteState>, ori
   }
 }
 
-function ensureAdjacentRoute(routeStates: Record<RouteId, RouteState>, nodeId: NodeId) {
+export function ensureAdjacentRoute(routeStates: Record<RouteId, RouteState>, nodeId: NodeId, previousNodeId?: NodeId) {
   const adjacentActive = getAdjacentRoutes(nodeId).filter((route) => routeStates[route.id].active);
-  if (adjacentActive.length > 0) {
+  const forwardActive = previousNodeId ? adjacentActive.filter((route) => otherEnd(route, nodeId) !== previousNodeId) : adjacentActive;
+  if (forwardActive.length > 0) {
     return;
   }
-  getAdjacentRoutes(nodeId)
+  const candidates = getAdjacentRoutes(nodeId).filter((route) => !previousNodeId || otherEnd(route, nodeId) !== previousNodeId);
+  (candidates.length ? candidates : getAdjacentRoutes(nodeId))
     .slice(0, 2)
     .forEach((route) => {
       activateRoute(routeStates, route.id, 'adjacency');
@@ -462,6 +467,8 @@ export function generateStationRumor(seed: number, journey: number, deliveryInJo
   const realHazards = adjacentRoutes
     .flatMap((route) => routeStates[route.id]?.hazardIds ?? [])
     .filter((hazardId): hazardId is HazardId => Boolean(hazardId && hazardId !== 'clean'));
+  const realHazardSet = new Set(realHazards);
+  const falseHazardPool = hazards.filter((hazard) => hazard.id !== 'clean' && !realHazardSet.has(hazard.id));
   const quality: IntelQuality = qualityRoll < 0.3 ? 'true' : qualityRoll < 0.56 ? 'partial' : qualityRoll < 0.78 ? 'false' : qualityRoll < 0.9 ? 'rumor' : 'bait';
   const suggestedHazardId =
     quality === 'true' || quality === 'partial'
@@ -469,7 +476,9 @@ export function generateStationRumor(seed: number, journey: number, deliveryInJo
         ? choose(realHazards, next)
         : undefined
       : quality === 'false' || quality === 'bait'
-        ? choose(hazards.filter((hazard) => hazard.id !== 'clean'), next).id
+        ? falseHazardPool.length
+          ? choose(falseHazardPool, next).id
+          : undefined
         : undefined;
 
   return {
@@ -502,8 +511,8 @@ function softenFirstContractOpening(routeStates: Record<RouteId, RouteState>, no
   };
 }
 
-function routeClosesDistanceForNodes(nextNodeId: NodeId, currentNodeId: NodeId, destination: NodeId) {
-  return hopDistance(nextNodeId, destination, true) < hopDistance(currentNodeId, destination, true);
+function routeClosesDistanceForNodes(nextNodeId: NodeId, currentNodeId: NodeId, destination: NodeId, includeExpress = false) {
+  return hopDistance(nextNodeId, destination, includeExpress) < hopDistance(currentNodeId, destination, includeExpress);
 }
 
 export function getAdjacentRoutes(nodeId: NodeId, onlyActive?: Record<RouteId, RouteState>) {
@@ -648,7 +657,9 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const arrivedAtDestination = success && nextNodeId === state.contract.destination;
   const contractEnded = arrivedAtDestination || !success || state.contract.legsRemaining <= 1;
   const repeatCount = state.segmentHistory[segmentKey(route)] ?? 0;
-  const repeatPenalty = repeatCount > 0 ? Math.max(0.25, 1 - repeatCount * 0.28) : 1;
+  const repeatedTraversal = repeatCount > 0;
+  const deadheadRun = success && wouldDeadhead(state, route);
+  const repeatPenalty = repeatedTraversal ? Math.max(0.25, 1 - repeatCount * 0.28) : 1;
   const backtrackMultiplier = backtrackPenalty ? 0.3 : 1;
   const riskScore = Math.round(route.baseRisk * 1000 * state.contract.routeRiskBonus);
   const distanceScore = distanceScoreForRoute(route);
@@ -657,7 +668,8 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const destinationBonus = arrivedAtDestination ? Math.round(state.contract.cargoValue * 0.42 + state.contract.deliveryFee * 0.7) : 0;
   const legFeeBase = Math.round((state.contract.deliveryFee / Math.max(1, state.contract.plannedHops)) * route.payoutMultiplier);
   const counterFeeBonus = countered ? Math.round(90 + route.baseRisk * 240 + state.contract.routeRiskBonus * 35) : 0;
-  const grossFee = success ? Math.round((legFeeBase + counterFeeBonus + (arrivedAtDestination ? state.contract.deliveryFee * 0.35 : 0)) * repeatPenalty * backtrackMultiplier) : 0;
+  const deadheadPenalty = deadheadRun ? deadheadPenaltyForRoute(route) : 0;
+  const grossFee = success && !deadheadRun ? Math.round((legFeeBase + counterFeeBonus + (arrivedAtDestination ? state.contract.deliveryFee * 0.35 : 0)) * repeatPenalty * backtrackMultiplier) : 0;
   const principalRepaid = success ? Math.min(state.borrowedCredit, Math.round(grossFee * 0.35)) : 0;
   const interestCharge = nextInterestCharge(state);
   const netFee = grossFee - principalRepaid - interestCharge;
@@ -665,20 +677,31 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const liability = success ? 0 : Math.round(state.contract.cargoValue * (insured ? 0.2 : 0.5) * (1 + route.baseRisk * 0.8));
   const insuranceMitigation = !success && insured ? Math.round(state.contract.cargoValue * 0.3) : 0;
 
-  let cashDelta = success ? netFee : -liability - interestCharge;
-  let scoreDelta = success
+  const initialCash = state.cash;
+  const initialScore = state.score;
+  const initialReputation = state.reputation;
+  const initialTrust = state.trust;
+
+  let cashDeltaRaw = success ? netFee - deadheadPenalty : -liability - interestCharge;
+  let scoreDeltaRaw = success
     ? Math.round((state.contract.cargoValue * 0.15 + riskScore + distanceScore + expressScore + counterScore + destinationBonus) * repeatPenalty * backtrackMultiplier)
     : -Math.round(liability * 0.38);
-  let reputationDelta = success ? (countered ? 4 : 2) + (arrivedAtDestination ? 3 : 0) : insured ? -8 : -15;
-  let trustDelta = success
+  let reputationDeltaRaw = success ? (countered ? 4 : 2) + (arrivedAtDestination ? 3 : 0) : insured ? -8 : -15;
+  let trustDeltaRaw = success
     ? Math.round(2 + state.contract.trustWeight * (arrivedAtDestination ? 5 : 2))
     : -Math.round((insured ? 7 : 17) * state.contract.trustWeight);
 
+  if (deadheadRun) {
+    scoreDeltaRaw = -Math.round(deadheadScorePenaltyBase + route.baseRisk * 420 + (route.express ? 80 : 0));
+    reputationDeltaRaw = Math.min(reputationDeltaRaw, -2);
+    trustDeltaRaw = Math.min(trustDeltaRaw, -2);
+  }
+
   if (state.contract.legsRemaining <= 1 && !arrivedAtDestination) {
-    cashDelta -= Math.round(state.contract.cargoValue * 0.22);
-    scoreDelta -= Math.round(state.contract.cargoValue * 0.22);
-    reputationDelta -= 7;
-    trustDelta -= 9;
+    cashDeltaRaw -= Math.round(state.contract.cargoValue * 0.22);
+    scoreDeltaRaw -= Math.round(state.contract.cargoValue * 0.22);
+    reputationDeltaRaw -= 7;
+    trustDeltaRaw -= 9;
   }
 
   const prepUsed = uniquePrep(incidents.flatMap((incident) => incident.counterAttempted));
@@ -698,9 +721,14 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
   const prepNotNeeded = protectionHeld;
   const localRumorOutcome = classifyLocalRumor(routeState.intelReports, incidentIds);
   const pressureDelta = calculatePressureDelta(state, route, success, countered);
-  const newCash = Math.round(state.cash + cashDelta);
-  const newReputation = clamp(state.reputation + reputationDelta, 0, 100);
-  const newTrust = clamp(state.trust + trustDelta, 0, 100);
+  const newCash = Math.round(initialCash + cashDeltaRaw);
+  const newScore = Math.max(0, initialScore + scoreDeltaRaw);
+  const newReputation = clamp(initialReputation + reputationDeltaRaw, 0, 100);
+  const newTrust = clamp(initialTrust + trustDeltaRaw, 0, 100);
+  const cashDelta = newCash - initialCash;
+  const scoreDelta = newScore - initialScore;
+  const reputationDelta = newReputation - initialReputation;
+  const trustDelta = newTrust - initialTrust;
   const newDebt = Math.max(0, state.borrowedCredit - principalRepaid);
   const firedReason = newCash < debtLimit ? 'Cash fell below the board debt limit.' : newReputation <= 0 ? 'Reputation reached zero.' : newTrust <= 0 ? 'Currency trust reached zero.' : undefined;
   const resultContract = state.contract;
@@ -736,8 +764,10 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     reputationDelta,
     trustDelta,
     pressureDelta,
+    deadheadRun,
+    deadheadPenalty,
     message: resultMessage(success, arrivedAtDestination, countered, state.contract.legsRemaining <= 1),
-    detail: resultDetail(success, arrivedAtDestination, hazard, countered, insured, insuranceMitigation),
+    detail: resultDetail(success, arrivedAtDestination, hazard, countered, insured, insuranceMitigation, deadheadRun),
     nextNodeId,
     arrivedAtDestination,
     contractEnded,
@@ -764,7 +794,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     nextContract = generateContract(nextSeed, nextJourney, nextNodeId);
     routeStates = generateRouteStates(nextSeed, nextJourney, nextNodeId, nextContract, nextPressure);
   } else {
-    ensureAdjacentRoute(routeStates, nextNodeId);
+    ensureAdjacentRoute(routeStates, nextNodeId, state.currentNodeId);
     ensureHazardsForActiveRoutes(routeStates, state.seed, nextJourney, nextPressure);
   }
   const stationRumor = generateStationRumor(nextSeed, nextJourney, nextDelivery, nextNodeId, routeStates);
@@ -774,7 +804,7 @@ export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerSta
     currentNodeId: nextNodeId,
     previousNodeId: state.currentNodeId,
     cash: newCash,
-    score: Math.max(0, state.score + scoreDelta),
+    score: newScore,
     reputation: newReputation,
     trust: newTrust,
     outlawPressure: nextPressure,
@@ -861,8 +891,6 @@ function markRouteResolved(routeStates: Record<RouteId, RouteState>, routeId: Ro
   const next = { ...routeStates };
   next[routeId] = {
     ...next[routeId],
-    hazardId: 'clean',
-    hazardIds: ['clean'],
     hazardsGenerated: true,
     assigned: [],
     intelReports: [],
@@ -891,7 +919,22 @@ export function getLegalAdjacentRoutes(state: LedgerState) {
 
 export function routeClosesDistance(state: LedgerState, route: LedgerRoute) {
   const nextNodeId = otherEnd(route, state.currentNodeId);
-  return hopDistance(nextNodeId, state.contract.destination, true) < hopDistance(state.currentNodeId, state.contract.destination, true);
+  return activeHopDistance(nextNodeId, state.contract.destination, state.routeStates, true) < activeHopDistance(state.currentNodeId, state.contract.destination, state.routeStates, true);
+}
+
+export function deadheadPenaltyForRoute(route: LedgerRoute) {
+  return Math.round(deadheadCashPenaltyBase + route.baseRisk * 180 + (route.express ? 35 : 0));
+}
+
+export function wouldDeadhead(state: LedgerState, route: LedgerRoute) {
+  const nextNodeId = otherEnd(route, state.currentNodeId);
+  if (nextNodeId === state.contract.destination) {
+    return false;
+  }
+  const repeatCount = state.segmentHistory[segmentKey(route)] ?? 0;
+  const repeatedTraversal = repeatCount > 0;
+  const backtrackPenalty = Boolean(state.previousNodeId && nextNodeId === state.previousNodeId && getLegalAdjacentRoutes(state).length > 1);
+  return repeatedTraversal || backtrackPenalty || !routeClosesDistance(state, route);
 }
 
 export function meterClass(value: number) {
@@ -916,10 +959,15 @@ export function describeIntel(routeState: RouteState) {
 }
 
 export function describeHazardStack(routeState: RouteState) {
-  if (!routeState.revealed) {
+  if (!routeState.revealed || routeState.intelReports.length === 0) {
     return 'Unknown';
   }
-  return routeState.hazardIds.map((id) => hazardById(id).name).join(' + ');
+  return routeState.intelReports.map((report) => report.text).join(' ');
+}
+
+export function visibleHazardIdFromIntel(routeState: RouteState) {
+  const reported = routeState.intelReports.find((report) => report.hazardId);
+  return reported?.hazardId;
 }
 
 export function routeStatusLabel(state: LedgerState, route: LedgerRoute) {
@@ -938,42 +986,63 @@ function buildIntelForAction(state: LedgerState, routeId: RouteId, actionId: Pre
   const hazardIds = routeState.hazardIds.length ? routeState.hazardIds : [routeState.hazardId];
 
   if (actionId === 'scout') {
-    const found = hazardIds.find((id) => id === 'clean' || physicalIntelHazards.has(id));
-    return found
-      ? {
-          source: 'scout',
-          quality: found === 'clean' ? 'partial' : 'true',
-          hazardId: found === 'clean' ? undefined : found,
-          confidence: found === 'clean' ? 0.58 : 0.86,
-          text: found === 'clean' ? 'Scout: physical trail looks clear.' : `Scout: ${hazardById(found).name}.`
-        }
-      : {
-          source: 'scout',
-          quality: 'partial',
-          confidence: 0.45,
-          text: 'Scout: no physical sign; official trouble still possible.'
-        };
+    const found = hazardIds.find((id) => physicalIntelHazards.has(id));
+    const allClean = hazardIds.every((id) => id === 'clean');
+    if (found) {
+      return {
+        source: 'scout',
+        quality: 'true',
+        hazardId: found,
+        confidence: 0.86,
+        text: `Scout: ${hazardById(found).name}.`
+      };
+    }
+    if (allClean) {
+      return {
+        source: 'scout',
+        quality: 'partial',
+        confidence: 0.58,
+        text: 'Scout: physical trail looks clear.'
+      };
+    }
+    return {
+      source: 'scout',
+      quality: 'partial',
+      confidence: 0.45,
+      text: 'Scout: no physical sign; official trouble still possible.'
+    };
   }
 
   if (actionId === 'telegraph') {
-    const found = hazardIds.find((id) => id === 'clean' || officialIntelHazards.has(id));
-    return found
-      ? {
-          source: 'telegraph',
-          quality: found === 'clean' ? 'partial' : 'true',
-          hazardId: found === 'clean' ? undefined : found,
-          confidence: found === 'clean' ? 0.6 : 0.88,
-          text: found === 'clean' ? 'Wire: no official warning posted.' : `Wire: ${hazardById(found).name}.`
-        }
-      : {
-          source: 'telegraph',
-          quality: 'partial',
-          confidence: 0.45,
-          text: 'Wire: official desk is quiet; physical danger unknown.'
-        };
+    const found = hazardIds.find((id) => officialIntelHazards.has(id));
+    const allClean = hazardIds.every((id) => id === 'clean');
+    if (found) {
+      return {
+        source: 'telegraph',
+        quality: 'true',
+        hazardId: found,
+        confidence: 0.88,
+        text: `Wire: ${hazardById(found).name}.`
+      };
+    }
+    if (allClean) {
+      return {
+        source: 'telegraph',
+        quality: 'partial',
+        confidence: 0.6,
+        text: 'Wire: no official warning posted.'
+      };
+    }
+    return {
+      source: 'telegraph',
+      quality: 'partial',
+      confidence: 0.45,
+      text: 'Wire: official desk is quiet; physical danger unknown.'
+    };
   }
 
   if (actionId === 'tip') {
+    const realHazards = new Set<HazardId>(hazardIds.filter((id) => id !== 'clean'));
     const realHazard = hazardIds.find((id) => id !== 'clean') ?? 'clean';
     const rumor = state.stationRumor;
     if (!rumor.available || rumor.used) {
@@ -998,11 +1067,12 @@ function buildIntelForAction(state: LedgerState, routeId: RouteId, actionId: Pre
       };
     }
     if (rumor.quality === 'false' || rumor.quality === 'bait') {
-      const wrong = rumor.suggestedHazardId ? hazardById(rumor.suggestedHazardId) : hazards.find((item) => item.id !== realHazard && item.id !== 'clean') ?? hazards[0];
+      const suggestedWrong = rumor.suggestedHazardId && !realHazards.has(rumor.suggestedHazardId) ? hazardById(rumor.suggestedHazardId) : undefined;
+      const wrong = suggestedWrong ?? hazards.find((item) => item.id !== 'clean' && !realHazards.has(item.id)) ?? hazardById('clean');
       return {
         source: 'tip',
         quality: rumor.quality,
-        hazardId: wrong.id,
+        hazardId: wrong.id === 'clean' ? undefined : wrong.id,
         confidence: rumor.reliability,
         text: rumor.quality === 'bait' ? `Tip: a stranger insists on ${wrong.name}.` : `Tip: maybe ${wrong.name}.`
       };
@@ -1032,7 +1102,12 @@ function classifyLocalRumor(reports: IntelReport[], incidentIds: HazardId[]): Lo
     return undefined;
   }
   const realHazards = new Set<HazardId>(incidentIds.filter((id) => id !== 'clean'));
-  if (report.quality === 'true' && (!report.hazardId || realHazards.has(report.hazardId))) {
+  const reportedClean = !report.hazardId;
+  const exactHazardMatch = Boolean(report.hazardId && realHazards.has(report.hazardId));
+  if ((reportedClean && realHazards.size === 0) || exactHazardMatch) {
+    return report.quality === 'partial' || report.quality === 'rumor' ? 'incomplete' : 'useful';
+  }
+  if (report.quality === 'true' && reportedClean && realHazards.size === 0) {
     return 'useful';
   }
   if (report.quality === 'partial' || report.quality === 'rumor') {
@@ -1068,9 +1143,12 @@ function resultMessage(success: boolean, arrivedAtDestination: boolean, countere
   return 'Shipment Failed';
 }
 
-function resultDetail(success: boolean, arrivedAtDestination: boolean, hazard: Hazard, countered: boolean, insured: boolean, insuranceMitigation: number) {
+function resultDetail(success: boolean, arrivedAtDestination: boolean, hazard: Hazard, countered: boolean, insured: boolean, insuranceMitigation: number, deadheadRun = false) {
   if (arrivedAtDestination) {
     return 'The shipment reached the named office. The fee was earned, the paper held, and the board has another contract waiting.';
+  }
+  if (deadheadRun) {
+    return 'The shipment moved, but the board marks repeated backtracking as deadhead travel: no route fee, no score farm, and a small operating charge.';
   }
   if (success && hazard.id === 'clean') {
     return 'The route held. No one fired a shot, and the ledger stayed legible.';
@@ -1160,6 +1238,28 @@ function hopDistance(from: NodeId, to: NodeId, includeExpress: boolean) {
   return 99;
 }
 
+function activeHopDistance(from: NodeId, to: NodeId, routeStates: Record<RouteId, RouteState>, includeExpress: boolean) {
+  if (from === to) {
+    return 0;
+  }
+  const queue: Array<{ nodeId: NodeId; distance: number }> = [{ nodeId: from, distance: 0 }];
+  const visited = new Set<NodeId>([from]);
+  while (queue.length) {
+    const item = queue.shift()!;
+    for (const route of getAdjacentRoutes(item.nodeId, routeStates).filter((candidate) => includeExpress || !candidate.express)) {
+      const nextNode = otherEnd(route, item.nodeId);
+      if (nextNode === to) {
+        return item.distance + 1;
+      }
+      if (!visited.has(nextNode)) {
+        visited.add(nextNode);
+        queue.push({ nodeId: nextNode, distance: item.distance + 1 });
+      }
+    }
+  }
+  return 99;
+}
+
 function shortestPath(from: NodeId, to: NodeId, includeExpress: boolean): LedgerRoute[] {
   const queue: Array<{ nodeId: NodeId; path: LedgerRoute[] }> = [{ nodeId: from, path: [] }];
   const visited = new Set<NodeId>([from]);
@@ -1190,7 +1290,7 @@ function shipmentFromContract(contract: Contract): Shipment {
   };
 }
 
-function segmentKey(route: LedgerRoute) {
+export function segmentKey(route: LedgerRoute) {
   return [route.from, route.to].sort().join('|');
 }
 

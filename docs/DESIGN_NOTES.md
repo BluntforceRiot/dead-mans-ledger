@@ -10,6 +10,18 @@ The money provided independence. The route was the engine.
 
 The game treats independence as economic circulation. Paper money only creates practical independence if it reaches towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
+## v0.7.2 Scope
+
+The v0.7.2 hardening pass keeps the showmanship and balance intact while closing Review9 truth and accounting findings:
+
+- Selected-route threat text is now derived from visible intel reports, not the hidden authoritative hazard stack.
+- Scout and Telegraph inspect all express exposure slots before reporting clear, so `[clean, hazard]` routes no longer mask danger.
+- Route progress and deadhead classification use the active contract graph, preventing inactive express shortcuts from making valid opening moves look like detours.
+- The UI and simulation share one deadhead classifier, including the destination-delivery exemption.
+- Result settlement deltas are the actual before/after applied values after score, reputation, and trust clamps.
+- Deadhead operating charges are recorded on the dispatch result and shown as their own settlement row.
+- Review9 regressions cover false-tip secrecy, cross-source intel secrecy, express second-slot intel, opening fee eligibility, destination deadhead exemption, and applied deltas.
+
 ## v0.7.1 Scope
 
 The v0.7.1 truth-and-release patch keeps the v0.7 showmanship intact and fixes final release truth issues:
