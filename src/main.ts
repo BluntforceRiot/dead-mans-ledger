@@ -41,10 +41,36 @@ import { MAP_HEIGHT, MAP_WIDTH, projectPoint } from './map/projection';
 const appRoot = document.querySelector<HTMLDivElement>('#app')!;
 const demoUrl = 'https://bluntforceriot.github.io/dead-mans-ledger/';
 const repoUrl = 'https://github.com/BluntforceRiot/dead-mans-ledger';
+const DISPATCH_ANIMATION_MS = 2600;
 
 let state: LedgerState = createInitialState(screenFromHash());
 let muted = window.localStorage.getItem('dead-mans-ledger.muted') === 'true';
 let audioContext: AudioContext | undefined;
+let pendingDispatch: { routeId: RouteId; timeoutId: number } | undefined;
+
+type DispatchResultView = NonNullable<LedgerState['lastResult']>;
+type StampTone = 'gold' | 'failure';
+type EventSeal = 'clean' | 'weather' | 'ambush' | 'defended' | 'repair' | 'bridge' | 'rumor' | 'delivery' | 'loss';
+
+interface ChronicleLeg {
+  routeId: RouteId;
+  from: NodeId;
+  to: NodeId;
+  seal: EventSeal;
+  status: string;
+  headline: string;
+}
+
+interface ChronicleState {
+  contractId: string;
+  origin: NodeId;
+  destination: NodeId;
+  legs: ChronicleLeg[];
+  currentHeadline?: string;
+  recentHeadlines: string[];
+}
+
+let chronicle: ChronicleState = createChronicleState(state);
 
 window.addEventListener('hashchange', () => {
   state = { ...state, screen: screenFromHash() };
@@ -52,6 +78,11 @@ window.addEventListener('hashchange', () => {
 });
 
 window.addEventListener('keydown', (event) => {
+  if ((event.key === 'Escape' || event.key.toLowerCase() === 's') && state.dispatchingRouteId) {
+    event.preventDefault();
+    finishPendingDispatch();
+    return;
+  }
   if (state.screen === 'scores' && event.key.toLowerCase() === 'r') {
     handleScoreReset();
   }
@@ -75,6 +106,8 @@ appRoot.addEventListener('click', (event) => {
   if (officeId) {
     playCue('dispatch');
     state = startNewRun(officeId);
+    chronicle = createChronicleState(state);
+    playCue('stamp');
     updateHash('game');
     return;
   }
@@ -106,6 +139,10 @@ appRoot.addEventListener('click', (event) => {
     case 'dispatch':
       dispatchSelectedRoute();
       break;
+    case 'skip-dispatch':
+      playCue('click');
+      finishPendingDispatch();
+      break;
     case 'map-focus':
       state = { ...state, mapMode: 'focus' };
       render();
@@ -125,7 +162,12 @@ appRoot.addEventListener('click', (event) => {
         playCue('fired');
         navigate('fired');
       } else {
+        const endedContract = state.lastResult?.contractEnded;
         state = { ...state, lastResult: undefined };
+        if (endedContract) {
+          chronicle = createChronicleState(state);
+          playCue('stamp');
+        }
         render();
       }
       break;
@@ -257,11 +299,32 @@ function dispatchSelectedRoute() {
   playCue('dispatch');
   state = { ...state, dispatchingRouteId: routeId, lastResult: undefined };
   render();
-  window.setTimeout(() => {
-    state = resolveDispatch(state, routeId);
-    playCue(state.firedReason ? 'fired' : state.lastResult?.success ? 'success' : 'failure');
-    render();
-  }, 900);
+  const delay = prefersReducedMotion() ? 120 : DISPATCH_ANIMATION_MS;
+  pendingDispatch = {
+    routeId,
+    timeoutId: window.setTimeout(() => finishPendingDispatch(), delay)
+  };
+}
+
+function finishPendingDispatch() {
+  if (!pendingDispatch) {
+    return;
+  }
+  const { routeId, timeoutId } = pendingDispatch;
+  window.clearTimeout(timeoutId);
+  pendingDispatch = undefined;
+  if (!state.dispatchingRouteId || state.dispatchingRouteId !== routeId) {
+    return;
+  }
+  const before = state;
+  const nextState = resolveDispatch(state, routeId);
+  if (nextState.lastResult) {
+    recordChronicleLeg(before, nextState.lastResult);
+  }
+  state = nextState;
+  playCue('stamp');
+  playResultCues(state.lastResult);
+  render();
 }
 
 function saveCurrentScore() {
@@ -299,6 +362,7 @@ function render() {
               : state.screen === 'fired'
                 ? renderFired()
                 : renderHighScores();
+  hydrateSettlementAnimations();
 }
 
 function renderTitle() {
@@ -447,6 +511,7 @@ function renderMapPreview() {
       <aside class="side-panel">
         <h1>Route Atlas</h1>
         <p>Inspect the board geography, route types, express lines, and contract availability before opening the ledger.</p>
+        ${renderLedgerStamp('ROUTE LEGEND', 'gold', 'atlas-stamp')}
         <p class="hint">Open U.S. geography styled as a playable frontier route board.</p>
         <dl>
           <dt>Nodes</dt><dd>${nodes.length}</dd>
@@ -484,6 +549,7 @@ function renderGame() {
       <aside class="side-panel contract-panel">
         <p class="eyebrow">Current Contract</p>
         <h1>${state.contract.cargoName}</h1>
+        ${renderLedgerStamp('CONTRACT ACCEPTED', 'gold', 'contract-accepted-stamp')}
         <p>${state.contract.copy}</p>
         <dl class="compact-list">
           <dt>Office</dt><dd>${office.name.replace(' Office', '')}</dd>
@@ -503,7 +569,9 @@ function renderGame() {
       <section class="map-stage">
         ${renderContractRibbon()}
         ${renderMap('game')}
+        ${state.dispatchingRouteId ? renderDispatchCinematic(routesById[state.dispatchingRouteId]) : ''}
         ${renderSelectedRouteLedger(selected, selectedState)}
+        ${renderDispatchChronicle()}
       </section>
       <aside class="side-panel actions-panel">
         <p class="eyebrow">Preparation</p>
@@ -626,7 +694,11 @@ function renderSelectedRouteLedger(selected?: LedgerRoute, selectedState?: Ledge
         <span>Counters</span>
         <strong>${selectedState.assigned.filter((id) => !['scout', 'telegraph', 'tip', 'borrow'].includes(id)).length ? selectedState.assigned.filter((id) => !['scout', 'telegraph', 'tip', 'borrow'].includes(id)).map((id) => actionName(id)).join(', ') : 'None'}</strong>
       </div>
-      <button data-action="dispatch" ${canDispatch(state) ? '' : 'disabled'}>${state.dispatchingRouteId ? 'Dispatching...' : 'Dispatch Shipment'}</button>
+      ${
+        state.dispatchingRouteId
+          ? '<button data-action="skip-dispatch">Skip Animation</button>'
+          : `<button data-action="dispatch" ${canDispatch(state) ? '' : 'disabled'}>Dispatch Shipment</button>`
+      }
     </footer>
   `;
 }
@@ -637,6 +709,67 @@ function routeDangerLabel(route: LedgerRoute) {
   const prefix = state.journey === 1 && !route.express && percent <= 32 ? 'Tutorial ' : '';
   const suffix = route.express ? ' any incident' : '';
   return `${prefix}${percent}%${suffix}`;
+}
+
+function renderDispatchChronicle() {
+  const activeResult = state.lastResult;
+  const contract = activeResult?.contract ?? state.contract;
+  if (chronicle.contractId !== contract.id && !activeResult) {
+    chronicle = createChronicleState(state);
+  }
+  const currentNode = activeResult ? activeResult.nextNodeId : state.currentNodeId;
+  const completedStations = chronicle.legs.map((leg) => leg.to).filter((nodeId) => nodeId !== currentNode && nodeId !== contract.origin);
+  const stationItems = [
+    `<span class="chronicle-station origin"><em>Origin</em><strong>${findNodeName(contract.origin)}</strong></span>`,
+    ...completedStations.map((nodeId) => `<span class="chronicle-station completed"><em>Stop</em><strong>${findNodeName(nodeId)}</strong></span>`),
+    `<span class="chronicle-station current"><em>Current</em><strong>${findNodeName(currentNode)}</strong></span>`,
+    `<span class="chronicle-station destination"><em>Destination</em><strong>${findNodeName(contract.destination)}</strong></span>`
+  ];
+  const eventSeals = chronicle.legs.length
+    ? chronicle.legs
+        .map(
+          (leg, index) => `
+            <span class="event-seal seal-${leg.seal}" title="${escapeHtml(leg.status)}: ${escapeHtml(leg.headline)}">
+              <b>${sealIcon(leg.seal)}</b>
+              <em>${index + 1}</em>
+            </span>
+          `
+        )
+        .join('')
+    : '<span class="chronicle-empty">No completed legs yet.</span>';
+  const headline = chronicle.currentHeadline ?? 'LEDGER WIRE AWAITS THE FIRST DISPATCH';
+  const recent = chronicle.recentHeadlines.slice(0, 6);
+
+  return `
+    <section class="dispatch-chronicle" aria-label="Dispatch Chronicle" data-chronicle-contract="${escapeHtml(contract.id)}" data-chronicle-leg-count="${chronicle.legs.length}">
+      <div class="chronicle-main">
+        <div class="chronicle-title">
+          <span>Dispatch Chronicle</span>
+          <strong>${escapeHtml(headline)}</strong>
+        </div>
+        <div class="chronicle-route" data-testid="chronicle-stations">${stationItems.join('')}</div>
+        <div class="chronicle-seals" data-testid="chronicle-seals">${eventSeals}</div>
+      </div>
+      <details class="ledger-wire-panel">
+        <summary>Ledger Wire</summary>
+        ${
+          recent.length
+            ? `<ol>${recent.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ol>`
+            : '<p>No wire headlines filed yet.</p>'
+        }
+      </details>
+    </section>
+  `;
+}
+
+function renderDispatchCinematic(route: LedgerRoute) {
+  return `
+    <div class="dispatch-cinematic" role="status" aria-live="polite">
+      <strong>Dispatch moving</strong>
+      <span>${routeName(route)}</span>
+      <button data-action="skip-dispatch">Skip Animation</button>
+    </div>
+  `;
 }
 
 function renderActionGroups() {
@@ -745,9 +878,10 @@ function renderResultModal() {
   }
   const eventAsset = eventAssetForResult(result);
   const effectClass = eventEffectClass(result);
+  const statusLabel = dispatchResultStatusLabel(result);
   return `
     <div class="modal-backdrop">
-      <article class="result-card ${result.success ? 'success-result' : 'failure-result'} ${result.journeyComplete ? 'legend-result' : ''}">
+      <article class="result-card ${result.success ? 'success-result' : 'failure-result'} ${result.journeyComplete ? 'legend-result' : ''}" data-result-status="${escapeHtml(statusLabel)}">
         <div class="event-frame ${effectClass}">
           <img src="${assetUrl(`assets/events/${eventAsset}`)}" alt="" class="event-art" />
           <div class="event-fx event-fx-one"></div>
@@ -756,9 +890,11 @@ function renderResultModal() {
           <div class="event-spark"></div>
         </div>
         <div>
+          ${renderResultStamp(result)}
           <p class="eyebrow">${result.arrivedAtDestination ? 'Destination Arrival' : result.success ? 'Route Result' : 'Board Incident'}</p>
           <h1>${result.arrivedAtDestination ? 'CONTRACT DELIVERED' : result.message}</h1>
-          <p class="result-outcome ${result.success ? 'outcome-good' : 'outcome-bad'}">${dispatchResultStatusLabel(result)}${result.prepUsed.length ? ` &middot; ${result.prepUsed.length} counter${result.prepUsed.length === 1 ? '' : 's'} attempted` : ''}</p>
+          <p class="result-outcome ${result.success ? 'outcome-good' : 'outcome-bad'}">${statusLabel}${result.prepUsed.length ? ` &middot; ${result.prepUsed.length} counter${result.prepUsed.length === 1 ? '' : 's'} attempted` : ''}</p>
+          ${renderLedgerWireCurrent(result)}
           <p>${result.detail}</p>
           ${result.arrivedAtDestination ? '<p class="success-copy">The named destination signed the receipt. The money engine keeps turning.</p>' : ''}
           <button class="result-primary-action" data-action="continue-result">${result.firedReason ? 'Face the Board' : result.contractEnded ? 'Review Next Contract' : 'Continue'}</button>
@@ -775,6 +911,25 @@ function renderResultModal() {
         </div>
       </article>
     </div>
+  `;
+}
+
+function renderResultStamp(result: DispatchResultView) {
+  const label = stampLabelForResult(result);
+  if (!label) {
+    return '';
+  }
+  const tone: StampTone = label === 'CONTRACT EXPIRED' || label === 'FIRED BY THE BOARD' ? 'failure' : 'gold';
+  return renderLedgerStamp(label, tone, 'result-stamp');
+}
+
+function renderLedgerWireCurrent(result: DispatchResultView) {
+  const headline = chronicle.currentHeadline ?? buildLedgerHeadline(result);
+  return `
+    <aside class="ledger-wire-current" data-testid="ledger-wire-headline" data-headline="${escapeHtml(headline)}">
+      <span>The Ledger Wire</span>
+      <strong>${escapeHtml(headline)}</strong>
+    </aside>
   `;
 }
 
@@ -800,17 +955,17 @@ function renderResultSections(result: NonNullable<LedgerState['lastResult']>) {
     ? [['Failed', result.countersFailed.map((id) => actionName(id)).join(', ')], ['Effect', 'Attempted, but the incident still broke through.']]
     : [];
   const financial = [
-    ...amountRow('Gross fee', result.grossFee, 'money'),
-    ...amountRow('Net fee', result.netFee, 'signed-money'),
-    ...amountRow('Score', result.scoreDelta, 'signed-number'),
-    ...amountRow('Cash', result.cashDelta, 'signed-money'),
-    ...amountRow('Insurance applied', result.mitigationApplied.includes('insurance') ? Math.round(result.contract.cargoValue * 0.3) : 0, 'money'),
-    ...amountRow('Debt used', result.debtUsed, 'money'),
-    ...amountRow('Principal repaid', result.principalRepaid, 'money'),
-    ...amountRow('Interest paid', result.interestCharge, 'money'),
-    ...amountRow('Reputation', result.reputationDelta, 'signed-number'),
-    ...amountRow('Trust', result.trustDelta, 'signed-number'),
-    ...amountRow('Outlaw pressure', result.pressureDelta, 'signed-number')
+    ...amountRow('Payout', result.grossFee, 'money', 'coin'),
+    ...amountRow('Net fee', result.netFee, 'signed-money', 'coin'),
+    ...amountRow('Score', result.scoreDelta, 'signed-number', 'coin'),
+    ...amountRow('Cash', result.cashDelta, 'signed-money', 'cash'),
+    ...amountRow('Insurance applied', result.mitigationApplied.includes('insurance') ? Math.round(result.contract.cargoValue * 0.3) : 0, 'money', 'cash'),
+    ...amountRow('Debt principal used', result.debtUsed, 'money', 'debt'),
+    ...amountRow('Debt principal repaid', result.principalRepaid, 'money', 'debt'),
+    ...amountRow('Interest paid', result.interestCharge, 'money', 'interest'),
+    ...amountRow('Reputation', result.reputationDelta, 'signed-number', 'reputation'),
+    ...amountRow('Currency trust', result.trustDelta, 'signed-number', 'trust'),
+    ...amountRow('Outlaw Pressure', result.pressureDelta, 'signed-number', 'pressure')
   ];
   const reserve = result.protectionHeld.map((id) => [actionName(id), 'Held in reserve; no matching incident required it.']);
   const backtrack = result.backtrackPenalty ? [['Backtrack penalty', 'Fee and score reduced.']] : [];
@@ -843,13 +998,19 @@ function renderResultSection(title: string, rows: string[][]) {
   `;
 }
 
-function amountRow(label: string, value: number, mode: 'money' | 'signed-money' | 'signed-number') {
+function amountRow(label: string, value: number, mode: 'money' | 'signed-money' | 'signed-number', category: string) {
   if (Math.round(value) === 0) {
     return [];
   }
   const rendered = mode === 'money' ? formatMoney(value) : mode === 'signed-money' ? signedMoney(value) : signedNumber(value);
   const klass = value >= 0 ? 'positive-result' : 'negative-result';
-  return [[label, `<span class="${mode === 'money' ? 'money-result' : klass}">${rendered}</span>`]];
+  const moneyClass = mode === 'money' ? 'money-result' : klass;
+  return [
+    [
+      label,
+      `<span class="${moneyClass} settlement-value settlement-${category}" data-settle-value data-to="${Math.round(value)}" data-format="${mode}" data-final="${escapeHtml(rendered)}" aria-label="${escapeHtml(rendered)}">${prefersReducedMotion() ? rendered : mode === 'signed-number' || mode === 'signed-money' ? '+0' : '$0'}</span>`
+    ]
+  ];
 }
 
 function intelLabel(source: string) {
@@ -879,6 +1040,215 @@ function localRumorOutcomeText(outcome: string) {
   return 'False rumor.';
 }
 
+function createChronicleState(source: LedgerState): ChronicleState {
+  return {
+    contractId: source.contract.id,
+    origin: source.contract.origin,
+    destination: source.contract.destination,
+    legs: [],
+    recentHeadlines: []
+  };
+}
+
+function recordChronicleLeg(before: LedgerState, result: DispatchResultView) {
+  if (chronicle.contractId !== result.contract.id) {
+    chronicle = {
+      contractId: result.contract.id,
+      origin: result.contract.origin,
+      destination: result.contract.destination,
+      legs: [],
+      recentHeadlines: chronicle.recentHeadlines
+    };
+  }
+  const headline = buildLedgerHeadline(result);
+  const status = dispatchResultStatusLabel(result);
+  chronicle = {
+    ...chronicle,
+    currentHeadline: headline,
+    recentHeadlines: [headline, ...chronicle.recentHeadlines.filter((item) => item !== headline)].slice(0, 8),
+    legs: [
+      ...chronicle.legs,
+      {
+        routeId: result.route.id,
+        from: before.currentNodeId,
+        to: result.nextNodeId,
+        seal: eventSealForResult(result),
+        status,
+        headline
+      }
+    ]
+  };
+}
+
+function eventSealForResult(result: DispatchResultView): EventSeal {
+  if (result.arrivedAtDestination) {
+    return 'delivery';
+  }
+  if (!result.success) {
+    return result.hazard.id === 'bad-weather'
+      ? 'weather'
+      : result.hazard.id === 'washed-bridge'
+        ? 'bridge'
+        : result.hazard.id === 'false-tip' || result.hazard.id === 'scout-missing'
+          ? 'rumor'
+          : result.hazard.tag === 'ambush' || result.hazard.tag === 'sabotage'
+            ? 'ambush'
+            : 'loss';
+  }
+  if (result.countered && (result.hazard.tag === 'ambush' || result.hazard.tag === 'sabotage')) {
+    return 'defended';
+  }
+  if (result.hazard.id === 'clean') {
+    return 'clean';
+  }
+  if (result.hazard.id === 'bad-weather') {
+    return 'weather';
+  }
+  if (result.hazard.id === 'track-cut') {
+    return 'repair';
+  }
+  if (result.hazard.id === 'washed-bridge') {
+    return 'bridge';
+  }
+  if (result.hazard.id === 'false-tip' || result.hazard.id === 'scout-missing') {
+    return 'rumor';
+  }
+  return result.countered ? 'defended' : 'clean';
+}
+
+function sealIcon(seal: EventSeal) {
+  const icons: Record<EventSeal, string> = {
+    clean: 'CP',
+    weather: 'WX',
+    ambush: 'AM',
+    defended: 'DF',
+    repair: 'TR',
+    bridge: 'BR',
+    rumor: 'FR',
+    delivery: 'DL',
+    loss: 'LS'
+  };
+  return icons[seal];
+}
+
+function buildLedgerHeadline(result: DispatchResultView) {
+  const cargo = headlineCargo(result.contract.cargoType);
+  const destination = findNodeName(result.contract.destination).toUpperCase();
+  const routeEnd = findNodeName(result.nextNodeId).toUpperCase();
+  const route = routeName(result.route).toUpperCase();
+  const net = result.netFee >= 0 ? `NET ${formatMoney(result.netFee)}` : `COST ${formatMoney(Math.abs(result.netFee))}`;
+
+  if (result.arrivedAtDestination) {
+    return `${cargo} REACHES ${destination} WITH ${net}`;
+  }
+  if (!result.success) {
+    if (result.localRumorOutcome === 'false' || result.hazard.id === 'false-tip' || result.hazard.id === 'scout-missing') {
+      return `FALSE RUMOR SENDS CREW INTO EMPTY COUNTRY`;
+    }
+    return `${cargo} LOSS ON ${route} SHAKES ${destination} TRUST`;
+  }
+  if (result.countered && (result.hazard.tag === 'ambush' || result.hazard.tag === 'sabotage')) {
+    return `GUARDS BREAK AMBUSH ON ${route}`;
+  }
+  if (result.hazard.id === 'track-cut') {
+    return `TRACK REOPENED BEFORE ${cargo} LOSES TRUST`;
+  }
+  if (result.hazard.id === 'washed-bridge') {
+    return `BRIDGE CREW KEEPS ${cargo} MOVING TO ${routeEnd}`;
+  }
+  if (result.hazard.id === 'bad-weather') {
+    return `${cargo} BEATS WEATHER INTO ${routeEnd}`;
+  }
+  if (result.hazard.id === 'clean') {
+    return `${cargo} CLEARS ${routeEnd} WITHOUT INCIDENT`;
+  }
+  return `${cargo} HOLDS ON ${route} FOR ${net}`;
+}
+
+function headlineCargo(cargoType: string) {
+  return cargoType.replace(/\s+/g, ' ').trim().toUpperCase();
+}
+
+function stampLabelForResult(result: DispatchResultView) {
+  if (result.firedReason) {
+    return 'FIRED BY THE BOARD';
+  }
+  if (result.arrivedAtDestination) {
+    return 'DELIVERED';
+  }
+  if (result.contractEnded && result.success) {
+    return 'CONTRACT EXPIRED';
+  }
+  if (result.countered) {
+    return 'COUNTER WORKED';
+  }
+  if (result.success && result.hazard.id === 'clean') {
+    return 'CLEAN PASSAGE';
+  }
+  return '';
+}
+
+function renderLedgerStamp(label: string, tone: StampTone, extraClass = '') {
+  const lines = label.split(' ');
+  const top = lines.slice(0, Math.ceil(lines.length / 2)).join(' ');
+  const bottom = lines.slice(Math.ceil(lines.length / 2)).join(' ');
+  return `
+    <div class="gold-ledger-stamp stamp-${tone} ${extraClass}" aria-label="${escapeHtml(label)}">
+      <svg viewBox="0 0 260 94" role="img" aria-hidden="true" focusable="false">
+        <rect x="8" y="8" width="244" height="78" rx="12"></rect>
+        <path d="M24 26 H236 M24 68 H236"></path>
+        <text x="130" y="${bottom ? 43 : 57}" text-anchor="middle">${escapeHtml(top)}</text>
+        ${bottom ? `<text x="130" y="65" text-anchor="middle">${escapeHtml(bottom)}</text>` : ''}
+      </svg>
+      <span class="stamp-glint"></span>
+    </div>
+  `;
+}
+
+function hydrateSettlementAnimations() {
+  const values = [...document.querySelectorAll<HTMLElement>('[data-settle-value]')];
+  if (!values.length) {
+    return;
+  }
+  if (prefersReducedMotion()) {
+    for (const element of values) {
+      element.textContent = element.dataset.final ?? element.textContent;
+    }
+    return;
+  }
+
+  const start = performance.now();
+  const duration = 620;
+  const update = (time: number) => {
+    const t = Math.min(1, (time - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    for (const element of values) {
+      const target = Number(element.dataset.to ?? 0);
+      const mode = element.dataset.format as 'money' | 'signed-money' | 'signed-number';
+      const current = Math.round(target * eased);
+      element.textContent = t >= 1 ? element.dataset.final ?? formatSettlementValue(target, mode) : formatSettlementValue(current, mode);
+    }
+    if (t < 1) {
+      window.requestAnimationFrame(update);
+    }
+  };
+  window.requestAnimationFrame(update);
+}
+
+function formatSettlementValue(value: number, mode: 'money' | 'signed-money' | 'signed-number') {
+  if (mode === 'money') {
+    return formatMoney(value);
+  }
+  if (mode === 'signed-money') {
+    return signedMoney(value);
+  }
+  return signedNumber(value);
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 
 function renderFired() {
   if (!state.firedReason) {
@@ -887,7 +1257,7 @@ function renderFired() {
   return `
     <main class="page-shell fired-screen">
       <section class="paper-page compact">
-        <div class="ledger-stamp">BOARD REVIEW</div>
+        ${renderLedgerStamp('FIRED BY THE BOARD', 'failure', 'page-stamp')}
         <p class="eyebrow">Final Board Review</p>
         <h1>FIRED BY THE BOARD</h1>
         <p>Payroll failed. Merchants refused paper. The route lost trust. The town went back to dust, favors, and shotguns.</p>
@@ -939,7 +1309,7 @@ function renderHighScores() {
 }
 
 function renderMap(mode: 'preview' | 'game') {
-  const focus = mode === 'game' && state.mapMode === 'focus' ? mapFocusState() : undefined;
+  const focus = mode === 'game' && state.dispatchingRouteId ? mapRouteFocusState(routesById[state.dispatchingRouteId]) : mode === 'game' && state.mapMode === 'focus' ? mapFocusState() : undefined;
   const focused = Boolean(focus);
   const focusNodeIds = focus?.nodeIds ?? new Set<NodeId>();
   const labels = nodes
@@ -965,6 +1335,7 @@ function renderMap(mode: 'preview' | 'game') {
     .map((route) => {
       const routeState = state.routeStates[route.id];
       const selected = state.selectedRouteId === route.id;
+      const dispatching = state.dispatchingRouteId === route.id;
       const connected = route.from === state.currentNodeId || route.to === state.currentNodeId;
       const reachable = Boolean(routeState?.active && connected);
       const inspectable = mode === 'preview' || reachable;
@@ -976,7 +1347,8 @@ function renderMap(mode: 'preview' | 'game') {
         `type-${route.type}`,
         selected ? 'selected' : '',
         reachable ? 'reachable' : '',
-        state.dispatchingRouteId === route.id ? 'dispatching' : ''
+        state.dispatchingRouteId && !dispatching ? 'dispatch-muted' : '',
+        dispatching ? 'dispatching' : ''
       ].join(' ');
       const aria = routeAriaLabel(route, routeState, mode);
       return `
@@ -984,6 +1356,7 @@ function renderMap(mode: 'preview' | 'game') {
         <path d="${d}" class="${classes}"></path>
         ${routeState?.assigned.length ? renderRouteBadges(route, routeState.assigned) : ''}
         ${routeState?.revealed && routeState.hazardId !== 'clean' ? renderHazardPip(route) : ''}
+        ${dispatching ? renderIncidentPulse(route) : ''}
       `;
     })
     .join('');
@@ -993,7 +1366,7 @@ function renderMap(mode: 'preview' | 'game') {
     : renderStationToken(state.currentNodeId);
 
   return `
-    <div class="map-wrap ${focused ? 'focus-contract' : 'full-network'}" ${focus?.attrs ?? ''}>
+    <div class="map-wrap ${focused ? 'focus-contract' : 'full-network'} ${state.dispatchingRouteId ? 'cinematic-focus' : ''}" ${focus?.attrs ?? ''}>
       <img src="${assetUrl('assets/map/map-base-usa-4k.webp')}" alt="Antique geodata-derived United States map" class="map-base" />
       <svg class="map-overlay" viewBox="0 0 ${MAP_WIDTH} ${MAP_HEIGHT}" aria-label="Clickable route graph">
         <g class="route-layer">${routeLines}</g>
@@ -1041,8 +1414,45 @@ function mapFocusState() {
   };
 }
 
+function mapRouteFocusState(route: LedgerRoute) {
+  const nodeIds = new Set<NodeId>([route.from, route.to, state.contract.destination]);
+  const points = [route.from, route.to].map((nodeId) => projectPoint(nodesById[nodeId].longitude, nodesById[nodeId].latitude));
+  const minX = Math.max(0, Math.min(...points.map((point) => point.x)) - 250);
+  const maxX = Math.min(MAP_WIDTH, Math.max(...points.map((point) => point.x)) + 250);
+  const minY = Math.max(0, Math.min(...points.map((point) => point.y)) - 210);
+  const maxY = Math.min(MAP_HEIGHT, Math.max(...points.map((point) => point.y)) + 210);
+  const boxWidth = Math.max(1, maxX - minX);
+  const boxHeight = Math.max(1, maxY - minY);
+  const scale = clampValue(Math.min((MAP_WIDTH / boxWidth) * 0.7, (MAP_HEIGHT / boxHeight) * 0.7), 1.18, 2.15);
+  const centerX = ((minX + maxX) / 2 / MAP_WIDTH) * 100;
+  const centerY = ((minY + maxY) / 2 / MAP_HEIGHT) * 100;
+  const minPan = 100 - scale * 100;
+  const panX = clampValue(50 - scale * centerX, minPan, 0);
+  const panY = clampValue(50 - scale * centerY, minPan, 0);
+  const focusArea = (boxWidth * boxHeight) / (MAP_WIDTH * MAP_HEIGHT);
+
+  return {
+    nodeIds,
+    attrs: `style="--focus-scale:${scale.toFixed(3)};--focus-pan-x:${panX.toFixed(2)}%;--focus-pan-y:${panY.toFixed(2)}%;" data-focus-scale="${scale.toFixed(3)}" data-focus-area="${focusArea.toFixed(4)}" data-dispatch-route="${route.id}"`
+  };
+}
+
 function clampValue(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+function renderIncidentPulse(route: LedgerRoute) {
+  const routeState = state.routeStates[route.id];
+  const hazard = hazardById(routeState.hazardIds.find((id) => id !== 'clean') ?? routeState.hazardId);
+  const mid = routeMidPoint(route);
+  const label = hazard.id === 'clean' ? 'Clean passage check' : hazard.name;
+  return `
+    <g class="incident-pulse" transform="translate(${mid.x.toFixed(1)} ${mid.y.toFixed(1)})">
+      <circle class="incident-ring" r="22"></circle>
+      <circle class="incident-core" r="7"></circle>
+      <title>${escapeHtml(label)}</title>
+    </g>
+  `;
 }
 
 function renderHazardPip(route: LedgerRoute) {
@@ -1089,13 +1499,14 @@ function renderStationToken(nodeId: NodeId) {
 
 function renderMovingToken(route: LedgerRoute) {
   const path = routePath(route, state.currentNodeId);
+  const duration = prefersReducedMotion() ? '0.12s' : `${(DISPATCH_ANIMATION_MS / 1000).toFixed(1)}s`;
   return `
     <g class="vehicle-token moving">
       <circle class="token-dust dust-one" cx="-54" cy="18" r="10"></circle>
       <circle class="token-dust dust-two" cx="-78" cy="26" r="7"></circle>
       <circle class="token-glint" cx="30" cy="-22" r="8"></circle>
       <image href="${assetUrl(`assets/tokens/${route.type === 'stage' || route.type === 'branch' ? 'stagecoach.svg' : 'train.svg'}`)}" x="-52" y="-48" width="104" height="72"></image>
-      <animateMotion dur="0.9s" fill="freeze" path="${path}"></animateMotion>
+      <animateMotion dur="${duration}" fill="freeze" path="${path}"></animateMotion>
     </g>
   `;
 }
@@ -1267,7 +1678,31 @@ function escapeHtml(value: string) {
     .replaceAll("'", '&#039;');
 }
 
-type Cue = 'click' | 'dispatch' | 'success' | 'failure' | 'fired' | 'tip';
+type Cue = 'click' | 'dispatch' | 'success' | 'failure' | 'fired' | 'tip' | 'stamp' | 'coin' | 'drawer' | 'debt';
+
+function playResultCues(result?: DispatchResultView) {
+  if (!result) {
+    return;
+  }
+  if (result.firedReason) {
+    playCue('fired');
+    return;
+  }
+  if (!result.success) {
+    playCue('failure');
+    if (result.interestCharge > 0 || result.cashDelta < 0) {
+      window.setTimeout(() => playCue('debt'), 160);
+    }
+    return;
+  }
+  playCue(result.arrivedAtDestination ? 'success' : 'drawer');
+  if (result.grossFee > 0 || result.scoreDelta > 0) {
+    window.setTimeout(() => playCue('coin'), 130);
+  }
+  if (result.interestCharge > 0 || result.principalRepaid > 0) {
+    window.setTimeout(() => playCue('debt'), 260);
+  }
+}
 
 function playCue(cue: Cue) {
   if (muted) {
@@ -1276,6 +1711,9 @@ function playCue(cue: Cue) {
 
   try {
     audioContext ??= new AudioContext();
+    if (audioContext.state === 'suspended') {
+      void audioContext.resume();
+    }
     const now = audioContext.currentTime;
     const gain = audioContext.createGain();
     const osc = audioContext.createOscillator();
@@ -1285,18 +1723,24 @@ function playCue(cue: Cue) {
       success: [660, 0.2, 'triangle'],
       failure: [160, 0.22, 'sawtooth'],
       fired: [92, 0.45, 'sawtooth'],
-      tip: [520, 0.08, 'triangle']
+      tip: [520, 0.08, 'triangle'],
+      stamp: [150, 0.08, 'square'],
+      coin: [900, 0.1, 'triangle'],
+      drawer: [330, 0.13, 'square'],
+      debt: [118, 0.18, 'sawtooth']
     };
     const [frequency, duration, type] = table[cue];
     osc.type = type;
     osc.frequency.setValueAtTime(frequency, now);
-    if (cue === 'success') {
+    if (cue === 'success' || cue === 'coin') {
       osc.frequency.exponentialRampToValueAtTime(990, now + duration);
-    } else if (cue === 'failure' || cue === 'fired') {
+    } else if (cue === 'stamp') {
+      osc.frequency.exponentialRampToValueAtTime(80, now + duration * 0.7);
+    } else if (cue === 'failure' || cue === 'fired' || cue === 'debt') {
       osc.frequency.exponentialRampToValueAtTime(Math.max(40, frequency * 0.55), now + duration);
     }
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(cue === 'fired' ? 0.12 : 0.055, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(cue === 'fired' ? 0.12 : cue === 'stamp' ? 0.08 : 0.055, now + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     osc.connect(gain);
     gain.connect(audioContext.destination);

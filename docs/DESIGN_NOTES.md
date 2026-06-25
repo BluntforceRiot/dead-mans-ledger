@@ -10,9 +10,18 @@ The money provided independence. The route was the engine.
 
 The game treats independence as economic circulation. Paper money only creates practical independence if it reaches towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
-## v0.6.1 Scope
+## v0.7 Scope
 
-The v0.6.1 patch keeps the v0.6 mechanics intact and hardens final public-submission truth, framing, and release hygiene:
+The v0.7 final showmanship bundle keeps the v0.6.1 mechanics intact and adds theater, memory, and tactility:
+
+- Gold ledger stamps mark contract acceptance, route legend, clean passage, counters worked, delivery, contract expiry, and board failure.
+- Dispatch Chronicle records the active contract's origin, completed stations, current station, destination, and small event seals for completed legs.
+- Ledger Wire headlines are deterministic templates based on cargo, route, event, counter outcome, destination, and financial result.
+- Dispatch uses a short cinematic focus on the active route, visible vehicle movement, incident pulse, and a Skip Animation control.
+- Result cards animate nonzero settlement values to their authoritative final values, with reduced-motion fallback.
+- Generated WebAudio cues support stamp hits, settlement, cash drawer, debt warning, delivery, and board failure.
+
+The v0.6.1 foundation remains:
 
 - Contracts now have origin, destination, cargo value, delivery fee, trust weight, urgency, and leg limit.
 - The route network persists for the contract instead of rerolling after each dispatch.

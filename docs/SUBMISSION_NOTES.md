@@ -5,7 +5,7 @@
 - Title: Dead Man's Ledger: The Money Engine
 - Event: Summer into AI Week 2
 - Theme: Independence Engines
-- Build: v1.0 submission build, v0.6.1 release-hygiene patch
+- Build: v1.0 submission build, v0.7 final showmanship bundle
 
 ## Short Description
 
@@ -51,6 +51,7 @@ Dead Man's Ledger treats independence as economic circulation. Paper money only 
 - Runs end when cash, reputation, or currency trust collapses.
 - Reaching the named destination completes the contract.
 - Generated WebAudio cues can be toggled with `M`.
+- The final showmanship bundle adds gold ledger stamps, Dispatch Chronicle contract history, deterministic Ledger Wire headlines, cinematic route focus with Skip Animation, and animated settlement deltas.
 
 ## Competitor Reference
 
@@ -65,13 +66,13 @@ https://github.com/BluntforceRiot/dead-mans-ledger
 
 ## Review Packet
 
-The v0.6.1 review packet should include:
+The v0.7 review packet should include:
 
 - Source code.
 - Package files.
 - Public assets.
 - Docs.
-- v0.6.1 screenshots.
+- v0.7 screenshots.
 - Build receipt.
 - Build log.
 - Balance report.

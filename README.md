@@ -8,7 +8,7 @@ Built for Summer into AI Week 2: Independence Engines.
 
 ## Playable Submission Build
 
-This build is the v0.6.1 release-hygiene patch for the v1.0 submission build:
+This build is the v0.7 final showmanship bundle for the v1.0 submission build:
 
 - Vite + TypeScript static browser app.
 - Real geodata-derived contiguous U.S. base map.
@@ -23,6 +23,7 @@ This build is the v0.6.1 release-hygiene patch for the v1.0 submission build:
 - About/Credits shows proof notes, AI usage, local-score scope, and the current journey seed.
 - Local high scores only; no backend, login, or online leaderboard.
 - Generated WebAudio cues with `M` mute toggle.
+- Gold ledger stamps, Dispatch Chronicle, Ledger Wire headlines, cinematic dispatch focus, and animated settlement deltas.
 - Station rumors replace always-on Local Tip busywork.
 - Focus Contract now adaptively frames the active contract corridor, while Full Map restores the complete network.
 - Displayed danger uses the same incident-probability model as route generation.
@@ -43,6 +44,7 @@ npm run typecheck
 npm run build
 npm run balance:sim
 npm run playtest:v061
+npm run playtest:v07
 npm run preview
 npm audit --audit-level=moderate
 ```
@@ -50,7 +52,7 @@ npm audit --audit-level=moderate
 Screenshot capture for review:
 
 ```sh
-npm run screenshots:v061
+npm run screenshots:v07
 ```
 
 ## Controls
@@ -61,6 +63,7 @@ This is intentionally mouse-first.
 - Click an active gold route from the current station.
 - Click a prep action, then click a reachable route to assign it.
 - Click `Dispatch Shipment`.
+- Click `Skip Animation` or press `S`/Escape during dispatch to skip the cinematic focus.
 - Read the result card and continue.
 - Use Route Atlas to inspect the graph.
 - Use About for proof notes, AI usage, and the current journey seed.
