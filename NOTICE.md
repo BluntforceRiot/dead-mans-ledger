@@ -1,6 +1,6 @@
 # Notice
 
-Dead Man's Ledger: The Money Engine is an original browser game prototype.
+Dead Man's Ledger: The Money Engine is an original static browser game submission build.
 
 No Google Maps screenshots are used.
 

@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate event scenes
+        run: npm run events:generate
+
       - name: Generate geodata map
         run: npm run map:generate
 

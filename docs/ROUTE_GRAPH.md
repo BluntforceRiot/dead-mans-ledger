@@ -2,7 +2,7 @@
 
 ## Summary
 
-v0.6 includes:
+v0.6.1 includes:
 
 - 55 city nodes.
 - 80 routes.
@@ -10,7 +10,8 @@ v0.6 includes:
 - Standard and express route styling.
 - Hidden route hazards on a portion of active routes.
 - Route-attached prep badges.
-- Separate visual treatments for rail, stage/branch, river/sea, and express routes, with stronger v0.6 hover, selected-route, keyboard-focus, dispatch, and Focus Contract styling.
+- Separate visual treatments for rail, stage/branch, river/sea, and express routes, with stronger hover, selected-route, keyboard-focus, dispatch, and adaptive Focus Contract styling.
+- Displayed danger estimates are derived from the same incident-probability model used when hazards are generated.
 
 Nodes remain fixed. Contract route availability and hazards persist for the current destination contract, so the map feels like a known frontier network with changing opportunities instead of rerolling after every dispatch.
 

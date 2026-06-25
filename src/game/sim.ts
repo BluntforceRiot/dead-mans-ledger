@@ -152,6 +152,25 @@ export interface DispatchResult {
   firedReason?: string;
 }
 
+export function dispatchResultStatusLabel(result: DispatchResult) {
+  if (result.arrivedAtDestination) {
+    return 'DELIVERED';
+  }
+  if (!result.success) {
+    return 'SHIPMENT DISRUPTED';
+  }
+  if (result.contractEnded) {
+    return 'CONTRACT EXPIRED';
+  }
+  if (result.countered) {
+    return 'COUNTER WORKED';
+  }
+  if (result.hazard.id === 'clean') {
+    return 'CLEAN PASSAGE';
+  }
+  return 'IN TRANSIT';
+}
+
 export const dispatchOffices: DispatchOffice[] = [
   {
     id: 'new-york',
@@ -272,9 +291,6 @@ export function generateRouteStates(
   outlawPressure = 20
 ): Record<RouteId, RouteState> {
   const next = random(seed + journey * 7919 + outlawPressure * 17);
-  const pressureLift = outlawPressure / 100;
-  const tutorialEase = journey === 1 ? -0.12 : 0;
-  const hazardChance = Math.min(0.72, Math.max(0.08, 0.22 + journey * 0.018 + pressureLift * 0.22 + tutorialEase));
   const routeStates = Object.fromEntries(
     routes.map((route) => {
       const activeRoll = next();
@@ -289,7 +305,7 @@ export function generateRouteStates(
         active = active || next() < 0.76;
       }
 
-      const hazardIds = active ? generateHazardsForRoute(route, hazardChance, outlawPressure, next) : ['clean'];
+      const hazardIds = active ? generateHazardsForRoute(route, journey, outlawPressure, next) : ['clean'];
       return [
         route.id,
         {
@@ -316,11 +332,33 @@ export function generateRouteStates(
   return routeStates;
 }
 
-function generateHazardsForRoute(route: LedgerRoute, hazardChance: number, outlawPressure: number, next: () => number): HazardId[] {
+export interface RouteIncidentEstimate {
+  probability: number;
+  perCheck: number[];
+  exposure: number;
+}
+
+export function routeIncidentCheckProbability(route: LedgerRoute, journey: number, outlawPressure: number, exposureIndex = 0) {
+  const pressureLift = outlawPressure / 100;
+  const tutorialEase = journey === 1 ? -0.12 : 0;
+  const hazardChance = clamp(0.22 + journey * 0.018 + pressureLift * 0.22 + tutorialEase, 0.08, 0.72);
+  return clamp(hazardChance + route.baseRisk * 0.42 + (route.express ? 0.12 : 0) + exposureIndex * 0.08, 0.08, 0.86);
+}
+
+export function estimateRouteIncidentProbability(route: LedgerRoute, journey: number, outlawPressure: number): RouteIncidentEstimate {
+  const perCheck = Array.from({ length: incidentExposure(route) }, (_, index) => routeIncidentCheckProbability(route, journey, outlawPressure, index));
+  return {
+    probability: 1 - perCheck.reduce((safe, chance) => safe * (1 - chance), 1),
+    perCheck,
+    exposure: perCheck.length
+  };
+}
+
+function generateHazardsForRoute(route: LedgerRoute, journey: number, outlawPressure: number, next: () => number): HazardId[] {
   const exposure = incidentExposure(route);
   const hazardIds: HazardId[] = [];
   for (let index = 0; index < exposure; index += 1) {
-    const chance = clamp(hazardChance + route.baseRisk * 0.42 + (route.express ? 0.12 : 0) + index * 0.08, 0.08, 0.86);
+    const chance = routeIncidentCheckProbability(route, journey, outlawPressure, index);
     hazardIds.push(next() < chance ? pickHazard(route, next, outlawPressure).id : 'clean');
   }
   const filtered = hazardIds.filter((id) => id !== 'clean');

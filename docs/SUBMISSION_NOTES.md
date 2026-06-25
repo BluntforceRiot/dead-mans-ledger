@@ -5,7 +5,7 @@
 - Title: Dead Man's Ledger: The Money Engine
 - Event: Summer into AI Week 2
 - Theme: Independence Engines
-- Build: v0.6 gold master candidate pending live deploy approval
+- Build: v1.0 submission build, v0.6.1 release-hygiene patch
 
 ## Short Description
 
@@ -26,6 +26,8 @@ Dead Man's Ledger treats independence as economic circulation. Paper money only 
 - No online leaderboard.
 - Local high scores only.
 - GitHub Pages workflow prepared, but no push or deploy should happen without explicit approval.
+- Demo URL: `https://bluntforceriot.github.io/dead-mans-ledger/`
+- Repository URL: `https://github.com/BluntforceRiot/dead-mans-ledger`
 
 ## Map And Data Notes
 
@@ -54,21 +56,22 @@ Dead Man's Ledger treats independence as economic circulation. Paper money only 
 
 The About/Credits screen includes a public competitor-reference card for Myles's Dependency Day with a safe external link. The comparison is friendly and framed around distinct mechanics: severance versus circulation.
 
-## Expected Demo URL
+## Demo And Repository URLs
 
 ```text
 https://bluntforceriot.github.io/dead-mans-ledger/
+https://github.com/BluntforceRiot/dead-mans-ledger
 ```
 
 ## Review Packet
 
-The v0.6 review packet should include:
+The v0.6.1 review packet should include:
 
 - Source code.
 - Package files.
 - Public assets.
 - Docs.
-- v0.6 screenshots.
+- v0.6.1 screenshots.
 - Build receipt.
 - Build log.
 - Balance report.

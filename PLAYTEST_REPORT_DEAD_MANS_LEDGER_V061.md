@@ -1,0 +1,106 @@
+# Dead Man's Ledger v0.6.1 Playtest Report
+
+Base URL: http://127.0.0.1:4173/
+
+## Passes
+
+- PASS: Danger model matches route generation: Journey 1 low pressure normal route (0.2836 ~= 0.2836)
+- PASS: Per-check danger matches generation: Journey 1 low pressure normal route check 1 (0.2836 ~= 0.2836)
+- PASS: Danger model matches route generation: Later journey medium pressure normal route (0.5416 ~= 0.5416)
+- PASS: Per-check danger matches generation: Later journey medium pressure normal route check 1 (0.5416 ~= 0.5416)
+- PASS: Danger model matches route generation: High pressure normal route (0.7060 ~= 0.7060)
+- PASS: Per-check danger matches generation: High pressure normal route check 1 (0.7060 ~= 0.7060)
+- PASS: Danger model matches route generation: Express route any-incident probability (0.9555 ~= 0.9555)
+- PASS: Per-check danger matches generation: Express route any-incident probability check 1 (0.7454 ~= 0.7454)
+- PASS: Per-check danger matches generation: Express route any-incident probability check 2 (0.8254 ~= 0.8254)
+- PASS: Generated map asset does not contain clipped caption text
+- PASS: Required deploy/package file exists: .github/workflows/deploy.yml
+- PASS: Required deploy/package file exists: .gitignore
+- PASS: Required deploy/package file exists: LICENSE
+- PASS: cautious full Contract 1 completion: seed 1000, office new-orleans
+- PASS: reckless express contract remains risky: seed 1000, office st-louis
+- PASS: credit-funded contract keeps debt accounting: seed 1000, office new-york
+- PASS: false local tip scenario: seed 1000, office new-orleans
+- PASS: ambush countered by guards: seed 1444, office san-francisco
+- PASS: track cut repaired: seed 1222, office new-orleans
+- PASS: clean passage with protection held in reserve: seed 1000, office new-york
+- PASS: fired outcome: seed 1000, office new-york
+- PASS: in-transit result status: seed 1370, office new-orleans
+- PASS: shipment disrupted result status: seed 1000, office new-york
+- PASS: contract expired result status: seed 1000, office new-york
+- PASS: Result status label: DELIVERED
+- PASS: Result status label: COUNTER WORKED
+- PASS: Result status label: CLEAN PASSAGE
+- PASS: Result status label: IN TRANSIT
+- PASS: Result status label: SHIPMENT DISRUPTED
+- PASS: Result status label: CONTRACT EXPIRED
+- PASS: Local Tip availability is bounded (49/120 samples)
+- PASS: Local Tip cannot be used repeatedly at one station
+- PASS: No horizontal overflow: title 1920x1080
+- PASS: public title copy is release-ready 1920x1080
+- PASS: No horizontal overflow: about 1920x1080
+- PASS: About copy has no candidate/pending language 1920x1080
+- PASS: Demo URL safe link 1920x1080
+- PASS: Repository URL safe link 1920x1080
+- PASS: competitor card visible 1920x1080
+- PASS: About/Credits competitor link is correct and safe
+- PASS: No horizontal overflow: game 1920x1080
+- PASS: Focus Contract tighter than Full Map 1920x1080
+- PASS: selected-route ledger 1920x1080
+- PASS: Displayed danger matches generation model 1920x1080
+- PASS: Full Map mode toggles on
+- PASS: Focus Contract mode toggles on
+- PASS: Destination remains visible in gameplay
+- PASS: Action panel exposes route actions
+- PASS: No horizontal overflow: title 1440x900
+- PASS: public title copy is release-ready 1440x900
+- PASS: No horizontal overflow: about 1440x900
+- PASS: About copy has no candidate/pending language 1440x900
+- PASS: Demo URL safe link 1440x900
+- PASS: Repository URL safe link 1440x900
+- PASS: competitor card visible 1440x900
+- PASS: About/Credits competitor link is correct and safe
+- PASS: No horizontal overflow: game 1440x900
+- PASS: Focus Contract tighter than Full Map 1440x900
+- PASS: selected-route ledger 1440x900
+- PASS: Displayed danger matches generation model 1440x900
+- PASS: Full Map mode toggles on
+- PASS: Focus Contract mode toggles on
+- PASS: Destination remains visible in gameplay
+- PASS: Action panel exposes route actions
+- PASS: No horizontal overflow: title 1366x768
+- PASS: public title copy is release-ready 1366x768
+- PASS: No horizontal overflow: about 1366x768
+- PASS: About copy has no candidate/pending language 1366x768
+- PASS: Demo URL safe link 1366x768
+- PASS: Repository URL safe link 1366x768
+- PASS: competitor card visible 1366x768
+- PASS: About/Credits competitor link is correct and safe
+- PASS: No horizontal overflow: game 1366x768
+- PASS: Focus Contract tighter than Full Map 1366x768
+- PASS: selected-route ledger 1366x768
+- PASS: Displayed danger matches generation model 1366x768
+- PASS: Full Map mode toggles on
+- PASS: Focus Contract mode toggles on
+- PASS: Destination remains visible in gameplay
+- PASS: Action panel exposes route actions
+- PASS: No horizontal overflow: title 1280x720
+- PASS: public title copy is release-ready 1280x720
+- PASS: No horizontal overflow: about 1280x720
+- PASS: About copy has no candidate/pending language 1280x720
+- PASS: Demo URL safe link 1280x720
+- PASS: Repository URL safe link 1280x720
+- PASS: competitor card visible 1280x720
+- PASS: About/Credits competitor link is correct and safe
+- PASS: No horizontal overflow: game 1280x720
+- PASS: Focus Contract tighter than Full Map 1280x720
+- PASS: selected-route ledger 1280x720
+- PASS: Displayed danger matches generation model 1280x720
+- PASS: Full Map mode toggles on
+- PASS: Focus Contract mode toggles on
+- PASS: Destination remains visible in gameplay
+- PASS: Action panel exposes route actions
+
+## Findings
+
+- None

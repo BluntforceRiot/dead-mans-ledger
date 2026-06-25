@@ -198,7 +198,6 @@ async function main() {
   <rect width="${width}" height="${height}" fill="#f0c978" opacity="0.08" filter="url(#paperNoise)"/>
   <rect x="80" y="78" width="${width - 160}" height="${height - 156}" rx="42" fill="none" stroke="#d4af6a" stroke-width="8" opacity="0.48"/>
   <rect x="111" y="109" width="${width - 222}" height="${height - 218}" rx="28" fill="none" stroke="#281b12" stroke-width="3" opacity="0.55"/>
-  <text x="176" y="2070" fill="#e6c987" font-family="Georgia, serif" font-size="44" opacity="0.82">Open U.S. geography styled as a playable frontier route board.</text>
 </svg>`;
 
   const outputDir = path.join(root, 'public', 'assets', 'map');

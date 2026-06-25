@@ -10,9 +10,9 @@ The money provided independence. The route was the engine.
 
 The game treats independence as economic circulation. Paper money only creates practical independence if it reaches towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
-## v0.6 Scope
+## v0.6.1 Scope
 
-The sixth build turns the v0.5 mechanics into a gold-master candidate:
+The v0.6.1 patch keeps the v0.6 mechanics intact and hardens final public-submission truth, framing, and release hygiene:
 
 - Contracts now have origin, destination, cargo value, delivery fee, trust weight, urgency, and leg limit.
 - The route network persists for the contract instead of rerolling after each dispatch.
@@ -24,6 +24,8 @@ The sixth build turns the v0.5 mechanics into a gold-master candidate:
 - Local Tip is now a station-rumor decision instead of always-on busywork.
 - Result cards group intel gathered, counters attempted/succeeded/failed, financial mitigation, and protection held in reserve.
 - The central board uses Focus Contract and Full Map display modes, a contract ribbon, and a selected-route ledger.
+- Displayed danger now uses the same incident-probability formula as route generation.
+- Focus Contract uses adaptive corridor framing instead of a fixed whole-country zoom.
 - The action panel groups Intelligence, Protection, Infrastructure, and Finance.
 - Incident cards and board tokens use richer original SVG scenes and metallic board-piece treatment.
 - Route Atlas replaces Map Preview and removes player-facing code references.
@@ -64,4 +66,4 @@ The public-demo look should feel like a premium board-table ledger, not a muddy 
 
 ## Future Art Hook
 
-The v0.6 SVGs are intentional public-demo symbolic art, not final commercial illustration. A later art pass can replace them with hand-painted or higher-fidelity assets without changing the contract/economy rules.
+The v0.6.1 SVGs are intentional public-demo symbolic art, not final commercial illustration. A later art pass can replace them with hand-painted or higher-fidelity assets without changing the contract/economy rules.

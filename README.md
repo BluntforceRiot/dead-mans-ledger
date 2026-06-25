@@ -6,9 +6,9 @@ The money provided independence. The route was the engine.
 
 Built for Summer into AI Week 2: Independence Engines.
 
-## Playable v0.6
+## Playable Submission Build
 
-This build is the gold-master candidate pass:
+This build is the v0.6.1 release-hygiene patch for the v1.0 submission build:
 
 - Vite + TypeScript static browser app.
 - Real geodata-derived contiguous U.S. base map.
@@ -24,8 +24,13 @@ This build is the gold-master candidate pass:
 - Local high scores only; no backend, login, or online leaderboard.
 - Generated WebAudio cues with `M` mute toggle.
 - Station rumors replace always-on Local Tip busywork.
-- Focus Contract and Full Map display modes support play and planning.
+- Focus Contract now adaptively frames the active contract corridor, while Full Map restores the complete network.
+- Displayed danger uses the same incident-probability model as route generation.
 - About/Credits includes a public, respectful competitor reference.
+
+Demo: [https://bluntforceriot.github.io/dead-mans-ledger/](https://bluntforceriot.github.io/dead-mans-ledger/)
+
+Repository: [https://github.com/BluntforceRiot/dead-mans-ledger](https://github.com/BluntforceRiot/dead-mans-ledger)
 
 ## Commands
 
@@ -37,7 +42,7 @@ npm run verify:assets
 npm run typecheck
 npm run build
 npm run balance:sim
-npm run playtest:v06
+npm run playtest:v061
 npm run preview
 npm audit --audit-level=moderate
 ```
@@ -45,7 +50,7 @@ npm audit --audit-level=moderate
 Screenshot capture for review:
 
 ```sh
-npm run screenshots:v06
+npm run screenshots:v061
 ```
 
 ## Controls
@@ -63,7 +68,7 @@ This is intentionally mouse-first.
 
 Keyboard route support:
 
-- Focusable route paths expose route, status, risk, fee multiplier, and exposure.
+- Focusable route paths expose route, status, modeled danger, fee multiplier, and exposure.
 - Press Enter or Space on a focused route to select it.
 
 ## Game Loop
@@ -124,6 +129,6 @@ Expected project URL once deployed:
 https://bluntforceriot.github.io/dead-mans-ledger/
 ```
 
-The included GitHub Pages workflow runs `npm ci`, `npm run map:generate`, `npm run verify:assets`, `npm run typecheck`, and `npm run build` before uploading `dist/`.
+The included GitHub Pages workflow runs `npm ci`, `npm run events:generate`, `npm run map:generate`, `npm run verify:assets`, `npm run typecheck`, and `npm run build` before uploading `dist/`.
 
 Do not push or deploy without explicit approval.

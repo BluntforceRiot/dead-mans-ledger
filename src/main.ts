@@ -13,6 +13,8 @@ import {
   describeIntel,
   describeHazardStack,
   dispatchOffices,
+  dispatchResultStatusLabel,
+  estimateRouteIncidentProbability,
   findNodeName,
   generateRouteStates,
   getAdjacentRoutes,
@@ -37,6 +39,8 @@ import {
 import { MAP_HEIGHT, MAP_WIDTH, projectPoint } from './map/projection';
 
 const appRoot = document.querySelector<HTMLDivElement>('#app')!;
+const demoUrl = 'https://bluntforceriot.github.io/dead-mans-ledger/';
+const repoUrl = 'https://github.com/BluntforceRiot/dead-mans-ledger';
 
 let state: LedgerState = createInitialState(screenFromHash());
 let muted = window.localStorage.getItem('dead-mans-ledger.muted') === 'true';
@@ -312,7 +316,7 @@ function renderTitle() {
           <button data-screen="about">About</button>
           <button data-screen="scores">High Scores</button>
         </div>
-        <p class="fine-print">v0.6 gold master candidate &middot; Summer into AI Week 2: Independence Engines &middot; M toggles sound</p>
+        <p class="fine-print">v1.0 submission build &middot; Summer into AI Week 2: Independence Engines</p>
       </div>
     </main>
   `;
@@ -408,7 +412,8 @@ function renderAbout() {
           </article>
           <article>
             <h2>Version And Links</h2>
-            <p>Version: <strong>v0.6 gold master candidate</strong>. Demo: <strong>GitHub Pages URL pending deploy approval</strong>. Repo: <strong>public URL pending deploy approval</strong>. Journey seed: <strong>${state.seed}</strong>.</p>
+            <p>Version: <strong>v1.0 submission build</strong>. Demo: <a href="${demoUrl}" target="_blank" rel="noopener noreferrer">${demoUrl}</a>. Repo: <a href="${repoUrl}" target="_blank" rel="noopener noreferrer">${repoUrl}</a>.</p>
+            <details class="proof-details"><summary>Proof Details</summary><span>Journey seed: <strong>${state.seed}</strong></span></details>
           </article>
           <article>
             <h2>Credits</h2>
@@ -442,6 +447,7 @@ function renderMapPreview() {
       <aside class="side-panel">
         <h1>Route Atlas</h1>
         <p>Inspect the board geography, route types, express lines, and contract availability before opening the ledger.</p>
+        <p class="hint">Open U.S. geography styled as a playable frontier route board.</p>
         <dl>
           <dt>Nodes</dt><dd>${nodes.length}</dd>
           <dt>Routes</dt><dd>${routes.length}</dd>
@@ -452,7 +458,7 @@ function renderMapPreview() {
             ? `<div class="route-card">
                 <h2>${routeName(selected)}</h2>
                 <p class="route-note">${selected.note}</p>
-                <p><strong>${selected.type.toUpperCase()}</strong> &middot; ${selected.distanceTier} &middot; risk ${Math.round(selected.baseRisk * 100)}% &middot; exposure ${incidentExposure(selected)} &middot; ${selected.express ? 'EXPRESS' : 'standard'}</p>
+                <p><strong>${selected.type.toUpperCase()}</strong> &middot; ${selected.distanceTier} &middot; danger ${routeDangerLabel(selected)} &middot; exposure ${incidentExposure(selected)} &middot; ${selected.express ? 'EXPRESS' : 'standard'}</p>
                 <p>${selectedState?.active ? 'Open this contract' : 'Closed this contract'} &middot; Intel: ${selectedState ? describeIntel(selectedState) : 'Unknown'}</p>
               </div>`
             : '<p class="hint">Click a route line to inspect status, risk, exposure, and route type.</p>'
@@ -487,7 +493,7 @@ function renderGame() {
           <dt>Cargo type</dt><dd>${state.contract.cargoType}</dd>
           <dt>Cargo value</dt><dd>${formatMoney(state.contract.cargoValue)}</dd>
           <dt>Delivery fee</dt><dd>${formatMoney(state.contract.deliveryFee)}</dd>
-          <dt>Legs left</dt><dd>${state.contract.legsRemaining}/${state.contract.legLimit}</dd>
+          <dt>Legs remaining</dt><dd>${state.contract.legsRemaining}</dd>
           <dt>Active exits</dt><dd>${adjacent.length}</dd>
         </dl>
         ${renderStationRumorNotice()}
@@ -558,11 +564,7 @@ function renderContractRibbon() {
       </div>
       <div>
         <span>Progress</span>
-        <strong>${state.contract.legLimit - state.contract.legsRemaining}/${state.contract.legLimit} legs</strong>
-      </div>
-      <div>
-        <span>Allowance</span>
-        <strong>${state.contract.legsRemaining} left</strong>
+        <strong>${state.contract.legLimit - state.contract.legsRemaining}/${state.contract.legLimit}</strong>
       </div>
       <div class="shipment-seal">
         <span>Seal</span>
@@ -606,7 +608,7 @@ function renderSelectedRouteLedger(selected?: LedgerRoute, selectedState?: Ledge
       </div>
       <div>
         <span>Danger</span>
-        <strong>${estimatedDanger(selected)}</strong>
+        <strong>${routeDangerLabel(selected)}</strong>
       </div>
       <div>
         <span>Exposure</span>
@@ -629,12 +631,12 @@ function renderSelectedRouteLedger(selected?: LedgerRoute, selectedState?: Ledge
   `;
 }
 
-function estimatedDanger(route: LedgerRoute) {
-  const estimate = Math.round((route.baseRisk + state.outlawPressure * 0.002 + (route.express ? 0.08 : 0)) * 100);
-  if (state.journey === 1 && !route.express && estimate <= 32) {
-    return `Tutorial ${estimate}%`;
-  }
-  return `${estimate}%`;
+function routeDangerLabel(route: LedgerRoute) {
+  const estimate = estimateRouteIncidentProbability(route, state.journey, state.outlawPressure);
+  const percent = Math.round(estimate.probability * 100);
+  const prefix = state.journey === 1 && !route.express && percent <= 32 ? 'Tutorial ' : '';
+  const suffix = route.express ? ' any incident' : '';
+  return `${prefix}${percent}%${suffix}`;
 }
 
 function renderActionGroups() {
@@ -731,8 +733,8 @@ function renderHud() {
     <div class="meter debt"><span>Debt</span><strong>${formatMoney(state.borrowedCredit)}</strong></div>
     <div class="meter"><span>Rate</span><strong>${state.interestRate.toFixed(1)}%</strong></div>
     <div class="meter"><span>Next Interest</span><strong>${formatMoney(nextInterestCharge(state))}</strong></div>
-    <div class="meter"><span>Contract</span><strong>${state.journey}.${state.deliveryInJourney}</strong></div>
-    <button class="mute-button" data-action="toggle-sound" title="M toggles sound">${muted ? 'Muted' : 'Sound'}</button>
+    <div class="meter"><span>Contract</span><strong>${state.journey} &middot; Leg ${state.deliveryInJourney}</strong></div>
+    <button class="mute-button" data-action="toggle-sound" title="M toggles sound">${muted ? 'Muted' : 'Sound On'}</button>
   `;
 }
 
@@ -756,7 +758,7 @@ function renderResultModal() {
         <div>
           <p class="eyebrow">${result.arrivedAtDestination ? 'Destination Arrival' : result.success ? 'Route Result' : 'Board Incident'}</p>
           <h1>${result.arrivedAtDestination ? 'CONTRACT DELIVERED' : result.message}</h1>
-          <p class="result-outcome ${result.success ? 'outcome-good' : 'outcome-bad'}">${result.success ? 'Shipment moving' : 'Shipment disrupted'}${result.prepUsed.length ? ` &middot; ${result.prepUsed.length} counter${result.prepUsed.length === 1 ? '' : 's'} attempted` : ''}</p>
+          <p class="result-outcome ${result.success ? 'outcome-good' : 'outcome-bad'}">${dispatchResultStatusLabel(result)}${result.prepUsed.length ? ` &middot; ${result.prepUsed.length} counter${result.prepUsed.length === 1 ? '' : 's'} attempted` : ''}</p>
           <p>${result.detail}</p>
           ${result.arrivedAtDestination ? '<p class="success-copy">The named destination signed the receipt. The money engine keeps turning.</p>' : ''}
           <button class="result-primary-action" data-action="continue-result">${result.firedReason ? 'Face the Board' : result.contractEnded ? 'Review Next Contract' : 'Continue'}</button>
@@ -937,6 +939,9 @@ function renderHighScores() {
 }
 
 function renderMap(mode: 'preview' | 'game') {
+  const focus = mode === 'game' && state.mapMode === 'focus' ? mapFocusState() : undefined;
+  const focused = Boolean(focus);
+  const focusNodeIds = focus?.nodeIds ?? new Set<NodeId>();
   const labels = nodes
     .map((node) => {
       const point = projectPoint(node.longitude, node.latitude);
@@ -946,7 +951,7 @@ function renderMap(mode: 'preview' | 'game') {
       const dense = isDenseNode(node.id);
       const offset = labelOffset(node.id);
       return `
-        <g class="node ${current ? 'current' : ''} ${destination ? 'destination' : ''} ${reachable ? 'reachable-node' : ''} ${dense ? 'dense-node' : ''}" transform="translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})">
+        <g class="node ${current ? 'current' : ''} ${destination ? 'destination' : ''} ${reachable ? 'reachable-node' : ''} ${dense ? 'dense-node' : ''} ${focusNodeIds.has(node.id) ? 'focus-relevant' : ''}" transform="translate(${point.x.toFixed(1)} ${point.y.toFixed(1)})">
           <circle r="${current ? 20 : destination ? 18 : 12}" />
           ${current ? '<circle class="station-ring" r="33" />' : ''}
           ${destination ? '<circle class="destination-ring" r="31" />' : ''}
@@ -987,10 +992,8 @@ function renderMap(mode: 'preview' | 'game') {
     ? renderMovingToken(routesById[state.dispatchingRouteId])
     : renderStationToken(state.currentNodeId);
 
-  const focused = mode === 'game' && state.mapMode === 'focus';
-  const focusStyle = focused ? mapFocusStyle() : '';
   return `
-    <div class="map-wrap ${focused ? 'focus-contract' : 'full-network'}" ${focusStyle}>
+    <div class="map-wrap ${focused ? 'focus-contract' : 'full-network'}" ${focus?.attrs ?? ''}>
       <img src="${assetUrl('assets/map/map-base-usa-4k.webp')}" alt="Antique geodata-derived United States map" class="map-base" />
       <svg class="map-overlay" viewBox="0 0 ${MAP_WIDTH} ${MAP_HEIGHT}" aria-label="Clickable route graph">
         <g class="route-layer">${routeLines}</g>
@@ -1001,18 +1004,45 @@ function renderMap(mode: 'preview' | 'game') {
   `;
 }
 
-function mapFocusStyle() {
-  const current = nodesById[state.currentNodeId];
-  const destination = nodesById[state.contract.destination];
-  const a = projectPoint(current.longitude, current.latitude);
-  const b = projectPoint(destination.longitude, destination.latitude);
-  const x = clampPercent(((a.x + b.x) / 2 / MAP_WIDTH) * 100);
-  const y = clampPercent(((a.y + b.y) / 2 / MAP_HEIGHT) * 100);
-  return `style="--focus-x:${x.toFixed(1)}%;--focus-y:${y.toFixed(1)}%;"`;
+function mapFocusState() {
+  const nodeIds = new Set<NodeId>([state.currentNodeId, state.contract.destination]);
+  const legalRoutes = getLegalAdjacentRoutes(state);
+  for (const route of legalRoutes) {
+    nodeIds.add(route.from);
+    nodeIds.add(route.to);
+    if (routeClosesDistance(state, route)) {
+      nodeIds.add(otherEnd(route, state.currentNodeId));
+    }
+  }
+  if (state.selectedRouteId) {
+    const selected = routesById[state.selectedRouteId];
+    nodeIds.add(selected.from);
+    nodeIds.add(selected.to);
+  }
+
+  const points = [...nodeIds].map((nodeId) => projectPoint(nodesById[nodeId].longitude, nodesById[nodeId].latitude));
+  const minX = Math.max(0, Math.min(...points.map((point) => point.x)) - 210);
+  const maxX = Math.min(MAP_WIDTH, Math.max(...points.map((point) => point.x)) + 210);
+  const minY = Math.max(0, Math.min(...points.map((point) => point.y)) - 170);
+  const maxY = Math.min(MAP_HEIGHT, Math.max(...points.map((point) => point.y)) + 170);
+  const boxWidth = Math.max(1, maxX - minX);
+  const boxHeight = Math.max(1, maxY - minY);
+  const scale = clampValue(Math.min((MAP_WIDTH / boxWidth) * 0.74, (MAP_HEIGHT / boxHeight) * 0.74), 1.15, 2.35);
+  const centerX = ((minX + maxX) / 2 / MAP_WIDTH) * 100;
+  const centerY = ((minY + maxY) / 2 / MAP_HEIGHT) * 100;
+  const minPan = 100 - scale * 100;
+  const panX = clampValue(50 - scale * centerX, minPan, 0);
+  const panY = clampValue(50 - scale * centerY, minPan, 0);
+  const focusArea = (boxWidth * boxHeight) / (MAP_WIDTH * MAP_HEIGHT);
+
+  return {
+    nodeIds,
+    attrs: `style="--focus-scale:${scale.toFixed(3)};--focus-pan-x:${panX.toFixed(2)}%;--focus-pan-y:${panY.toFixed(2)}%;" data-focus-scale="${scale.toFixed(3)}" data-focus-area="${focusArea.toFixed(4)}"`
+  };
 }
 
-function clampPercent(value: number) {
-  return Math.max(18, Math.min(82, value));
+function clampValue(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function renderHazardPip(route: LedgerRoute) {
@@ -1098,12 +1128,12 @@ function routeName(route: LedgerRoute) {
 
 function routeTooltip(route: LedgerRoute, routeState?: { active: boolean; assigned: PrepActionId[]; revealed: boolean }) {
   const prep = routeState?.assigned.length ? routeState.assigned.map((id) => actionName(id)).join(', ') : 'No prep assigned';
-  return `${routeName(route)} | ${route.type} ${route.express ? 'express' : 'route'} | risk ${Math.round(route.baseRisk * 100)}% | fee x${route.payoutMultiplier.toFixed(2)} | exposure ${incidentExposure(route)} | ${routeState?.active ? 'open' : 'closed'} | ${prep}`;
+  return `${routeName(route)} | ${route.type} ${route.express ? 'express' : 'route'} | danger ${routeDangerLabel(route)} | fee x${route.payoutMultiplier.toFixed(2)} | exposure ${incidentExposure(route)} | ${routeState?.active ? 'open' : 'closed'} | ${prep}`;
 }
 
 function routeAriaLabel(route: LedgerRoute, routeState: LedgerState['routeStates'][RouteId] | undefined, mode: 'preview' | 'game') {
   const status = mode === 'preview' ? (routeState?.active ? 'open this contract' : 'closed this contract') : routeStatusLabel(state, route);
-  return `${routeName(route)}, ${status}, ${route.type}${route.express ? ' express' : ''}, risk ${Math.round(route.baseRisk * 100)} percent, fee multiplier ${route.payoutMultiplier.toFixed(2)}, incident exposure ${incidentExposure(route)}`;
+  return `${routeName(route)}, ${status}, ${route.type}${route.express ? ' express' : ''}, danger ${routeDangerLabel(route)}, fee multiplier ${route.payoutMultiplier.toFixed(2)}, incident exposure ${incidentExposure(route)}`;
 }
 
 function renderPrepBadge(actionId: PrepActionId) {

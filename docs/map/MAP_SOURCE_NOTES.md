@@ -73,7 +73,7 @@ AI assistance may be used later for decorative art, panels, tokens, or title tre
 
 ## v0.5 Status
 
-The v0.5 final-candidate pass keeps the geodata pipeline deterministic for CI by adding the local river fallback and `npm run verify:assets`.
+The release-hygiene pass keeps the geodata pipeline deterministic for CI by adding the local river fallback and `npm run verify:assets`.
 
 ## Known Map Limitations
 
