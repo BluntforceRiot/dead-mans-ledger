@@ -19,7 +19,7 @@ export function buildLedgerHeadline(result: DispatchResult) {
     return `${cargo} LOSS ON ${route} SHAKES ${destination} TRUST`;
   }
   if (result.countered && (result.hazard.tag === 'ambush' || result.hazard.tag === 'sabotage')) {
-    return `GUARDS BREAK AMBUSH ON ${route}`;
+    return `COUNTER BREAKS AMBUSH ON ${route}`;
   }
   if (result.hazard.id === 'track-cut') {
     return `TRACK REOPENED ON ${route} BEFORE ${cargo} LOSES TRUST`;

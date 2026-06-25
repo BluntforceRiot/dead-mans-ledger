@@ -10,6 +10,16 @@ The money provided independence. The route was the engine.
 
 The game treats independence as economic circulation. Paper money only creates practical independence if it reaches towns, merchants trust it, payroll arrives, and routes survive weather, sabotage, ambushes, and broken infrastructure.
 
+## v0.7.5 Scope
+
+The v0.7.5 production-modal-lock pass closes the Review12 keyboard honor-rule caveat without changing the core loop:
+
+- Open result cards now make the underlying board sections inert and hidden from assistive navigation until the player continues.
+- Result cards now render as `role="dialog"` with `aria-modal="true"` and move focus to the primary Continue/Face the Board action.
+- Global Escape-to-title navigation is disabled while a result dialog is open, so the player must resolve the modal through its live action.
+- Route selection, prep assignment, borrowing, repayment, dispatch eligibility, and direct dispatch resolution now reject result/fired phases at the simulation and UI boundaries.
+- Successful ambush/sabotage counter headlines now say `COUNTER BREAKS AMBUSH` instead of miscrediting guards when a decoy carried the result.
+
 ## v0.7.4 Scope
 
 The v0.7.4 production-truth pass closes Review11 release blockers without changing the core loop:

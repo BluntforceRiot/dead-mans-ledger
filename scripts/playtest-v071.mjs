@@ -358,6 +358,26 @@ async function assertResultLayout(label) {
   assert(layout.scrollHeight <= layout.clientHeight + 24, `${label}: primary result information fits without major card scrolling`);
 }
 
+async function assertResultModalLocksBoard(label) {
+  await page.waitForSelector('.result-card[role="dialog"][aria-modal="true"]');
+  const modalState = await page.evaluate(() => ({
+    inertSections: document.querySelectorAll('.contract-panel[inert], .map-stage[inert], .actions-panel[inert], .hud[inert]').length,
+    activePrimary: document.activeElement?.matches('[data-dialog-primary]') ?? false,
+    dialogLabel: document.querySelector('.result-card')?.getAttribute('aria-labelledby') ?? ''
+  }));
+  assert(modalState.inertSections === 4, `${label}: underlying board sections are inert while result dialog is open`);
+  assert(modalState.activePrimary, `${label}: result dialog moves focus to primary action`);
+  assert(modalState.dialogLabel === 'result-title', `${label}: result dialog has an accessible title reference`);
+  for (let index = 0; index < 8; index += 1) {
+    await page.keyboard.press('Tab');
+    const focusedBehindModal = await page.evaluate(() => Boolean(document.activeElement?.closest('[inert]')));
+    assert(!focusedBehindModal, `${label}: Tab does not move focus into inert board content`);
+  }
+  await page.keyboard.press('Escape');
+  const stillOpenAfterEscape = await page.locator('.result-card[role="dialog"][aria-modal="true"]').count();
+  assert(stillOpenAfterEscape === 1, `${label}: global Escape shortcut does not bypass the result dialog`);
+}
+
 await testOverflowScreens();
 
 await page.goto(`${baseUrl}#/about`);
@@ -384,6 +404,7 @@ const routeId = await chooseRoute();
 assert(Boolean(routeId), 'A reachable route can be selected');
 await prepareRoute(routeId);
 await dispatchAndSkip();
+await assertResultModalLocksBoard('Result modal');
 const status = await page.locator('.result-card').getAttribute('data-result-status');
 const cardText = await page.locator('.result-card').innerText();
 const stamp = await page.locator('.result-card .gold-ledger-stamp').first().getAttribute('aria-label').catch(() => '');

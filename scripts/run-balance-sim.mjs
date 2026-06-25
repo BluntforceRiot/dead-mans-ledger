@@ -235,6 +235,7 @@ function simulate(strategy, index) {
     for (const report of result.intelGathered) {
       intelUse[report.source] = (intelUse[report.source] ?? 0) + 1;
     }
+    state = { ...state, lastResult: undefined };
   }
 
   return {

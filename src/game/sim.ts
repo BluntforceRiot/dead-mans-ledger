@@ -576,7 +576,7 @@ export function nextInterestCharge(state: LedgerState) {
 }
 
 export function borrowCredit(state: LedgerState): LedgerState {
-  if (state.dispatchingRouteId) {
+  if (isPhaseLocked(state)) {
     return state;
   }
   if (state.creditBorrowedThisLeg || state.borrowedCredit >= creditLimit(state)) {
@@ -597,7 +597,7 @@ export function borrowCredit(state: LedgerState): LedgerState {
 }
 
 export function repayDebt(state: LedgerState): LedgerState {
-  if (state.dispatchingRouteId) {
+  if (isPhaseLocked(state)) {
     return state;
   }
   if (state.borrowedCredit <= 0 || state.cash <= 0) {
@@ -623,7 +623,7 @@ export function repayDebt(state: LedgerState): LedgerState {
 }
 
 export function applyPrepAction(state: LedgerState, routeId: RouteId, actionId: PrepActionId): LedgerState {
-  if (state.dispatchingRouteId) {
+  if (isPhaseLocked(state)) {
     return state;
   }
   if (actionId === 'borrow') {
@@ -668,6 +668,9 @@ export function applyPrepAction(state: LedgerState, routeId: RouteId, actionId: 
 }
 
 export function resolveDispatch(state: LedgerState, routeId: RouteId): LedgerState {
+  if (state.lastResult || state.firedReason || (state.dispatchingRouteId && state.dispatchingRouteId !== routeId)) {
+    return state;
+  }
   const route = routesById[routeId];
   const routeState = state.routeStates[routeId];
   const nextNodeId = otherEnd(route, state.currentNodeId);
@@ -943,7 +946,11 @@ function markRouteResolved(routeStates: Record<RouteId, RouteState>, routeId: Ro
 
 export function canDispatch(state: LedgerState) {
   const route = state.selectedRouteId ? routesById[state.selectedRouteId] : undefined;
-  return Boolean(route && isLegalRoute(state, route.id) && !state.dispatchingRouteId);
+  return Boolean(route && isLegalRoute(state, route.id) && !isPhaseLocked(state));
+}
+
+function isPhaseLocked(state: LedgerState) {
+  return Boolean(state.dispatchingRouteId || state.lastResult || state.firedReason);
 }
 
 export function isLegalRoute(state: LedgerState, routeId: RouteId) {

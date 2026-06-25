@@ -103,6 +103,9 @@ function testContractHistoryReset() {
     const before = forceCleanRoute(state, route);
     state = sim.resolveDispatch(before, route.id);
     delivered = Boolean(state.lastResult?.arrivedAtDestination);
+    if (!delivered) {
+      state = { ...state, lastResult: undefined };
+    }
   }
   assert(delivered, 'seed 810001 forced-clean run delivered the first contract');
   assert(Object.keys(state.segmentHistory).length === 0, 'segment history resets when a new contract is posted');

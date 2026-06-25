@@ -82,18 +82,25 @@ window.addEventListener('hashchange', () => {
 });
 
 window.addEventListener('keydown', (event) => {
+  if (event.key.toLowerCase() === 'm') {
+    muted = !muted;
+    window.localStorage.setItem('dead-mans-ledger.muted', String(muted));
+    render();
+    return;
+  }
   if ((event.key === 'Escape' || event.key.toLowerCase() === 's') && state.dispatchingRouteId) {
     event.preventDefault();
     finishPendingDispatch();
     return;
   }
+  if (state.screen === 'game' && state.lastResult) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+    }
+    return;
+  }
   if (state.screen === 'scores' && event.key.toLowerCase() === 'r') {
     handleScoreReset();
-  }
-  if (event.key.toLowerCase() === 'm') {
-    muted = !muted;
-    window.localStorage.setItem('dead-mans-ledger.muted', String(muted));
-    render();
   }
   if (event.key === 'Escape' && state.screen !== 'title') {
     navigate('title');
@@ -208,6 +215,9 @@ appRoot.addEventListener('click', (event) => {
 });
 
 appRoot.addEventListener('keydown', (event) => {
+  if (state.dispatchingRouteId || state.lastResult || state.firedReason) {
+    return;
+  }
   const target = (event.target as HTMLElement).closest<HTMLElement>('[data-route-id]');
   if (!target || (event.key !== 'Enter' && event.key !== ' ')) {
     return;
@@ -247,7 +257,7 @@ function handlePrepClick(prepId: PrepActionId) {
   if (state.screen !== 'game') {
     return;
   }
-  if (state.dispatchingRouteId) {
+  if (state.dispatchingRouteId || state.lastResult || state.firedReason) {
     return;
   }
 
@@ -273,7 +283,7 @@ function handleRouteClick(routeId: RouteId) {
   if (state.screen !== 'game') {
     return;
   }
-  if (state.dispatchingRouteId) {
+  if (state.dispatchingRouteId || state.lastResult || state.firedReason) {
     return;
   }
 
@@ -373,6 +383,7 @@ function render() {
                 ? renderFired()
                 : renderHighScores();
   hydrateSettlementAnimations();
+  focusResultDialogAction();
 }
 
 function renderTitle() {
@@ -553,10 +564,11 @@ function renderGame() {
   const adjacent = getLegalAdjacentRoutes(state);
   const selectedState = selected ? state.routeStates[selected.id] : undefined;
   const office = officeById(state.officeId);
+  const boardInert = state.lastResult ? 'inert aria-hidden="true"' : '';
 
   return `
     <main class="game-shell">
-      <aside class="side-panel contract-panel">
+      <aside class="side-panel contract-panel" ${boardInert}>
         <p class="eyebrow">Current Contract</p>
         <h1>${state.contract.cargoName}</h1>
         ${renderLedgerStamp('CONTRACT ACCEPTED', 'gold', 'contract-accepted-stamp')}
@@ -576,20 +588,20 @@ function renderGame() {
         ${renderFirstTurnRecommendation()}
         ${state.routeNotice ? `<p class="danger-copy small-copy">${state.routeNotice}</p>` : ''}
       </aside>
-      <section class="map-stage">
+      <section class="map-stage" ${boardInert}>
         ${renderContractRibbon()}
         ${renderMap('game')}
         ${state.dispatchingRouteId ? renderDispatchCinematic(routesById[state.dispatchingRouteId]) : ''}
         ${renderSelectedRouteLedger(selected, selectedState)}
         ${renderDispatchChronicle()}
       </section>
-      <aside class="side-panel actions-panel">
+      <aside class="side-panel actions-panel" ${boardInert}>
         <p class="eyebrow">Preparation</p>
         <h2>Route Actions</h2>
         ${renderActionGroups()}
         ${renderSelectedActionDetail()}
       </aside>
-      <section class="hud">${renderHud()}</section>
+      <section class="hud" ${boardInert}>${renderHud()}</section>
       ${state.lastResult ? renderResultModal() : ''}
     </main>
   `;
@@ -906,7 +918,7 @@ function renderResultModal() {
   const statusLabel = dispatchResultStatusLabel(result);
   return `
     <div class="modal-backdrop">
-      <article class="result-card ${result.success ? 'success-result' : 'failure-result'} ${result.journeyComplete ? 'legend-result' : ''}" data-result-status="${escapeHtml(statusLabel)}">
+      <article class="result-card ${result.success ? 'success-result' : 'failure-result'} ${result.journeyComplete ? 'legend-result' : ''}" data-result-status="${escapeHtml(statusLabel)}" role="dialog" aria-modal="true" aria-labelledby="result-title" tabindex="-1">
         <div class="event-frame ${effectClass}">
           <img src="${assetUrl(`assets/events/${eventAsset}`)}" alt="" class="event-art" />
           <div class="event-fx event-fx-one"></div>
@@ -917,12 +929,12 @@ function renderResultModal() {
         <div>
           ${renderResultStamp(result)}
           <p class="eyebrow">${result.arrivedAtDestination ? 'Destination Arrival' : result.success ? 'Route Result' : 'Board Incident'}</p>
-          <h1>${result.arrivedAtDestination ? 'CONTRACT DELIVERED' : result.message}</h1>
+          <h1 id="result-title">${result.arrivedAtDestination ? 'CONTRACT DELIVERED' : result.message}</h1>
           <p class="result-outcome ${result.success ? 'outcome-good' : 'outcome-bad'}">${statusLabel}${result.prepUsed.length ? ` &middot; ${result.prepUsed.length} counter${result.prepUsed.length === 1 ? '' : 's'} attempted` : ''}</p>
           ${renderLedgerWireCurrent(result)}
           <p>${result.detail}</p>
           ${result.arrivedAtDestination ? '<p class="success-copy">The named destination signed the receipt. The money engine keeps turning.</p>' : ''}
-          <button class="result-primary-action" data-action="continue-result">${result.firedReason ? 'Face the Board' : result.contractEnded ? 'Review Next Contract' : 'Continue'}</button>
+          <button class="result-primary-action" data-action="continue-result" data-dialog-primary autofocus>${result.firedReason ? 'Face the Board' : result.contractEnded ? 'Review Next Contract' : 'Continue'}</button>
           ${renderResultSections(result)}
           ${
             result.firedReason
@@ -1281,6 +1293,14 @@ function hydrateSettlementAnimations() {
     }
   };
   window.requestAnimationFrame(update);
+}
+
+function focusResultDialogAction() {
+  if (!state.lastResult) {
+    return;
+  }
+  const primary = document.querySelector<HTMLButtonElement>('[data-dialog-primary]');
+  primary?.focus({ preventScroll: true });
 }
 
 function formatSettlementValue(value: number, mode: 'money' | 'signed-money' | 'signed-number') {

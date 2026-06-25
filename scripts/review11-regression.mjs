@@ -240,8 +240,9 @@ function testSettlementDeadlineAndDebtTruth() {
   assert(firstResult.debtBefore === borrowed.borrowedCredit, 'debtBefore records the committed dispatch balance');
   assert(firstResult.debtAfter === firstLeg.borrowedCredit, 'debtAfter records the authoritative post-dispatch balance');
 
-  const secondRoute = legalRoutes(firstLeg)[0];
-  const secondLeg = sim.resolveDispatch(forceRoute(firstLeg, secondRoute, ['clean']), secondRoute.id);
+  const firstLegContinued = { ...firstLeg, lastResult: undefined };
+  const secondRoute = legalRoutes(firstLegContinued)[0];
+  const secondLeg = sim.resolveDispatch(forceRoute(firstLegContinued, secondRoute, ['clean']), secondRoute.id);
   const secondResult = secondLeg.lastResult;
   assert(secondResult.borrowedThisLeg === 0, 'carried debt is not labeled as newly borrowed on later legs');
   assert(secondResult.debtBefore === firstLeg.borrowedCredit, 'later leg debtBefore shows carried balance separately');
